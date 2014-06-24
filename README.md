@@ -1,4 +1,4 @@
-omniacreator-plugin
-===================
+Omnia Creator plugin
+====================
 
 Omnia Creator plugin
