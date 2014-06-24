@@ -1,4 +1,4 @@
 omniacreator-plugin
 ===================
 
-Omnia Creator IDE plugin
+Omnia Creator plugin
