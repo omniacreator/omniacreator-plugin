@@ -1,4 +1,5 @@
-Omnia Creator plugin
+Omnia Creator Plugin
 ====================
 
-Omnia Creator plugin
+Using [QCustomPlot](http://www.qcustomplot.com)  
+Using [FFTW3](http://www.fftw.org)
