@@ -49,24 +49,20 @@ if __name__ == "__main__":
 
     # Deploy ##################################################################
 
+    os.chdir(src_folder)
+
     # Deploy Library #
 
-    subprocess.call(["python",
-    os.path.join(src_folder, "preprocess.py"),
-    "-I", os.path.abspath(os.path.join(src_folder, '.')),
-    "-I", os.path.abspath(os.path.join(src_folder, "..")),
+    subprocess.call(["python", "preprocess.py",
     os.path.join(src_folder, "il.h"), # old file name
     os.path.join(install_folder, "InterfaceLibrary.h")]) # new file name
 
     # Deploy Documentation #
 
-    os.chdir(src_folder)
-    subprocess.call(["doxygen", os.path.join(src_folder, "Doxyfile")])
-
+    subprocess.call(["doxygen", "Doxyfile"])
     shutil.rmtree(os.path.join(install_folder, "html"), True)
-    shutil.copytree(os.path.join(src_folder, "html"),
-                    os.path.join(install_folder, "html"))
-    shutil.rmtree(os.path.join(src_folder, "html"), True)
+    shutil.move(os.path.join(src_folder, "html"),
+                os.path.join(install_folder, "html"))
 
 ################################################################################
 # @file

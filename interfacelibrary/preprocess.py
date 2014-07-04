@@ -67,10 +67,10 @@ if __name__ == "__main__":
 
     __folder__ = os.path.dirname(os.path.abspath(__file__))
 
-    parser = argparse.ArgumentParser(description =
-    "Preprocess Script")
+    parser = argparse.ArgumentParser(description = "Preprocess Script")
 
-    parser.add_argument("-I", "--include", action = "append")
+    parser.add_argument("-I", "--include", nargs = '?', default = '.',
+                        action = "append")
 
     parser.add_argument("input_file")
     parser.add_argument("output_file")

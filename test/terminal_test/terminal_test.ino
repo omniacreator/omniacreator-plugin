@@ -13,23 +13,19 @@ void setup()
 
   // Print Version
   {
-    char versionBuffer[16];
-    core.getVersion(versionBuffer,
-    sizeof(versionBuffer));
-
     core.print("\nVersion: ");
-    core.println(versionBuffer);
+    core.println(core.getVersionInt(true));
     delay(1000);
   }
 
-  // Print Compat Version
+  // Print Version
   {
-    char compatibleVersionBuffer[16];
-    core.getCompatVersion(compatibleVersionBuffer,
-    sizeof(compatibleVersionBuffer));
+    char versionBuffer[16];
+    
+    core.getVersionStr(versionBuffer, sizeof(versionBuffer));
 
-    core.print("Compatible Version: ");
-    core.println(compatibleVersionBuffer);
+    core.print("\nVersion: ");
+    core.println(versionBuffer);
     delay(1000);
   }
 
