@@ -37,7 +37,7 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
     // Application Reskining //////////////////////////////////////////////////
 
     QApplication::setOrganizationName(PROJECT_VENDOR_STR);
-    QApplication::setOrganizationDomain("http://" PROJECT_URL_STR "/");
+    QApplication::setOrganizationDomain(PROJECT_DOMAIN_NAME_STR);
     QApplication::setApplicationName(PROJECT_FULL_NAME_STR);
     QApplication::setApplicationVersion(PROJECT_VERSION_STR);
 
@@ -946,8 +946,8 @@ void OmniaCreatorPlugin::updateRemoveWidgetMenu()
 
 void OmniaCreatorPlugin::generalHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl(
-    QApplication::organizationDomain() + "help/general/")))
+    if(!QDesktopServices::openUrl(QUrl(PROJECT_URL_STR
+    "help/general/")))
     {
         QMessageBox::critical(Core::ICore::mainWindow(),
         tr("Open General Help Error"),
@@ -957,8 +957,8 @@ void OmniaCreatorPlugin::generalHelp()
 
 void OmniaCreatorPlugin::editorHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl(
-    QApplication::organizationDomain() + "help/editor/")))
+    if(!QDesktopServices::openUrl(QUrl(PROJECT_URL_STR
+    "help/editor/")))
     {
         QMessageBox::critical(Core::ICore::mainWindow(),
         tr("Open Editor Help Error"),

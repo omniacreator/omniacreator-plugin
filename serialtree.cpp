@@ -305,8 +305,8 @@ void SerialTree::exportState(const QString &fileName)
 
 void SerialTree::generalHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl(
-    QApplication::organizationDomain() + "help/general/")))
+    if(!QDesktopServices::openUrl(QUrl(PROJECT_URL_STR
+    "help/general/")))
     {
         QMessageBox::critical(this, tr("Open General Help Error"),
         tr("Unable to open the URL to the General Help page"));
@@ -315,8 +315,8 @@ void SerialTree::generalHelp()
 
 void SerialTree::treeHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl(
-    QApplication::organizationDomain() + "help/tree/")))
+    if(!QDesktopServices::openUrl(QUrl(PROJECT_URL_STR
+    "help/tree/")))
     {
         QMessageBox::critical(this, tr("Open Tree Help Error"),
         tr("Unable to open the URL to the Tree Help page"));

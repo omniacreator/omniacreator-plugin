@@ -53,13 +53,13 @@ if __name__ == "__main__":
 
     # Deploy Library #
 
-    subprocess.call(["python", "preprocess.py",
+    subprocess.check_call(["python", "preprocess.py",
     os.path.join(src_folder, "il.h"), # old file name
     os.path.join(install_folder, "InterfaceLibrary.h")]) # new file name
 
     # Deploy Documentation #
 
-    subprocess.call(["doxygen", "Doxyfile"])
+    subprocess.check_call(["doxygen", "Doxyfile"])
     shutil.rmtree(os.path.join(install_folder, "html"), True)
     shutil.move(os.path.join(src_folder, "html"),
                 os.path.join(install_folder, "html"))

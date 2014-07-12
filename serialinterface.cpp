@@ -3076,8 +3076,8 @@ void SerialInterface::deleteAllGroupBoxes()
 
 void SerialInterface::generalHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl(
-    QApplication::organizationDomain() + "help/general/")))
+    if(!QDesktopServices::openUrl(QUrl(PROJECT_URL_STR
+    "help/general/")))
     {
         QMessageBox::critical(this, tr("Open General Help Error"),
         tr("Unable to open the URL to the General Help page"));
@@ -3086,8 +3086,8 @@ void SerialInterface::generalHelp()
 
 void SerialInterface::interfaceHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl(
-    QApplication::organizationDomain() + "help/interface/")))
+    if(!QDesktopServices::openUrl(QUrl(PROJECT_URL_STR
+    "help/interface/")))
     {
         QMessageBox::critical(this, tr("Open Interface Help Error"),
         tr("Unable to open the URL to the Interface Help page"));

@@ -1447,8 +1447,8 @@ void SerialGraphics::exportState(const QString &fileName)
 
 void SerialGraphics::generalHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl(
-    QApplication::organizationDomain() + "help/general/")))
+    if(!QDesktopServices::openUrl(QUrl(PROJECT_URL_STR
+    "help/general/")))
     {
         QMessageBox::critical(this, tr("Open General Help Error"),
         tr("Unable to open the URL to the General Help page"));
@@ -1457,8 +1457,8 @@ void SerialGraphics::generalHelp()
 
 void SerialGraphics::graphicsHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl(
-    QApplication::organizationDomain() + "help/graphics/")))
+    if(!QDesktopServices::openUrl(QUrl(PROJECT_URL_STR
+    "help/graphics/")))
     {
         QMessageBox::critical(this, tr("Open Graphics Help Error"),
         tr("Unable to open the URL to the Graphics Help page"));

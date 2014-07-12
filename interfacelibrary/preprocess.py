@@ -46,14 +46,12 @@ def preprocess_file(file_name, include_paths, include_history = []):
                     for path in include_paths:
                         include = os.path.abspath(os.path.join(path, name))
 
-                        if not os.path.isfile(include):
-                            continue
+                        if not os.path.isfile(include): continue
 
                         lines.pop()
                         lines.append('\n')
 
-                        if include in include_history:
-                            break
+                        if include in include_history: break
 
                         include_history.append(include)
                         lines.extend(preprocess_file(include, include_paths,

@@ -7858,8 +7858,8 @@ void SerialOscilloscope::exportState(const QString &fileName)
 
 void SerialOscilloscope::generalHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl(
-    QApplication::organizationDomain() + "help/general/")))
+    if(!QDesktopServices::openUrl(QUrl(PROJECT_URL_STR
+    "help/general/")))
     {
         QMessageBox::critical(this, tr("Open General Help Error"),
         tr("Unable to open the URL to the General Help page"));
@@ -7868,8 +7868,8 @@ void SerialOscilloscope::generalHelp()
 
 void SerialOscilloscope::oscilloscopeHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl(
-    QApplication::organizationDomain() + "help/oscilloscope/")))
+    if(!QDesktopServices::openUrl(QUrl(PROJECT_URL_STR
+    "help/oscilloscope/")))
     {
         QMessageBox::critical(this, tr("Open Oscilloscope Help Error"),
         tr("Unable to open the URL to the Oscilloscope Help page"));

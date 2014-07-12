@@ -104,7 +104,7 @@ QString SerialMake::getWorkspaceFolder() const
     {
         return QDir::toNativeSeparators(QDir::cleanPath(
         QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) +
-        QDir::separator() + QApplication::applicationName().remove(' ')));
+        QDir::separator() + QApplication::applicationName()));
     }
 }
 
