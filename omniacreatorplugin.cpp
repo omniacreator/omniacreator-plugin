@@ -973,7 +973,7 @@ void OmniaCreatorPlugin::about()
     arg(QApplication::applicationVersion()),
     tr("<h3>About %L1 %L2</h3>"
     ""
-    "<p>Copyright %L3</p>"
+    "<p>Copyright (c) %L3</p>"
     ""
     "<h4>Acknowledgments</h4>"
     ""

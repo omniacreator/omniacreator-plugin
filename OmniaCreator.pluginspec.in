@@ -1,7 +1,7 @@
 <plugin name=\"$$PROJECT_FULL_NAME_WO_SPACES\" version=\"$$QTCREATOR_VERSION\" compatVersion=\"$$QTCREATOR_COMPAT_VERSION\">
     <vendor>$$PROJECT_VENDOR</vendor>
-    <copyright>$$PROJECT_COPYRIGHT</copyright>
-    <license>Copyright $$PROJECT_COPYRIGHT
+    <copyright>(C) $$PROJECT_COPYRIGHT</copyright>
+    <license>Copyright (C) $$PROJECT_COPYRIGHT
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
