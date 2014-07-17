@@ -27,7 +27,11 @@
 
 #include "omniacreator_global.h"
 
+#include <utils/fileutils.h>
+#include <utils/qtcassert.h>
+
 #include <extensionsystem/iplugin.h>
+#include <extensionsystem/pluginmanager.h>
 
 #include <coreplugin/actionmanager/actioncontainer.h>
 #include <coreplugin/actionmanager/actionmanager.h>
@@ -36,6 +40,38 @@
 #include <coreplugin/icontext.h>
 #include <coreplugin/icore.h>
 #include <coreplugin/messagemanager.h>
+#include <coreplugin/documentmanager.h>
+
+// Device Includes
+#include <projectexplorer/devicesupport/idevice.h>
+#include <projectexplorer/devicesupport/idevicefactory.h>
+#include <projectexplorer/devicesupport/idevicewidget.h>
+#include <projectexplorer/devicesupport/devicemanager.h>
+
+// Toolchain Includes
+#include <projectexplorer/gcctoolchain.h>
+#include <projectexplorer/toolchain.h>
+#include <projectexplorer/toolchainmanager.h>
+
+// Versions Includes
+#include <qtsupport/baseqtversion.h>
+#include <qtsupport/qtversionmanager.h>
+
+// Kit Includes
+#include <projectexplorer/kit.h>
+#include <projectexplorer/kitinformation.h>
+#include <projectexplorer/kitmanager.h>
+
+// Cmake Settings Inlcludes
+#include <cmakeprojectmanager/cmakeprojectmanager.h>
+
+// Project Settings Includes
+#include <projectexplorer/projectexplorersettings.h>
+#include <projectexplorer/projectexplorer.h>
+
+// Text Editor Settings Includes
+#include <texteditor/texteditorsettings.h>
+#include <texteditor/generichighlighter/highlightersettings.h>
 
 #define LABEL_INDEX 5
 
@@ -90,6 +126,21 @@ private slots:
 
     void errorMessage(const QString &text);
 
+    // Begin Qt Creator Setup Functions ///////////////////////////////////////
+
+    void deviceManagerSetup();
+    void toolchainMangerSetup();
+    void versionsManagerSetup();
+    void kitManagerSetup();
+
+    void cmakeManagerSetup();
+    void projectManagerSetup();
+
+    void environmentSetup();
+    void textEditorSetup();
+
+    // End Qt Creator Setup Functions /////////////////////////////////////////
+
 private:
 
     Q_DISABLE_COPY(OmniaCreatorPlugin)
@@ -118,6 +169,177 @@ private:
 
     Core::Command *m_resetSerialPort;
     Core::Command *m_resetSerialTerminal;
+
+    // Begin Qt Creator Setup Variables ///////////////////////////////////////
+
+    class MicrocontrollerDPSO :
+    public ProjectExplorer::DeviceProcessSignalOperation
+    {
+
+    public:
+
+        explicit MicrocontrollerDPSO() :
+        ProjectExplorer::DeviceProcessSignalOperation() { }
+        virtual ~MicrocontrollerDPSO() { }
+
+        void killProcess(int pid)
+        {
+            Q_UNUSED(pid);
+        }
+
+        void killProcess(const QString &filePath)
+        {
+            Q_UNUSED(filePath);
+        }
+
+        void interruptProcess(int pid)
+        {
+            Q_UNUSED(pid);
+        }
+
+        void interruptProcess(const QString &filePath)
+        {
+            Q_UNUSED(filePath);
+        }
+    };
+
+    class MicrocontrollerID :
+    public ProjectExplorer::IDevice
+    {
+
+    public:
+
+        explicit MicrocontrollerID() :
+        ProjectExplorer::IDevice(MICROCONTROLLER_DEVICE_TYPE,
+        ProjectExplorer::IDevice::AutoDetected,
+        ProjectExplorer::IDevice::Hardware,
+        MICROCONTROLLER_DEVICE_ID)
+        {
+            setDisplayName("Maker");
+        }
+
+        virtual ~MicrocontrollerID() { }
+
+        ProjectExplorer::IDevice::DeviceInfo deviceInformation() const
+        {
+            return DeviceInfo();
+        }
+
+        virtual QString displayType() const
+        {
+            return "Microcontroller";
+        }
+
+        virtual ProjectExplorer::IDeviceWidget *createWidget()
+        {
+            return 0;
+        }
+
+        virtual QList<Core::Id> actionIds() const
+        {
+            return QList<Core::Id>();
+        }
+
+        virtual QString displayNameForActionId(Core::Id actionId) const
+        {
+            Q_UNUSED(actionId); return QString();
+        }
+
+        void executeAction(Core::Id actionId, QWidget *parent = 0)
+        {
+            Q_UNUSED(actionId); Q_UNUSED(parent);
+        }
+
+        ProjectExplorer::DeviceProcessSignalOperation::Ptr
+        signalOperation() const
+        {
+            return ProjectExplorer::DeviceProcessSignalOperation::Ptr
+            (new MicrocontrollerDPSO());
+        }
+
+        ProjectExplorer::IDevice::Ptr clone() const
+        {
+            return ProjectExplorer::IDevice::Ptr(new MicrocontrollerID(*this));
+        }
+
+        virtual QString qmlProfilerHost() const
+        {
+            return QString();
+        }
+    };
+
+    class MicrocontrollerIDF :
+    public ProjectExplorer::IDeviceFactory
+    {
+
+    public:
+
+        explicit MicrocontrollerIDF(QObject *parent = NULL) :
+        ProjectExplorer::IDeviceFactory(parent) { }
+        virtual ~MicrocontrollerIDF() { }
+
+        virtual QString displayNameForId(Core::Id type) const
+        {
+            return (type == MICROCONTROLLER_DEVICE_TYPE) ? "Maker" : "Other";
+        }
+
+        virtual QList<Core::Id> availableCreationIds() const
+        {
+            return QList<Core::Id>() << MICROCONTROLLER_DEVICE_TYPE;
+        }
+
+        virtual bool canCreate() const
+        {
+            return false;
+        }
+
+        virtual ProjectExplorer::IDevice::Ptr
+        create(Core::Id id) const
+        {
+            Q_UNUSED(id); return ProjectExplorer::IDevice::Ptr();
+        }
+
+        virtual bool canRestore(const QVariantMap &map) const
+        {
+            return ProjectExplorer::IDevice::idFromMap(map) ==
+            MICROCONTROLLER_DEVICE_ID;
+        }
+
+        virtual ProjectExplorer::IDevice::Ptr
+        restore(const QVariantMap &map) const
+        {
+            QTC_ASSERT(canRestore(map),
+            return ProjectExplorer::IDevice::Ptr());
+
+            const ProjectExplorer::IDevice::Ptr device =
+            ProjectExplorer::IDevice::Ptr(new MicrocontrollerID);
+
+            device->fromMap(map);
+            return device;
+        }
+    };
+
+    class MicrocontrollerIDW :
+    public ProjectExplorer::IDeviceWidget
+    {
+
+    public:
+
+        explicit MicrocontrollerIDW
+        (const ProjectExplorer::IDevice::Ptr &device, QWidget *parent = NULL) :
+        ProjectExplorer::IDeviceWidget(device, parent) { }
+        virtual ~MicrocontrollerIDW() { }
+
+        virtual void updateDeviceFromUi() { }
+    };
+
+    ProjectExplorer::IDevice::Ptr m_device;
+    ProjectExplorer::GccToolChain *m_toolchain;
+    ProjectExplorer::Kit *m_kit;
+
+    // End Qt Creator Setup Variables /////////////////////////////////////////
+
+    static void messageHandler(QtMsgType type, const char *text);
 };
 
 #endif // OMNIACREATORPLUGIN_H

@@ -87,6 +87,31 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
 
     // Begin Registering //////////////////////////////////////////////////////
 
+    qInstallMsgHandler(messageHandler);
+
+    addAutoReleasedObject(new MicrocontrollerIDF);
+
+    connect(static_cast<ProjectExplorer::DeviceManager *>
+    (ProjectExplorer::DeviceManager::instance()),
+    SIGNAL(devicesLoaded()), this, SLOT(deviceManagerSetup()));
+
+    connect(static_cast<ProjectExplorer::ToolChainManager *>
+    (ProjectExplorer::ToolChainManager::instance()),
+    SIGNAL(toolChainsLoaded()), this, SLOT(toolchainMangerSetup()));
+
+    connect(static_cast<QtSupport::QtVersionManager *>
+    (QtSupport::QtVersionManager::instance()),
+    SIGNAL(qtVersionsLoaded()), this, SLOT(versionsManagerSetup()));
+
+    connect(static_cast<ProjectExplorer::KitManager *>
+    (ProjectExplorer::KitManager::instance()),
+    SIGNAL(kitsLoaded()), this, SLOT(kitManagerSetup()));
+
+    cmakeManagerSetup();
+    projectManagerSetup();
+    environmentSetup();
+    textEditorSetup();
+
     // Board Menu //
     {
         m_boardMenu = Core::ActionManager::createMenu(
@@ -946,7 +971,7 @@ void OmniaCreatorPlugin::updateRemoveWidgetMenu()
 
 void OmniaCreatorPlugin::generalHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl(PROJECT_URL_STR
+    if(!QDesktopServices::openUrl(QUrl("http://" PROJECT_DOMAIN_NAME_STR "/"
     "help/general/")))
     {
         QMessageBox::critical(Core::ICore::mainWindow(),
@@ -957,7 +982,7 @@ void OmniaCreatorPlugin::generalHelp()
 
 void OmniaCreatorPlugin::editorHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl(PROJECT_URL_STR
+    if(!QDesktopServices::openUrl(QUrl("http://" PROJECT_DOMAIN_NAME_STR "/"
     "help/editor/")))
     {
         QMessageBox::critical(Core::ICore::mainWindow(),
@@ -1021,6 +1046,303 @@ void OmniaCreatorPlugin::errorMessage(const QString &text)
         Core::MessageManager::ModeSwitch |
         Core::MessageManager::WithFocus |
         Core::MessageManager::EnsureSizeHint));
+    }
+}
+
+void OmniaCreatorPlugin::deviceManagerSetup()
+{
+    // Init stuff...
+
+    ProjectExplorer::DeviceManager *instance =
+    ProjectExplorer::DeviceManager::instance();
+
+    for(int i = 0, j = instance->deviceCount(); i < j; i++)
+    {
+        instance->removeDevice(instance->deviceAt(0)->id());
+    }
+
+    m_device = ProjectExplorer::IDevice::Ptr(new MicrocontrollerID);
+    instance->addDevice(m_device);
+
+    // Hide stuff...
+
+    QObject *page = ExtensionSystem::PluginManager::getObjectByClassName
+    ("ProjectExplorer::Internal::DeviceSettingsPage");
+
+    if(page)
+    {
+        ExtensionSystem::PluginManager::removeObject(page);
+    }
+
+    QObject *factory = ExtensionSystem::PluginManager::getObjectByClassName
+    ("ProjectExplorer::Internal::DesktopDeviceFactory");
+
+    if(factory)
+    {
+        ExtensionSystem::PluginManager::removeObject(factory);
+    }
+}
+
+void OmniaCreatorPlugin::toolchainMangerSetup()
+{
+    // Init stuff...
+
+    QList<ProjectExplorer::ToolChain *> list =
+    ProjectExplorer::ToolChainManager::toolChains();
+
+    foreach(ProjectExplorer::ToolChain *toolchain, list)
+    {
+        ProjectExplorer::ToolChainManager::deregisterToolChain(toolchain);
+    }
+
+    m_toolchain = new ProjectExplorer::GccToolChain(TOOLCHAIN_ID,
+    ProjectExplorer::ToolChain::ManualDetection);
+
+    if(!ProjectExplorer::ToolChainManager::registerToolChain(m_toolchain))
+    {
+        qFatal("Registering toolchain failed!");
+    }
+
+    // Hide stuff...
+
+    QObject *page = ExtensionSystem::PluginManager::getObjectByClassName
+    ("ProjectExplorer::Internal::ToolChainOptionsPage");
+
+    if(page)
+    {
+        ExtensionSystem::PluginManager::removeObject(page);
+    }
+}
+
+void OmniaCreatorPlugin::versionsManagerSetup()
+{
+    // Init stuff...
+
+    QList<QtSupport::BaseQtVersion *> list =
+    QtSupport::QtVersionManager::versions();
+
+    foreach(QtSupport::BaseQtVersion *version, list)
+    {
+        QtSupport::QtVersionManager::removeVersion(version);
+    }
+
+    // Hide stuff...
+
+    QObject *page = ExtensionSystem::PluginManager::getObjectByClassName
+    ("QtSupport::Internal::QtOptionsPage");
+
+    if(page)
+    {
+        ExtensionSystem::PluginManager::removeObject(page);
+    }
+}
+
+void OmniaCreatorPlugin::kitManagerSetup()
+{
+    // Init stuff...
+
+    QList<ProjectExplorer::Kit *> list =
+    ProjectExplorer::KitManager::kits();
+
+    foreach(ProjectExplorer::Kit *kit, list)
+    {
+        ProjectExplorer::KitManager::deregisterKit(kit);
+    }
+
+    m_kit = new ProjectExplorer::Kit(KIT_ID);
+    m_kit->setDisplayName(m_toolchain->displayName());
+    m_kit->setIconPath(Utils::FileName(QFileInfo(ICON_PATH)));
+
+    ProjectExplorer::DeviceTypeKitInformation::setDeviceTypeId(m_kit,
+    MICROCONTROLLER_DEVICE_TYPE);
+
+    ProjectExplorer::DeviceKitInformation::setDevice(m_kit,
+    m_device);
+
+    ProjectExplorer::ToolChainKitInformation::setToolChain(m_kit,
+    m_toolchain);
+
+    if(!ProjectExplorer::KitManager::registerKit(m_kit))
+    {
+        qFatal("Registering kit failed!");
+    }
+
+    ProjectExplorer::KitManager::setDefaultKit(m_kit);
+
+    // Hide stuff...
+
+    QObject *page = ExtensionSystem::PluginManager::getObjectByClassName
+    ("ProjectExplorer::KitOptionsPage");
+
+    if(page)
+    {
+        ExtensionSystem::PluginManager::removeObject(page);
+    }
+}
+
+void OmniaCreatorPlugin::cmakeManagerSetup()
+{
+    // Init stuff...
+
+#if defined(Q_OS_WIN)
+    QString path = "\\..\\..\\..\\tools\\cmake\\bin\\cmake.exe";
+#elif defined(Q_OS_MAC)
+    QString path = "/../../../tools/cmake/bin/cmake";
+#else
+    QString path = "/../../../tools/cmake/bin/cmake";
+#endif
+
+    path = QDir::toNativeSeparators(QDir::cleanPath
+    (QApplication::applicationDirPath() + path));
+
+    Core::ICore::settings()->beginGroup("CMakeSettings");
+    Core::ICore::settings()->setValue("cmakeExecutable", path);
+    Core::ICore::settings()->setValue("preferNinja", true);
+    Core::ICore::settings()->endGroup();
+
+    QObject *make = ExtensionSystem::PluginManager::getObjectByClassName
+    ("CMakeProjectManager::Internal::CMakeManager");
+
+    if(make)
+    {
+        static_cast<CMakeProjectManager::Internal::CMakeManager *>
+        (make)->setCMakeExecutable(path);
+    }
+
+    // Hide stuff...
+
+    QObject *page = ExtensionSystem::PluginManager::getObjectByClassName
+    ("CMakeProjectManager::Internal::CMakeSettingsPage");
+
+    if(page)
+    {
+        ExtensionSystem::PluginManager::removeObject(page);
+    }
+}
+
+void OmniaCreatorPlugin::projectManagerSetup()
+{
+    // Init stuff...
+
+    ProjectExplorer::Internal::ProjectExplorerSettings settings =
+    ProjectExplorer::ProjectExplorerPlugin::
+    instance()->projectExplorerSettings();
+
+    settings.buildBeforeDeploy = false;
+    settings.deployBeforeRun = false;
+    settings.saveBeforeBuild = true; // May need to tweak...
+    settings.showCompilerOutput = false;
+    settings.showRunOutput = false;
+    settings.showDebugOutput = false;
+    settings.cleanOldAppOutput = false;
+    settings.mergeStdErrAndStdOut = false;
+    settings.wrapAppOutput = false;
+    settings.useJom = true; // May need to tweak...
+    settings.autorestoreLastSession = true;
+    settings.prompToStopRunControl = false;
+    settings.maxAppOutputLines = TERMINAL_MAX_LINE_SIZE;
+    settings.environmentId = settings.environmentId;
+
+    ProjectExplorer::ProjectExplorerPlugin::
+    instance()->setProjectExplorerSettings(settings);
+
+    Core::DocumentManager::setProjectsDirectory(m_make->getWorkspaceFolder());
+    Core::DocumentManager::setUseProjectsDirectory(true);
+    Core::DocumentManager::setBuildDirectory(m_make->getMakeBuildFolder());
+
+    // Hide stuff...
+
+    QObject *page = ExtensionSystem::PluginManager::getObjectByClassName
+    ("ProjectExplorer::Internal::ProjectExplorerSettingsPage");
+
+    if(page)
+    {
+        ExtensionSystem::PluginManager::removeObject(page);
+    }
+
+    QObject *output = ExtensionSystem::PluginManager::getObjectByClassName
+    ("ProjectExplorer::Internal::AppOutputPane");
+
+    if(output)
+    {
+        ExtensionSystem::PluginManager::removeObject(output);
+    }
+
+    Core::ActionManager::actionContainer(
+    Core::Constants::M_FILE)->menu()->removeAction(
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_SESSION)->menu()->menuAction());
+
+    Core::ActionManager::actionContainer(
+    Core::Constants::M_FILE)->menu()->removeAction(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::NEWSESSION)->action());
+}
+
+void OmniaCreatorPlugin::environmentSetup()
+{
+    QObject *output = ExtensionSystem::PluginManager::getObjectByClassName
+    ("Core::Internal::MimeTypeSettings");
+
+    if(output)
+    {
+        ExtensionSystem::PluginManager::removeObject(output);
+    }
+}
+
+void OmniaCreatorPlugin::textEditorSetup()
+{
+    // To set settings... read from settings file with default values that
+    // we will set. Then write those values back to settings file. Then
+    // flush settings to settings widgets...
+
+//    QObject *output = ExtensionSystem::PluginManager::getObjectByClassName
+//    ("TextEditor::HighlighterSettingsPage");
+
+//    if(output)
+//    {
+//        ExtensionSystem::PluginManager::removeObject(output);
+//    }
+}
+
+void OmniaCreatorPlugin::messageHandler(QtMsgType type, const char *text)
+{
+    QStringList ignored;
+
+    ignored << "No tool chain set from kit \"GCC\".";
+    ignored << "PluginManagerPrivate::removeObject(): object not in list:";
+
+    foreach(const QString &string, ignored)
+    {
+        if(QString(text).startsWith(string))
+        {
+            return;
+        }
+    }
+
+    switch (type)
+    {
+        case QtDebugMsg:
+        {
+            fprintf(stderr, "%s\n", text); fflush(stderr); break;
+        }
+
+        case QtWarningMsg:
+        {
+            fprintf(stderr, "%s\n", text); fflush(stderr); break;
+        }
+
+        case QtCriticalMsg:
+        {
+            fprintf(stderr, "%s\n", text); fflush(stderr); break;
+        }
+
+        case QtFatalMsg:
+
+        default:
+        {
+            fprintf(stderr, "%s\n", text); fflush(stderr); abort();
+        }
     }
 }
 

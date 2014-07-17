@@ -20,6 +20,8 @@ QSettings *settings, QObject *parent) : QObject(parent)
 {
     m_widget = widget;
     m_settings = settings;
+
+    updateProject();
 }
 
 SerialMake::~SerialMake()
@@ -87,6 +89,10 @@ void SerialMake::setWorkspaceFolder(const QString &folder)
     settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
     settings.setValue(SERIAL_MAKE_KEY_WORKSPACE_FOLDER, folder);
 
+    // Start QtCreator Integration Stuff //////////////////////////////////////
+    Core::DocumentManager::setProjectsDirectory(folder);
+    // End QtCreator Integration Stuff ////////////////////////////////////////
+
     emit workspaceOrProjectSettingsChanged(); updateProject();
 }
 
@@ -151,6 +157,11 @@ QString SerialMake::getProjectFile() const
     {
         return QDir::toNativeSeparators(QDir::cleanPath(QString()));
     }
+}
+
+QString SerialMake::getProjectFile2() const
+{
+    return QDir::fromNativeSeparators(getProjectFile());
 }
 
 bool SerialMake::getProjectFileWasSet() const
@@ -229,6 +240,11 @@ QString SerialMake::getProjectMakeFile() const
     return settings.value(SERIAL_MAKE_KEY_PROJECT_MAKE_FILE).toString();
 }
 
+QString SerialMake::getProjectMakeFile2() const
+{
+    return QDir::fromNativeSeparators(getProjectMakeFile());
+}
+
 bool SerialMake::getProjectMakeFileWasSet() const
 {
     QSettings settings(m_settings ? m_settings->fileName() : QString(),
@@ -250,6 +266,18 @@ void SerialMake::setProjectMakeFileWasSet()
 QStringList SerialMake::getCMakeFilePaths() const
 {
     return getSystemCMakeFilePaths() + getUserCMakeFilePaths();
+}
+
+QStringList SerialMake::getCMakeFilePaths2() const
+{
+    QStringList list;
+
+    foreach(const QString &path, getCMakeFilePaths())
+    {
+        list.append(QDir::fromNativeSeparators(path));
+    }
+
+    return list;
 }
 
 QStringList SerialMake::getSystemCMakeFilePaths() const
@@ -279,6 +307,18 @@ QStringList SerialMake::getLibraryPaths() const
     return getSystemLibraryPaths() + getUserLibraryPaths();
 }
 
+QStringList SerialMake::getLibraryPaths2() const
+{
+    QStringList list;
+
+    foreach(const QString &path, getLibraryPaths())
+    {
+        list.append(QDir::fromNativeSeparators(path));
+    }
+
+    return list;
+}
+
 QStringList SerialMake::getSystemLibraryPaths() const
 {
     QStringList list;
@@ -299,6 +339,16 @@ QStringList SerialMake::getUserLibraryPaths() const
     "/libraries")));
 
     return list;
+}
+
+QString SerialMake::getMakeSrcFolder() const
+{
+    return m_makeSrcFolder;
+}
+
+QString SerialMake::getMakeBuildFolder() const
+{
+    return m_makeBuildFolder;
 }
 
 void SerialMake::handlePortDestroyedOrChanged()
@@ -332,23 +382,27 @@ void SerialMake::setupProject()
     hash.addData(getProjectPortName().toUtf8());
     hash.addData(getProjectMakeFile().toUtf8());
 
-    QString tempLocation =
+    QString tempLocation = QDir::toNativeSeparators(QDir::cleanPath(
     QStandardPaths::writableLocation(QStandardPaths::TempLocation) +
     QDir::separator() + QApplication::applicationName() +
     QDir::separator() + "CMake" +
-    QDir::separator() + hash.result().toHex().toUpper();
+    QDir::separator() + hash.result().toHex().toUpper()));
 
-    QString srcFolder = tempLocation + QDir::separator() + "src";
-    QString buildFolder = tempLocation + QDir::separator() + "build";
+    m_makeSrcFolder = tempLocation + QDir::separator() + "src";
+    m_makeBuildFolder = tempLocation + QDir::separator() + "build";
 
-    if(!QDir().mkpath(srcFolder))
+    // Start QtCreator Integration Stuff //////////////////////////////////////
+    Core::DocumentManager::setBuildDirectory(m_makeBuildFolder);
+    // End QtCreator Integration Stuff ////////////////////////////////////////
+
+    if(!QDir().mkpath(m_makeSrcFolder))
     {
         QMessageBox::critical(m_widget, tr("Setup Project"),
         tr("Unable to create cmake \"src\" directory!"));
         m_updateLock.unlock(); return;
     }
 
-    if(!QDir().mkpath(buildFolder))
+    if(!QDir().mkpath(m_makeBuildFolder))
     {
         QMessageBox::critical(m_widget, tr("Setup Project"),
         tr("Unable to create cmake \"build\" directory!"));
@@ -357,51 +411,51 @@ void SerialMake::setupProject()
 
     // Setup Build File ///////////////////////////////////////////////////////
 
-    QFile file(srcFolder + QDir::separator() + "CMakeLists.txt");
+    QFile file(m_makeSrcFolder + QDir::separator() + "CMakeLists.txt");
 
     if(file.open(QIODevice::ReadWrite))
     {
         file.write("cmake_minimum_required(VERSION 2.8)\n\n");
 
         file.write(QString("set(IDE_FOLDER \"%L1\")\n").
-        arg(QDir::toNativeSeparators(QDir::cleanPath(
+        arg(QDir::fromNativeSeparators(QDir::cleanPath( // '\' -> '/'
         QApplication::applicationDirPath() +
         "/../../../ide"))).toUtf8());
 
         file.write(QString("set(TOOLS_FOLDER \"%L1\")\n\n").
-        arg(QDir::toNativeSeparators(QDir::cleanPath(
+        arg(QDir::fromNativeSeparators(QDir::cleanPath( // '\' -> '/'
         QApplication::applicationDirPath() +
         "/../../../tools"))).toUtf8());
 
         file.write(QString("set(CMAKE_FILE_PATHS %L1)\n").
-        arg('\"' + getCMakeFilePaths().join("\" \"") + '\"').toUtf8());
+        arg('\"' + getCMakeFilePaths2().join("\" \"") + '\"').toUtf8());
 
         file.write(QString("set(LIBRARY_PATHS %L1)\n\n").
-        arg('\"' + getLibraryPaths().join("\" \"") + '\"').toUtf8());
+        arg('\"' + getLibraryPaths2().join("\" \"") + '\"').toUtf8());
 
         file.write(QString("set(PROJECT_FILE \"%L1\")\n\n").
-        arg(getProjectFile()).toUtf8());
+        arg(getProjectFile2()).toUtf8());
         file.write(QString("set(SERIAL_PORT \"%L1\")\n\n").
         arg(getProjectPortName()).toUtf8());
 
         file.write("set(BEFORE_PROJECT_COMMAND true)\n");
         file.write(QString("include(\"%L1\")\n\n").
-        arg(getProjectMakeFile()).toUtf8());
+        arg(getProjectMakeFile2()).toUtf8());
 
-        if(getProjectFile().isEmpty())
+        if(getProjectFile2().isEmpty())
         {
             file.write("project(Default C CXX)\n\n");
         }
         else
         {
             file.write(QString("project(%L1 C CXX)\n\n").
-            arg(QFileInfo(getProjectFile()).baseName().
+            arg(QFileInfo(getProjectFile2()).baseName().
             replace(QRegularExpression("[^0-9A-Za-z]"), "_")).toUtf8());
         }
 
         file.write("set(AFTER_PROJECT_COMMAND true)\n");
         file.write(QString("include(\"%L1\")\n").
-        arg(getProjectMakeFile()).toUtf8());
+        arg(getProjectMakeFile2()).toUtf8());
 
         file.close();
     }

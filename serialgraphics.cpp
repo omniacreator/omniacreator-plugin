@@ -1447,7 +1447,7 @@ void SerialGraphics::exportState(const QString &fileName)
 
 void SerialGraphics::generalHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl(PROJECT_URL_STR
+    if(!QDesktopServices::openUrl(QUrl("http://" PROJECT_DOMAIN_NAME_STR "/"
     "help/general/")))
     {
         QMessageBox::critical(this, tr("Open General Help Error"),
@@ -1457,7 +1457,7 @@ void SerialGraphics::generalHelp()
 
 void SerialGraphics::graphicsHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl(PROJECT_URL_STR
+    if(!QDesktopServices::openUrl(QUrl("http://" PROJECT_DOMAIN_NAME_STR "/"
     "help/graphics/")))
     {
         QMessageBox::critical(this, tr("Open Graphics Help Error"),

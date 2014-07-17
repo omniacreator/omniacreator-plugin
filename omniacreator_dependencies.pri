@@ -15,8 +15,14 @@
 
 QTC_PLUGIN_NAME = $$PROJECT_FULL_NAME_WO_SPACES
 
-QTC_LIB_DEPENDS += extensionsystem
-QTC_PLUGIN_DEPENDS += bineditor cmakeprojectmanager coreplugin
+QTC_LIB_DEPENDS += extensionsystem \
+                   utils
+
+QTC_PLUGIN_DEPENDS += bineditor \
+                      cmakeprojectmanager \
+                      coreplugin \
+                      projectexplorer \
+                      qtsupport
 
 ################################################################################
 # @file

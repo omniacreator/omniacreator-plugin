@@ -24,6 +24,8 @@
 
 #include "utilcolumndialog.h"
 
+#include <coreplugin/documentmanager.h>
+
 #define PROJECT_TIMEOUT 1000 // 1000 ms
 
 #define RED_CIRCLE ":icons/internal/circles/red/red24x24.png"
@@ -60,7 +62,8 @@ public:
     void setWorkspaceFolderWasSet();
 
     void setProjectFile(const QString &path);
-    QString getProjectFile() const;
+    QString getProjectFile() const; // Native paths
+    QString getProjectFile2() const; // Unix paths
     bool getProjectFileWasSet() const;
     void setProjectFileWasSet();
 
@@ -70,17 +73,23 @@ public:
     void setProjectPortNameWasSet();
 
     void setProjectMakeFile(const QString &makeFile);
-    QString getProjectMakeFile() const;
+    QString getProjectMakeFile() const; // Native paths
+    QString getProjectMakeFile2() const; // Unix paths
     bool getProjectMakeFileWasSet() const;
     void setProjectMakeFileWasSet();
 
-    QStringList getCMakeFilePaths() const;
+    QStringList getCMakeFilePaths() const; // Native paths
+    QStringList getCMakeFilePaths2() const; // Unix paths
     QStringList getSystemCMakeFilePaths() const;
     QStringList getUserCMakeFilePaths() const;
 
-    QStringList getLibraryPaths() const;
+    QStringList getLibraryPaths() const; // Native paths
+    QStringList getLibraryPaths2() const; // Unix paths
     QStringList getSystemLibraryPaths() const;
     QStringList getUserLibraryPaths() const;
+
+    QString getMakeSrcFolder() const;
+    QString getMakeBuildFolder() const;
 
     void setMakeFileWithDialog();
 
@@ -114,6 +123,9 @@ private:
     QPointer<QWidget> m_widget;
     QPointer<QSettings> m_settings;
     QPointer<SerialPort> m_serialPort;
+
+    QString m_makeSrcFolder;
+    QString m_makeBuildFolder;
 
     QMutex m_updateLock;
 };

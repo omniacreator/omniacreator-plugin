@@ -597,7 +597,7 @@ void SerialTerminal::saveTextFile()
 
 void SerialTerminal::generalHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl(PROJECT_URL_STR
+    if(!QDesktopServices::openUrl(QUrl("http://" PROJECT_DOMAIN_NAME_STR "/"
     "help/general/")))
     {
         QMessageBox::critical(this, tr("Open General Help Error"),
@@ -607,7 +607,7 @@ void SerialTerminal::generalHelp()
 
 void SerialTerminal::terminalHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl(PROJECT_URL_STR
+    if(!QDesktopServices::openUrl(QUrl("http://" PROJECT_DOMAIN_NAME_STR "/"
     "help/terminal/")))
     {
         QMessageBox::critical(this, tr("Open Terminal Help Error"),

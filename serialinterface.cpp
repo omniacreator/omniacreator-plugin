@@ -3076,7 +3076,7 @@ void SerialInterface::deleteAllGroupBoxes()
 
 void SerialInterface::generalHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl(PROJECT_URL_STR
+    if(!QDesktopServices::openUrl(QUrl("http://" PROJECT_DOMAIN_NAME_STR "/"
     "help/general/")))
     {
         QMessageBox::critical(this, tr("Open General Help Error"),
@@ -3086,7 +3086,7 @@ void SerialInterface::generalHelp()
 
 void SerialInterface::interfaceHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl(PROJECT_URL_STR
+    if(!QDesktopServices::openUrl(QUrl("http://" PROJECT_DOMAIN_NAME_STR "/"
     "help/interface/")))
     {
         QMessageBox::critical(this, tr("Open Interface Help Error"),

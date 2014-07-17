@@ -566,7 +566,7 @@ void SerialTable::exportState(const QString &fileName)
 
 void SerialTable::generalHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl(PROJECT_URL_STR
+    if(!QDesktopServices::openUrl(QUrl("http://" PROJECT_DOMAIN_NAME_STR "/"
     "help/general/")))
     {
         QMessageBox::critical(this, tr("Open General Help Error"),
@@ -576,7 +576,7 @@ void SerialTable::generalHelp()
 
 void SerialTable::tableHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl(PROJECT_URL_STR
+    if(!QDesktopServices::openUrl(QUrl("http://" PROJECT_DOMAIN_NAME_STR "/"
     "help/table/")))
     {
         QMessageBox::critical(this, tr("Open Table Help Error"),

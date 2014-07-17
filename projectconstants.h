@@ -28,9 +28,23 @@
 #define PROJECT_CATEGORY_STR STRINGIFY(PROJECT_CATEGORY)
 #define PROJECT_DESCRIPTION_STR STRINGIFY(PROJECT_DESCRIPTION)
 #define PROJECT_DOMAIN_NAME_STR STRINGIFY(PROJECT_DOMAIN_NAME)
-#define PROJECT_URL_STR STRINGIFY(PROJECT_URL)
-#define PROJECT_URL_WO_SLASH_STR STRINGIFY(PROJECT_URL_WO_SLASH)
+#define PROJECT_URL_STR STRINGIFY(PROJECT_URL) // Don't use
+#define PROJECT_URL_WO_SLASH_STR STRINGIFY(PROJECT_URL_WO_SLASH) // Don't use
 #define PROJECT_EMAIL_STR STRINGIFY(PROJECT_EMAIL)
+
+// Project Manager ////////////////////////////////////////////////////////////
+
+const char MICROCONTROLLER_DEVICE_TYPE[] =
+PROJECT_FULL_NAME_WO_SPACES_STR ".Microcontroller.Device.Type";
+
+const char MICROCONTROLLER_DEVICE_ID[] =
+PROJECT_FULL_NAME_WO_SPACES_STR ".Microcontroller.Device.Id";
+
+const char TOOLCHAIN_ID[] =
+PROJECT_FULL_NAME_WO_SPACES_STR ".Toolchain";
+
+const char KIT_ID[] =
+PROJECT_FULL_NAME_WO_SPACES_STR ".Kit";
 
 // Board Menu /////////////////////////////////////////////////////////////////
 
