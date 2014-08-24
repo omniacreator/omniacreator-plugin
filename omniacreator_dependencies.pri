@@ -21,8 +21,10 @@ QTC_LIB_DEPENDS += extensionsystem \
 QTC_PLUGIN_DEPENDS += bineditor \
                       cmakeprojectmanager \
                       coreplugin \
+                      cpptools \
                       projectexplorer \
-                      qtsupport
+                      qtsupport \
+                      texteditor
 
 ################################################################################
 # @file

@@ -22,6 +22,10 @@
 #include "serialmake.h"
 #include "serialport.h"
 #include "serialescape.h"
+#include "newfiledialog.h"
+#include "newprojectdialog.h"
+#include "newfileorprojectdialog.h"
+#include "openfileorprojectdialog.h"
 #include "utilitempicker.h"
 #include "utilpathpicker.h"
 
@@ -29,6 +33,7 @@
 
 #include <utils/fileutils.h>
 #include <utils/qtcassert.h>
+#include <utils/proxyaction.h>
 
 #include <extensionsystem/iplugin.h>
 #include <extensionsystem/pluginmanager.h>
@@ -41,6 +46,11 @@
 #include <coreplugin/icore.h>
 #include <coreplugin/messagemanager.h>
 #include <coreplugin/documentmanager.h>
+#include <coreplugin/editormanager/editormanager.h>
+#include <coreplugin/imode.h>
+#include <coreplugin/modemanager.h>
+#include <coreplugin/fancyactionbar.h>
+#include <coreplugin/fancytabwidget.h>
 
 // Device Includes
 #include <projectexplorer/devicesupport/idevice.h>
@@ -62,21 +72,45 @@
 #include <projectexplorer/kitinformation.h>
 #include <projectexplorer/kitmanager.h>
 
-// Cmake Settings Inlcludes
+// Cmake Inlcludes
+#include <cmakeprojectmanager/cmakeproject.h>
 #include <cmakeprojectmanager/cmakeprojectmanager.h>
+#include <cmakeprojectmanager/cmakeprojectconstants.h>
+#include <cmakeprojectmanager/makestep.h>
 
-// Project Settings Includes
+// Project Includes
 #include <projectexplorer/projectexplorersettings.h>
 #include <projectexplorer/projectexplorer.h>
+#include <projectexplorer/session.h>
+#include <projectexplorer/buildmanager.h>
+#include <projectexplorer/target.h>
+#include <projectexplorer/buildconfiguration.h>
+#include <projectexplorer/buildsteplist.h>
+#include <projectexplorer/buildstep.h>
 
-// Text Editor Settings Includes
+// Environment Includes
+
+// Text Editor Cpp Includes
 #include <texteditor/texteditorsettings.h>
 #include <texteditor/generichighlighter/highlightersettings.h>
+#include <texteditor/texteditorconstants.h>
+#include <texteditor/texteditoractionhandler.h>
+#include <cpptools/cppmodelmanagerinterface.h>
+#include <cppeditor/cppeditorconstants.h>
+#include <cpptools/cpptoolsconstants.h>
 
 #define LABEL_INDEX 5
 
 #define ICON_PATH ":icons/internal/icon/icon.png"
 #define SPLASH_PATH ":icons/internal/about/about600x300.png"
+
+#define CMAKE_PATH ":icons/external/cmake/cmake.png"
+
+#ifdef Q_OS_WIN
+    #define PATH_CHAR ";"
+#else
+    #define PATH_CHAR ":"
+#endif
 
 class OmniaCreatorPlugin : public ExtensionSystem::IPlugin
 {
@@ -101,6 +135,9 @@ public:
 
 private slots:
 
+    void newFileOrProject();
+    void openFileOrProject();
+
     void boardMenuAboutToShow();
     void widgetsMenuAboutToShow();
 
@@ -124,12 +161,13 @@ private slots:
 
     void about();
 
+    void processMessage(const int &code);
     void errorMessage(const QString &text);
 
     // Begin Qt Creator Setup Functions ///////////////////////////////////////
 
     void deviceManagerSetup();
-    void toolchainMangerSetup();
+    void toolchainManagerSetup();
     void versionsManagerSetup();
     void kitManagerSetup();
 
@@ -137,13 +175,26 @@ private slots:
     void projectManagerSetup();
 
     void environmentSetup();
-    void textEditorSetup();
+    void textEditorCppSetup();
 
     // End Qt Creator Setup Functions /////////////////////////////////////////
+
+    void updateRecentProjects();
+    void updateRunCmake();
+
+    void closeProject();
+    void openProject();
+    void cmakeChanged();
+
+    void buildClicked();
+    void runClicked();
+    void reopenPort();
 
 private:
 
     Q_DISABLE_COPY(OmniaCreatorPlugin)
+
+    bool m_upload;
 
     SerialMake *m_make;
     SerialPort *m_port;

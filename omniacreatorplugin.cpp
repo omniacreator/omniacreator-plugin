@@ -17,12 +17,40 @@
 
 OmniaCreatorPlugin::OmniaCreatorPlugin()
 {
-    // UNUSED //
+    // Help QtCreator find Ninja...
+    // See CMakeProjectManager->CMakeManager
+    QString path = qgetenv("PATH");
+    path.append(PATH_CHAR + QApplication::applicationDirPath());
+    qputenv("PATH", path.toUtf8());
+
+    // Remove warnings from files in application folder tree...
+    // See CMakeProjectManager->CMakeParser
+    // See ProjectExplorer->GccParser
+    // See ProjectExplorer->GnuMakeParser
+    // See ProjectExplorer->LdParser
+    QString wno_path = qgetenv("WNO_PATH");
+    wno_path.append(',' + QDir::fromNativeSeparators(QDir::cleanPath(
+    QApplication::applicationDirPath() + QDir::separator() + "../../..")));
+    qputenv("WNO_PATH", wno_path.toUtf8());
 }
 
 OmniaCreatorPlugin::~OmniaCreatorPlugin()
 {
-    // UNUSED //
+    // Help QtCreator find Ninja...
+    // See CMakeProjectManager->CMakeManager
+    QString path = qgetenv("PATH");
+    path.remove(PATH_CHAR + QApplication::applicationDirPath());
+    qputenv("PATH", path.toUtf8());
+
+    // Remove warnings from files in application folder tree...
+    // See CMakeProjectManager->CMakeParser
+    // See ProjectExplorer->GccParser
+    // See ProjectExplorer->GnuMakeParser
+    // See ProjectExplorer->LdParser
+    QString wno_path = qgetenv("WNO_PATH");
+    wno_path.remove(',' + QDir::fromNativeSeparators(QDir::cleanPath(
+    QApplication::applicationDirPath() + QDir::separator() + "../../..")));
+    qputenv("WNO_PATH", wno_path.toUtf8());
 }
 
 bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
@@ -60,12 +88,21 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
     m_make = new SerialMake(Core::ICore::mainWindow(),
                             Core::ICore::settings(), this);
 
+    m_upload = false;
+
+    qputenv("OC_WORKSPACE_FOLDER", m_make->getWorkspaceFolder().toUtf8());
+    qputenv("OC_PROJECT_FOLDER", m_make->getProjectFolder().toUtf8());
+    qputenv("OC_SERIAL_PORT", m_make->getProjectPortName().toUtf8());
+    qputenv("OC_MAKE_FILE", m_make->getProjectMakeFile().toUtf8());
+
+    connect(m_make, SIGNAL(workspaceOrProjectSettingsChanged()),
+            this, SLOT(cmakeChanged()));
+
     // Serial Port Init ///////////////////////////////////////////////////////
 
     m_port = new SerialPort(Core::ICore::mainWindow(),
                             Core::ICore::settings(), this);
 
-    m_make->setSerialPort(m_port);
     m_port->setSerialMake(m_make);
 
     connect(m_port, SIGNAL(demoPortListChanged()),
@@ -97,7 +134,7 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
 
     connect(static_cast<ProjectExplorer::ToolChainManager *>
     (ProjectExplorer::ToolChainManager::instance()),
-    SIGNAL(toolChainsLoaded()), this, SLOT(toolchainMangerSetup()));
+    SIGNAL(toolChainsLoaded()), this, SLOT(toolchainManagerSetup()));
 
     connect(static_cast<QtSupport::QtVersionManager *>
     (QtSupport::QtVersionManager::instance()),
@@ -110,7 +147,101 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
     cmakeManagerSetup();
     projectManagerSetup();
     environmentSetup();
-    textEditorSetup();
+    textEditorCppSetup();
+
+    // New File or Project //
+    {
+        Core::ActionManager::command(
+        Core::Constants::NEW)->action()->disconnect();
+
+        connect(Core::ActionManager::command(
+        Core::Constants::NEW)->action(),
+        SIGNAL(triggered()), this,
+        SLOT(newFileOrProject()));
+    }
+
+    // Open File or Project //
+    {
+        Core::ActionManager::command(
+        Core::Constants::OPEN)->action()->disconnect();
+
+        connect(Core::ActionManager::command(
+        Core::Constants::OPEN)->action(),
+        SIGNAL(triggered()), this,
+        SLOT(openFileOrProject()));
+    }
+
+    // Build Buttons //
+    {
+        Core::ActionManager::command(
+        ProjectExplorer::Constants::BUILDPROJECTONLY)->action()->disconnect();
+
+        connect(Core::ActionManager::command(
+        ProjectExplorer::Constants::BUILDPROJECTONLY)->action(),
+        SIGNAL(triggered()), this,
+        SLOT(buildClicked()));
+
+        Core::ActionManager::command(
+        ProjectExplorer::Constants::BUILD)->action()->disconnect();
+
+        connect(Core::ActionManager::command(
+        ProjectExplorer::Constants::BUILD)->action(),
+        SIGNAL(triggered()), this,
+        SLOT(buildClicked()));
+
+        Core::ActionManager::command(
+        ProjectExplorer::Constants::BUILDCM)->action()->disconnect();
+
+        connect(Core::ActionManager::command(
+        ProjectExplorer::Constants::BUILDCM)->action(),
+        SIGNAL(triggered()), this,
+        SLOT(buildClicked()));
+
+        Core::ActionManager::command(
+        ProjectExplorer::Constants::BUILDSESSION)->action()->disconnect();
+
+        connect(Core::ActionManager::command(
+        ProjectExplorer::Constants::BUILDSESSION)->action(),
+        SIGNAL(triggered()), this,
+        SLOT(buildClicked()));
+    }
+
+    // Run Buttons
+    {
+        Core::ActionManager::command(
+        ProjectExplorer::Constants::RUN)->action()->disconnect();
+
+        connect(Core::ActionManager::command(
+        ProjectExplorer::Constants::RUN)->action(),
+        SIGNAL(triggered()), this,
+        SLOT(runClicked()));
+
+        Core::ActionManager::command(
+        ProjectExplorer::Constants::RUNCONTEXTMENU)->action()->disconnect();
+
+        connect(Core::ActionManager::command(
+        ProjectExplorer::Constants::RUNCONTEXTMENU)->action(),
+        SIGNAL(triggered()), this,
+        SLOT(runClicked()));
+
+        Core::ActionManager::command(
+        ProjectExplorer::Constants::RUNWITHOUTDEPLOY)->action()->disconnect();
+
+        connect(Core::ActionManager::command(
+        ProjectExplorer::Constants::RUNWITHOUTDEPLOY)->action(),
+        SIGNAL(triggered()), this,
+        SLOT(runClicked()));
+    }
+
+    Core::ActionManager::actionContainer(
+    Core::Constants::M_FILE)->menu()->removeAction(
+    Core::ActionManager::command(
+    Core::Constants::OPEN_WITH)->action());
+
+    Core::ActionManager::actionContainer(
+    Core::Constants::M_WINDOW)->menu()->removeAction(
+    Core::ActionManager::actionContainer(
+    Core::Constants::M_WINDOW_VIEWS)->menu()->menuAction());
 
     // Board Menu //
     {
@@ -336,6 +467,9 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
     Core::Constants::M_HELP)->menu()->removeAction(
     Core::ActionManager::command(Core::Constants::ABOUT_PLUGINS)->action());
 
+    Core::ActionManager::actionContainer(
+    Core::Constants::M_HELP)->menu()->clear();
+
     // General Help //
     {
         Core::Command *generalHelp = Core::ActionManager::registerAction(
@@ -457,6 +591,7 @@ bool OmniaCreatorPlugin::delayedInitialize()
         if(picker.exec() == QDialog::Accepted)
         {
             m_make->setWorkspaceFolder(picker.getDefaultDir());
+            m_make->setWorkspaceFolderWasSet();
         }
     }
 
@@ -570,18 +705,757 @@ bool OmniaCreatorPlugin::delayedInitialize()
         }
     }
 
+    QProcess *update = new QProcess(this);
+
+    connect(update, SIGNAL(finished(int)), this, SLOT(processMessage(int)));
+    connect(update, SIGNAL(finished(int)), update, SLOT(deleteLater()));
+
+#if defined(Q_OS_WIN)
+    update->start(QDir::fromNativeSeparators(QDir::cleanPath(
+    QApplication::applicationDirPath() + "/update.exe")),
+#else
+    update->start(QDir::fromNativeSeparators(QDir::cleanPath(
+    QApplication::applicationDirPath() + "/update")),
+#endif
+
+    QStringList() << "--mode" << "unattended");
+
     return true;
 }
 
 ExtensionSystem::IPlugin::ShutdownFlag OmniaCreatorPlugin::aboutToShutdown()
 {
-    delete m_escape;
-    delete m_port;
     delete m_make;
+    delete m_port;
+    delete m_escape;
 
     SerialOscilloscope::finiFftw();
 
+    closeProject();
+
     return ExtensionSystem::IPlugin::SynchronousShutdown;
+}
+
+void OmniaCreatorPlugin::newFileOrProject()
+{
+    QSettings settings(Core::ICore::settings()->fileName(),
+                       Core::ICore::settings()->format());
+
+    settings.beginGroup(PLUGIN_DIALOG_KEY_GROUP);
+
+    NewFileOrProjectDialog dialog1(tr("New..."),
+    Core::ICore::mainWindow());
+
+    switch(dialog1.exec())
+    {
+        case NewFileOrProjectDialog::newFileWasPressed:
+        {
+            QString openPath = settings.value(PLUGIN_DIALOG_KEY_NEW_FILE,
+            QDir::fromNativeSeparators(QDir::homePath() +
+            QDir::separator() + tr("Untitled.cpp"))).toString();
+
+            NewFileDialog dialog2(tr("New File"),
+            QFileInfo(openPath).fileName(), QFileInfo(openPath).path(),
+            Core::ICore::mainWindow());
+
+            if(dialog2.exec() == QDialog::Accepted)
+            {
+                QString fullPath =
+                QDir::fromNativeSeparators(dialog2.getDefaultDir() +
+                QDir::separator() + dialog2.getName());
+
+                if(!QDir(dialog2.getDefaultDir()).exists())
+                {
+                    if(!QDir().mkpath(dialog2.getDefaultDir()))
+                    {
+                        QMessageBox::critical(Core::ICore::mainWindow(),
+                        dialog2.windowTitle(), tr("Unable to create path!"));
+                        break;
+                    }
+                }
+
+                QString time = QDateTime::currentDateTime().toString();
+
+                if(fullPath.endsWith(".c")
+                || fullPath.endsWith(".i")
+                || fullPath.endsWith(".cogc")) // For Propeller
+                {
+                    QFile file(fullPath);
+
+                    if(file.open(QIODevice::WriteOnly))
+                    {
+                        QByteArray text = QString(
+                        "/**\n"
+                        "* @file %L1\n"
+                        "* Brief Description\n"
+                        "*\n"
+                        "* @version @n 0.1\n"
+                        "* @date @n %L2\n"
+                        "*\n"
+                        "* @author @n %L3\n"
+                        "*/\n"
+                        "\n\n"
+                        ).arg(QFileInfo(file).fileName()).arg(time).
+                        arg(QString(qgetenv(BY_NAME))).toUtf8();
+
+                        if(file.write(text) != text.size())
+                        {
+                            QMessageBox::critical(Core::ICore::mainWindow(),
+                            dialog2.windowTitle(), file.errorString());
+                            break;
+                        }
+
+                        file.close();
+                    }
+                    else
+                    {
+                        QMessageBox::critical(Core::ICore::mainWindow(),
+                        dialog2.windowTitle(), file.errorString());
+                        break;
+                    }
+                }
+                else if(fullPath.endsWith(".cpp")
+                || fullPath.endsWith(".ii")
+                || fullPath.endsWith(".cc")
+                || fullPath.endsWith(".cp")
+                || fullPath.endsWith(".cxx")
+                || fullPath.endsWith(".c++")
+                || fullPath.endsWith(".cogcpp")) // For Propeller
+                {
+                    QFile file(fullPath);
+
+                    if(file.open(QIODevice::WriteOnly))
+                    {
+                        QByteArray text = QString(
+                        "/**\n"
+                        "* @file %L1\n"
+                        "* Brief Description\n"
+                        "*\n"
+                        "* @version @n 0.1\n"
+                        "* @date @n %L2\n"
+                        "*\n"
+                        "* @author @n %L3\n"
+                        "*/\n"
+                        "\n\n"
+                        ).arg(QFileInfo(file).fileName()).arg(time).
+                        arg(QString(qgetenv(BY_NAME))).toUtf8();
+
+                        if(file.write(text) != text.size())
+                        {
+                            QMessageBox::critical(Core::ICore::mainWindow(),
+                            dialog2.windowTitle(), file.errorString());
+                            break;
+                        }
+
+                        file.close();
+                    }
+                    else
+                    {
+                        QMessageBox::critical(Core::ICore::mainWindow(),
+                        dialog2.windowTitle(), file.errorString());
+                        break;
+                    }
+                }
+                else if(fullPath.endsWith(".h")
+                || fullPath.endsWith(".hpp")
+                || fullPath.endsWith(".hh")
+                || fullPath.endsWith(".hp")
+                || fullPath.endsWith(".hxx")
+                || fullPath.endsWith(".h++"))
+                {
+                    QFile file(fullPath);
+
+                    if(file.open(QIODevice::WriteOnly))
+                    {
+                        QByteArray text = QString(
+                        "/**\n"
+                        "* @file %L1\n"
+                        "* Brief Description\n"
+                        "*\n"
+                        "* @version @n 0.1\n"
+                        "* @date @n %L2\n"
+                        "*\n"
+                        "* @author @n %L3\n"
+                        "*/\n"
+                        "\n"
+                        "#ifndef %L4\n"
+                        "#define %L4\n"
+                        "\n\n\n"
+                        "#endif // %L4\n"
+                        ).arg(QFileInfo(file).fileName()).arg(time).
+                        arg(QString(qgetenv(BY_NAME))).
+                        arg(QFileInfo(file).fileName().toUpper().
+                        replace(QRegularExpression("[^0-9A-Za-z]"),
+                        "_")).toUtf8();
+
+                        if(file.write(text) != text.size())
+                        {
+                            QMessageBox::critical(Core::ICore::mainWindow(),
+                            dialog2.windowTitle(), file.errorString());
+                            break;
+                        }
+
+                        file.close();
+                    }
+                    else
+                    {
+                        QMessageBox::critical(Core::ICore::mainWindow(),
+                        dialog2.windowTitle(), file.errorString());
+                        break;
+                    }
+                }
+                else if(fullPath.endsWith(".ino") // For Arduino
+                || fullPath.endsWith(".pde")) // For Arduino
+                {
+                    QFile file(fullPath);
+
+                    if(file.open(QIODevice::WriteOnly))
+                    {
+                        QByteArray text = QString(
+                        "/**\n"
+                        "* @file %L1\n"
+                        "* Brief Description\n"
+                        "*\n"
+                        "* @version @n 0.1\n"
+                        "* @date @n %L2\n"
+                        "*\n"
+                        "* @author @n %L3\n"
+                        "*/\n"
+                        "\n"
+                        "void setup()\n"
+                        "{\n"
+                        "\n"
+                        "}\n"
+                        "\n"
+                        "void loop()\n"
+                        "{\n"
+                        "\n"
+                        "}\n"
+                        ).arg(QFileInfo(file).fileName()).arg(time).
+                        arg(QString(qgetenv(BY_NAME))).toUtf8();
+
+                        if(file.write(text) != text.size())
+                        {
+                            QMessageBox::critical(Core::ICore::mainWindow(),
+                            dialog2.windowTitle(), file.errorString());
+                            break;
+                        }
+
+                        file.close();
+                    }
+                    else
+                    {
+                        QMessageBox::critical(Core::ICore::mainWindow(),
+                        dialog2.windowTitle(), file.errorString());
+                        break;
+                    }
+                }
+                else if(fullPath.endsWith(".s")
+                || fullPath.endsWith(".sx"))
+                {
+                    QFile file(fullPath);
+
+                    if(file.open(QIODevice::WriteOnly))
+                    {
+                        QByteArray text = QString(
+                        "/**\n"
+                        "* @file %L1\n"
+                        "* Brief Description\n"
+                        "* \n"
+                        "* @version @n 0.1\n"
+                        "* @date @n %L2\n"
+                        "* \n"
+                        "* @author @n %L3\n"
+                        "*/\n"
+                        "\n\n"
+                        ).arg(QFileInfo(file).fileName()).arg(time).
+                        arg(QString(qgetenv(BY_NAME))).toUtf8();
+
+                        if(file.write(text) != text.size())
+                        {
+                            QMessageBox::critical(Core::ICore::mainWindow(),
+                            dialog2.windowTitle(), file.errorString());
+                            break;
+                        }
+
+                        file.close();
+                    }
+                    else
+                    {
+                        QMessageBox::critical(Core::ICore::mainWindow(),
+                        dialog2.windowTitle(), file.errorString());
+                        break;
+                    }
+                }
+                else if(fullPath.endsWith(".spin") // For Propeller
+                || fullPath.endsWith(".spin2")) // For Propeller
+                {
+                    QFile file(fullPath);
+
+                    if(file.open(QIODevice::WriteOnly))
+                    {
+                        QByteArray text = QString(
+                        "{{\n"
+                        "@file %L1\n"
+                        "Brief Description\n"
+                        "\n"
+                        "@version @n 0.1\n"
+                        "@date @n %L2\n"
+                        "\n"
+                        "@author @n %L3\n"
+                        "}}\n"
+                        "\n\n"
+                        ).arg(QFileInfo(file).fileName()).arg(time).
+                        arg(QString(qgetenv(BY_NAME))).toUtf8();
+
+                        if(file.write(text) != text.size())
+                        {
+                            QMessageBox::critical(Core::ICore::mainWindow(),
+                            dialog2.windowTitle(), file.errorString());
+                            break;
+                        }
+
+                        file.close();
+                    }
+                    else
+                    {
+                        QMessageBox::critical(Core::ICore::mainWindow(),
+                        dialog2.windowTitle(), file.errorString());
+                        break;
+                    }
+                }
+                else
+                {
+                    QFile file(fullPath);
+
+                    if(file.open(QIODevice::WriteOnly))
+                    {
+                        QByteArray text = QString().toUtf8();
+
+                        if(file.write(text) != text.size())
+                        {
+                            QMessageBox::critical(Core::ICore::mainWindow(),
+                            dialog2.windowTitle(), file.errorString());
+                            break;
+                        }
+
+                        file.close();
+                    }
+                    else
+                    {
+                        QMessageBox::critical(Core::ICore::mainWindow(),
+                        dialog2.windowTitle(), file.errorString());
+                        break;
+                    }
+                }
+
+                Core::EditorManager::openEditor(fullPath);
+
+                QFileInfo fileInfo(fullPath);
+
+                settings.setValue(PLUGIN_DIALOG_KEY_NEW_FILE,
+                fileInfo.canonicalFilePath());
+            }
+
+            break;
+        }
+
+        case NewFileOrProjectDialog::newProjectWasPressed:
+        {
+            QString openPath = settings.value(PLUGIN_DIALOG_KEY_NEW_PROJECT,
+            QDir::fromNativeSeparators(QDir::homePath() +
+            QDir::separator() + tr("Untitled"))).toString();
+
+            NewProjectDialog dialog2(tr("New Project"),
+            QFileInfo(openPath).fileName(), QFileInfo(openPath).path(),
+            Core::ICore::mainWindow());
+
+            if(dialog2.exec() == QDialog::Accepted)
+            {
+                QString fullPath =
+                QDir::fromNativeSeparators(dialog2.getDefaultDir() +
+                QDir::separator() + dialog2.getName());
+
+                if(!QDir(fullPath).exists())
+                {
+                    if(!QDir().mkpath(fullPath))
+                    {
+                        QMessageBox::critical(Core::ICore::mainWindow(),
+                        dialog2.windowTitle(), tr("Unable to create path!"));
+                        break;
+                    }
+                }
+
+                QString time = QDateTime::currentDateTime().toString();
+
+                if(dialog2.getCreateMainFiles())
+                {
+                    if(dialog2.getCreateCMainFile())
+                    {
+                        // Make H File
+                        {
+                            QFile file(QDir::fromNativeSeparators(
+                            fullPath + QDir::separator() +
+                            dialog2.getName() + ".h"));
+
+                            if(file.open(QIODevice::WriteOnly))
+                            {
+                                QByteArray text = QString(
+                                "/**\n"
+                                "* @file %L1\n"
+                                "* Brief Description\n"
+                                "*\n"
+                                "* @version @n 0.1\n"
+                                "* @date @n %L2\n"
+                                "*\n"
+                                "* @author @n %L3\n"
+                                "*/\n"
+                                "\n"
+                                "#ifndef %L4\n"
+                                "#define %L4\n"
+                                "\n"
+                                "#include <InterfaceLibrary.h>\n"
+                                "\n"
+                                "int main();\n"
+                                "\n"
+                                "#endif // %L4\n"
+                                ).arg(QFileInfo(file).fileName()).arg(time).
+                                arg(QString(qgetenv(BY_NAME))).
+                                arg(QFileInfo(file).fileName().toUpper().
+                                replace(QRegularExpression("[^0-9A-Za-z]"),
+                                "_")).toUtf8();
+
+                                if(file.write(text) != text.size())
+                                {
+                                    QMessageBox::critical(
+                                    Core::ICore::mainWindow(),
+                                    dialog2.windowTitle(),
+                                    file.errorString());
+                                    break;
+                                }
+
+                                file.close();
+                            }
+                            else
+                            {
+                                QMessageBox::critical(
+                                Core::ICore::mainWindow(),
+                                dialog2.windowTitle(),
+                                file.errorString());
+                                break;
+                            }
+
+                            Core::EditorManager::openEditor(file.fileName());
+                        }
+
+                        // Make C File
+                        {
+                            QFile file(QDir::fromNativeSeparators(
+                            fullPath + QDir::separator() +
+                            dialog2.getName() + ".c"));
+
+                            if(file.open(QIODevice::WriteOnly))
+                            {
+                                QByteArray text = QString(
+                                "/**\n"
+                                "* @file %L1\n"
+                                "* Brief Description\n"
+                                "*\n"
+                                "* @version @n 0.1\n"
+                                "* @date @n %L2\n"
+                                "*\n"
+                                "* @author @n %L3\n"
+                                "*/\n"
+                                "\n"
+                                "#include \"%L4\"\n"
+                                "\n"
+                                "int main()\n"
+                                "{\n"
+                                "\n"
+                                "}\n"
+                                ).arg(QFileInfo(file).fileName()).arg(time).
+                                arg(QString(qgetenv(BY_NAME))).
+                                arg(dialog2.getName() + ".h").toUtf8();
+
+                                if(file.write(text) != text.size())
+                                {
+                                    QMessageBox::critical(
+                                    Core::ICore::mainWindow(),
+                                    dialog2.windowTitle(),
+                                    file.errorString());
+                                    break;
+                                }
+
+                                file.close();
+                            }
+                            else
+                            {
+                                QMessageBox::critical(
+                                Core::ICore::mainWindow(),
+                                dialog2.windowTitle(),
+                                file.errorString());
+                                break;
+                            }
+
+                            Core::EditorManager::openEditor(file.fileName());
+                        }
+                    }
+                    else if(dialog2.getCreateCppMainFile())
+                    {
+                        // Make H File
+                        {
+                            QFile file(QDir::fromNativeSeparators(
+                            fullPath + QDir::separator() +
+                            dialog2.getName() + ".h"));
+
+                            if(file.open(QIODevice::WriteOnly))
+                            {
+                                QByteArray text = QString(
+                                "/**\n"
+                                "* @file %L1\n"
+                                "* Brief Description\n"
+                                "*\n"
+                                "* @version @n 0.1\n"
+                                "* @date @n %L2\n"
+                                "*\n"
+                                "* @author @n %L3\n"
+                                "*/\n"
+                                "\n"
+                                "#ifndef %L4\n"
+                                "#define %L4\n"
+                                "\n"
+                                "#include <InterfaceLibrary.h>\n"
+                                "\n"
+                                "int main();\n"
+                                "\n"
+                                "#endif // %L4\n"
+                                ).arg(QFileInfo(file).fileName()).arg(time).
+                                arg(QString(qgetenv(BY_NAME))).
+                                arg(QFileInfo(file).fileName().toUpper().
+                                replace(QRegularExpression("[^0-9A-Za-z]"),
+                                "_")).toUtf8();
+
+                                if(file.write(text) != text.size())
+                                {
+                                    QMessageBox::critical(
+                                    Core::ICore::mainWindow(),
+                                    dialog2.windowTitle(),
+                                    file.errorString());
+                                    break;
+                                }
+
+                                file.close();
+                            }
+                            else
+                            {
+                                QMessageBox::critical(
+                                Core::ICore::mainWindow(),
+                                dialog2.windowTitle(),
+                                file.errorString());
+                                break;
+                            }
+
+                            Core::EditorManager::openEditor(file.fileName());
+                        }
+
+                        // Make CPP File
+                        {
+                            QFile file(QDir::fromNativeSeparators(
+                            fullPath + QDir::separator() +
+                            dialog2.getName() + ".cpp"));
+
+                            if(file.open(QIODevice::WriteOnly))
+                            {
+                                QByteArray text = QString(
+                                "/**\n"
+                                "* @file %L1\n"
+                                "* Brief Description\n"
+                                "*\n"
+                                "* @version @n 0.1\n"
+                                "* @date @n %L2\n"
+                                "*\n"
+                                "* @author @n %L3\n"
+                                "*/\n"
+                                "\n"
+                                "#include \"%L4\"\n"
+                                "\n"
+                                "int main()\n"
+                                "{\n"
+                                "\n"
+                                "}\n"
+                                ).arg(QFileInfo(file).fileName()).arg(time).
+                                arg(QString(qgetenv(BY_NAME))).
+                                arg(dialog2.getName() + ".h").toUtf8();
+
+                                if(file.write(text) != text.size())
+                                {
+                                    QMessageBox::critical(
+                                    Core::ICore::mainWindow(),
+                                    dialog2.windowTitle(),
+                                    file.errorString());
+                                    break;
+                                }
+
+                                file.close();
+                            }
+                            else
+                            {
+                                QMessageBox::critical(
+                                Core::ICore::mainWindow(),
+                                dialog2.windowTitle(),
+                                file.errorString());
+                                break;
+                            }
+
+                            Core::EditorManager::openEditor(file.fileName());
+                        }
+                    }
+                    else if(dialog2.getCreateArduinoMainFile())
+                    {
+                        QFile file(QDir::fromNativeSeparators(
+                        fullPath + QDir::separator() +
+                        dialog2.getName() + ".ino"));
+
+                        if(file.open(QIODevice::WriteOnly))
+                        {
+                            QByteArray text = QString(
+                            "/**\n"
+                            "* @file %L1\n"
+                            "* Brief Description\n"
+                            "*\n"
+                            "* @version @n 0.1\n"
+                            "* @date @n %L2\n"
+                            "*\n"
+                            "* @author @n %L3\n"
+                            "*/\n"
+                            "\n"
+                            "#include <InterfaceLibrary.h>\n"
+                            "\n"
+                            "void setup()\n"
+                            "{\n"
+                            "\n"
+                            "}\n"
+                            "\n"
+                            "void loop()\n"
+                            "{\n"
+                            "\n"
+                            "}\n"
+                            ).arg(QFileInfo(file).fileName()).arg(time).
+                            arg(QString(qgetenv(BY_NAME))).toUtf8();
+
+                            if(file.write(text) != text.size())
+                            {
+                                QMessageBox::critical(
+                                Core::ICore::mainWindow(),
+                                dialog2.windowTitle(),
+                                file.errorString());
+                                break;
+                            }
+
+                            file.close();
+                        }
+                        else
+                        {
+                            QMessageBox::critical(
+                            Core::ICore::mainWindow(),
+                            dialog2.windowTitle(),
+                            file.errorString());
+                            break;
+                        }
+
+                        Core::EditorManager::openEditor(file.fileName());
+                    }
+                    else
+                    {
+                        Q_UNREACHABLE();
+                    }
+                }
+
+                m_make->setProjectFolder(fullPath);
+
+                QFileInfo fileInfo(fullPath);
+
+                settings.setValue(PLUGIN_DIALOG_KEY_NEW_PROJECT,
+                fileInfo.canonicalFilePath());
+            }
+
+            break;
+        }
+
+        default: break;
+    }
+}
+
+void OmniaCreatorPlugin::openFileOrProject()
+{
+    QSettings settings(Core::ICore::settings()->fileName(),
+                       Core::ICore::settings()->format());
+
+    settings.beginGroup(PLUGIN_DIALOG_KEY_GROUP);
+
+    OpenFileOrProjectDialog dialog1(tr("Open..."),
+    Core::ICore::mainWindow());
+
+    switch(dialog1.exec())
+    {
+        case OpenFileOrProjectDialog::openFileWasPressed:
+        {
+            QString openPath = settings.value(PLUGIN_DIALOG_KEY_OPEN_FILE,
+                                              QDir::homePath()).toString();
+
+            QStringList temp =
+            QFileDialog::getOpenFileNames(Core::ICore::mainWindow(),
+            tr("Open File"), openPath, tr("All Files (*)"));
+
+            foreach(const QString &string, temp)
+            {
+                if(!string.isEmpty())
+                {
+                    Core::EditorManager::openEditor(string);
+
+                    QFileInfo fileInfo(string);
+
+                    settings.setValue(PLUGIN_DIALOG_KEY_OPEN_FILE,
+                    fileInfo.canonicalPath());
+                }
+            }
+
+            break;
+        }
+
+        case OpenFileOrProjectDialog::openProjectWasPressed:
+        {
+            QString openPath = settings.value(PLUGIN_DIALOG_KEY_OPEN_PROJECT,
+                                              QDir::homePath()).toString();
+
+            QString temp =
+            QFileDialog::getExistingDirectory(Core::ICore::mainWindow(),
+            tr("Open Project"), openPath);
+
+            if(!temp.isEmpty())
+            {
+                foreach(const QString &fp,
+                QDir(temp).entryList(QStringList() <<
+                '*' + QFileInfo(temp).completeBaseName() + '*',
+                QDir::Files | QDir::NoDotAndDotDot | QDir::CaseSensitive,
+                QDir::Name | QDir::Reversed | QDir::LocaleAware))
+                {
+                    Core::EditorManager::openEditor(QDir(temp).filePath(fp));
+                }
+
+                m_make->setProjectFolder(temp);
+
+                QFileInfo fileInfo(temp);
+
+                settings.setValue(PLUGIN_DIALOG_KEY_OPEN_PROJECT,
+                fileInfo.canonicalPath());
+            }
+
+            break;
+        }
+
+        default: break;
+    }
 }
 
 void OmniaCreatorPlugin::boardMenuAboutToShow()
@@ -998,7 +1872,7 @@ void OmniaCreatorPlugin::about()
     arg(QApplication::applicationVersion()),
     tr("<h3>About %L1 %L2</h3>"
     ""
-    "<p>Copyright (c) %L3</p>"
+    "<p>Copyright (C) %L3</p>"
     ""
     "<h4>Acknowledgments</h4>"
     ""
@@ -1037,6 +1911,16 @@ void OmniaCreatorPlugin::about()
     arg(PROJECT_EMAIL_STR));
 }
 
+void OmniaCreatorPlugin::processMessage(const int &code)
+{
+    if(!code)
+    {
+        QMessageBox::information(Core::ICore::mainWindow(),
+        tr("New Version Available"), tr("A new version of %L1 is available").
+        arg(QApplication::applicationName()));
+    }
+}
+
 void OmniaCreatorPlugin::errorMessage(const QString &text)
 {
     if(!text.isEmpty())
@@ -1066,24 +1950,16 @@ void OmniaCreatorPlugin::deviceManagerSetup()
 
     // Hide stuff...
 
-    QObject *page = ExtensionSystem::PluginManager::getObjectByClassName
+    QObject *object = ExtensionSystem::PluginManager::getObjectByClassName
     ("ProjectExplorer::Internal::DeviceSettingsPage");
 
-    if(page)
+    if(object)
     {
-        ExtensionSystem::PluginManager::removeObject(page);
-    }
-
-    QObject *factory = ExtensionSystem::PluginManager::getObjectByClassName
-    ("ProjectExplorer::Internal::DesktopDeviceFactory");
-
-    if(factory)
-    {
-        ExtensionSystem::PluginManager::removeObject(factory);
+        ExtensionSystem::PluginManager::removeObject(object);
     }
 }
 
-void OmniaCreatorPlugin::toolchainMangerSetup()
+void OmniaCreatorPlugin::toolchainManagerSetup()
 {
     // Init stuff...
 
@@ -1105,12 +1981,12 @@ void OmniaCreatorPlugin::toolchainMangerSetup()
 
     // Hide stuff...
 
-    QObject *page = ExtensionSystem::PluginManager::getObjectByClassName
+    QObject *object = ExtensionSystem::PluginManager::getObjectByClassName
     ("ProjectExplorer::Internal::ToolChainOptionsPage");
 
-    if(page)
+    if(object)
     {
-        ExtensionSystem::PluginManager::removeObject(page);
+        ExtensionSystem::PluginManager::removeObject(object);
     }
 }
 
@@ -1128,12 +2004,12 @@ void OmniaCreatorPlugin::versionsManagerSetup()
 
     // Hide stuff...
 
-    QObject *page = ExtensionSystem::PluginManager::getObjectByClassName
+    QObject *object = ExtensionSystem::PluginManager::getObjectByClassName
     ("QtSupport::Internal::QtOptionsPage");
 
-    if(page)
+    if(object)
     {
-        ExtensionSystem::PluginManager::removeObject(page);
+        ExtensionSystem::PluginManager::removeObject(object);
     }
 }
 
@@ -1171,12 +2047,12 @@ void OmniaCreatorPlugin::kitManagerSetup()
 
     // Hide stuff...
 
-    QObject *page = ExtensionSystem::PluginManager::getObjectByClassName
+    QObject *object = ExtensionSystem::PluginManager::getObjectByClassName
     ("ProjectExplorer::KitOptionsPage");
 
-    if(page)
+    if(object)
     {
-        ExtensionSystem::PluginManager::removeObject(page);
+        ExtensionSystem::PluginManager::removeObject(object);
     }
 }
 
@@ -1184,20 +2060,16 @@ void OmniaCreatorPlugin::cmakeManagerSetup()
 {
     // Init stuff...
 
-#if defined(Q_OS_WIN)
-    QString path = "\\..\\..\\..\\tools\\cmake\\bin\\cmake.exe";
-#elif defined(Q_OS_MAC)
-    QString path = "/../../../tools/cmake/bin/cmake";
-#else
-    QString path = "/../../../tools/cmake/bin/cmake";
-#endif
-
-    path = QDir::toNativeSeparators(QDir::cleanPath
-    (QApplication::applicationDirPath() + path));
-
     Core::ICore::settings()->beginGroup("CMakeSettings");
-    Core::ICore::settings()->setValue("cmakeExecutable", path);
+
+    Core::ICore::settings()->setValue("cmakeExecutable",
+    SerialMake::getCmakePath());
+
+    Core::ICore::settings()->setValue("ninjaExecutable",
+    SerialMake::getNinjaPath());
+
     Core::ICore::settings()->setValue("preferNinja", true);
+
     Core::ICore::settings()->endGroup();
 
     QObject *make = ExtensionSystem::PluginManager::getObjectByClassName
@@ -1206,17 +2078,20 @@ void OmniaCreatorPlugin::cmakeManagerSetup()
     if(make)
     {
         static_cast<CMakeProjectManager::Internal::CMakeManager *>
-        (make)->setCMakeExecutable(path);
+        (make)->setCMakeExecutable(SerialMake::getCmakePath());
+
+        static_cast<CMakeProjectManager::Internal::CMakeManager *>
+        (make)->setNinjaExecutable(SerialMake::getNinjaPath());
     }
 
     // Hide stuff...
 
-    QObject *page = ExtensionSystem::PluginManager::getObjectByClassName
+    QObject *object = ExtensionSystem::PluginManager::getObjectByClassName
     ("CMakeProjectManager::Internal::CMakeSettingsPage");
 
-    if(page)
+    if(object)
     {
-        ExtensionSystem::PluginManager::removeObject(page);
+        ExtensionSystem::PluginManager::removeObject(object);
     }
 }
 
@@ -1230,14 +2105,14 @@ void OmniaCreatorPlugin::projectManagerSetup()
 
     settings.buildBeforeDeploy = false;
     settings.deployBeforeRun = false;
-    settings.saveBeforeBuild = true; // May need to tweak...
+    settings.saveBeforeBuild = true;
     settings.showCompilerOutput = false;
     settings.showRunOutput = false;
     settings.showDebugOutput = false;
     settings.cleanOldAppOutput = false;
     settings.mergeStdErrAndStdOut = false;
     settings.wrapAppOutput = false;
-    settings.useJom = true; // May need to tweak...
+    settings.useJom = false;
     settings.autorestoreLastSession = true;
     settings.prompToStopRunControl = false;
     settings.maxAppOutputLines = TERMINAL_MAX_LINE_SIZE;
@@ -1252,21 +2127,87 @@ void OmniaCreatorPlugin::projectManagerSetup()
 
     // Hide stuff...
 
-    QObject *page = ExtensionSystem::PluginManager::getObjectByClassName
+    QObject *object = ExtensionSystem::PluginManager::getObjectByClassName
     ("ProjectExplorer::Internal::ProjectExplorerSettingsPage");
 
-    if(page)
+    if(object)
     {
-        ExtensionSystem::PluginManager::removeObject(page);
+        ExtensionSystem::PluginManager::removeObject(object);
     }
 
-    QObject *output = ExtensionSystem::PluginManager::getObjectByClassName
+    object = ExtensionSystem::PluginManager::getObjectByClassName
+    ("ProjectExplorer::Internal::AllProjectsFilter");
+
+    if(object)
+    {
+        ExtensionSystem::PluginManager::removeObject(object);
+    }
+
+    object = ExtensionSystem::PluginManager::getObjectByClassName
+    ("ProjectExplorer::Internal::CurrentProjectFilter");
+
+    if(object)
+    {
+        ExtensionSystem::PluginManager::removeObject(object);
+    }
+
+    object = ExtensionSystem::PluginManager::getObjectByClassName
+    ("ProjectExplorer::Internal::AllProjectsFind");
+
+    if(object)
+    {
+        ExtensionSystem::PluginManager::removeObject(object);
+    }
+
+    object = ExtensionSystem::PluginManager::getObjectByClassName
+    ("ProjectExplorer::Internal::CurrentProjectFind");
+
+    if(object)
+    {
+        ExtensionSystem::PluginManager::removeObject(object);
+    }
+
+    object = ExtensionSystem::PluginManager::getObjectByClassName
+    ("ProjectExplorer::Internal::ProjectTreeWidgetFactory");
+
+    if(object)
+    {
+        ExtensionSystem::PluginManager::removeObject(object);
+    }
+
+    object = ExtensionSystem::PluginManager::getObjectByClassName
+    ("ProjectExplorer::Internal::VcsAnnotateTaskHandler");
+
+    if(object)
+    {
+        ExtensionSystem::PluginManager::removeObject(object);
+    }
+
+    object = ExtensionSystem::PluginManager::getObjectByClassName
     ("ProjectExplorer::Internal::AppOutputPane");
 
-    if(output)
+    if(object)
     {
-        ExtensionSystem::PluginManager::removeObject(output);
+        ExtensionSystem::PluginManager::removeObject(object);
     }
+
+    foreach(Core::IMode *object,
+    ExtensionSystem::PluginManager::getObjects<Core::IMode>())
+    {
+        if(QString(object->metaObject()->className())
+        != QString("Core::Internal::EditMode"))
+        {
+            object->disconnect();
+            ExtensionSystem::PluginManager::removeObject(object);
+        }
+    }
+
+    connect(Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_RECENTPROJECTS)->menu(),
+    SIGNAL(aboutToShow()), this, SLOT(updateRecentProjects()));
+    updateRecentProjects();
+
+    ///////////////////////////////////////////////////////////////////////////
 
     Core::ActionManager::actionContainer(
     Core::Constants::M_FILE)->menu()->removeAction(
@@ -1277,21 +2218,318 @@ void OmniaCreatorPlugin::projectManagerSetup()
     Core::Constants::M_FILE)->menu()->removeAction(
     Core::ActionManager::command(
     ProjectExplorer::Constants::NEWSESSION)->action());
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::BUILDSESSION)->setDefaultKeySequence(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::BUILD)->defaultKeySequence());
+
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::BUILD)->setDefaultKeySequence(
+    QKeySequence());
+
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::BUILDSESSION)->setKeySequence(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::BUILD)->keySequence());
+
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::BUILD)->setKeySequence(
+    QKeySequence());
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->removeAction(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::BUILD)->action());
+
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::BUILDSESSION)->setAttribute(
+    Core::Command::CA_UpdateText);
+
+    static_cast<Utils::ProxyAction *>(Core::ActionManager::command(
+    ProjectExplorer::Constants::BUILDSESSION)->action())->action()->setText(
+    tr("Build Project"));
+
+    static_cast<Utils::ProxyAction *>(Core::ActionManager::command(
+    ProjectExplorer::Constants::BUILDSESSION)->action(
+    ))->action()->setToolTip(
+    static_cast<Utils::ProxyAction *>(Core::ActionManager::command(
+    ProjectExplorer::Constants::BUILDSESSION)->action(
+    ))->action()->toolTip());
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    Core::ActionManager::command(
+    CMakeProjectManager::Constants::RUNCMAKE)->action()->setIcon(
+    QIcon(CMAKE_PATH));
+
+    connect(ProjectExplorer::ProjectExplorerPlugin::instance(),
+    SIGNAL(updateRunActions()), this, SLOT(updateRunCmake()));
+    updateRunCmake();
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->removeAction(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::DEPLOYSESSION)->action());
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->removeAction(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::DEPLOY)->action());
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->removeAction(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::REBUILD)->action());
+
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::REBUILDSESSION)->setAttribute(
+    Core::Command::CA_UpdateText);
+
+    static_cast<Utils::ProxyAction *>(Core::ActionManager::command(
+    ProjectExplorer::Constants::REBUILDSESSION)->action())->action()->setText(
+    tr("Rebuild Project"));
+
+    static_cast<Utils::ProxyAction *>(Core::ActionManager::command(
+    ProjectExplorer::Constants::REBUILDSESSION)->action(
+    ))->action()->setToolTip(
+    static_cast<Utils::ProxyAction *>(Core::ActionManager::command(
+    ProjectExplorer::Constants::REBUILDSESSION)->action(
+    ))->action()->toolTip());
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->removeAction(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::CLEAN)->action());
+
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::CLEANSESSION)->setAttribute(
+    Core::Command::CA_UpdateText);
+
+    static_cast<Utils::ProxyAction *>(Core::ActionManager::command(
+    ProjectExplorer::Constants::CLEANSESSION)->action())->action()->setText(
+    tr("Clean Project"));
+
+    static_cast<Utils::ProxyAction *>(Core::ActionManager::command(
+    ProjectExplorer::Constants::CLEANSESSION)->action(
+    ))->action()->setToolTip(
+    static_cast<Utils::ProxyAction *>(Core::ActionManager::command(
+    ProjectExplorer::Constants::CLEANSESSION)->action(
+    ))->action()->toolTip());
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->removeAction(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::SELECTTARGET)->action());
+
+    static_cast<Utils::ProxyAction *>(Core::ActionManager::command(
+    ProjectExplorer::Constants::RUN)->action())->action()->setText(
+    tr("Run Project"));
+
+    static_cast<Utils::ProxyAction *>(Core::ActionManager::command(
+    ProjectExplorer::Constants::RUN)->action(
+    ))->action()->setToolTip(
+    static_cast<Utils::ProxyAction *>(Core::ActionManager::command(
+    ProjectExplorer::Constants::RUN)->action(
+    ))->action()->toolTip());
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->setOnAllDisabledBehavior(
+    Core::ActionContainer::Show);
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->removeAction(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::RUN)->action());
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->removeAction(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::BUILDSESSION)->action());
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->removeAction(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::REBUILDSESSION)->action());
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->removeAction(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::CLEANSESSION)->action());
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->removeAction(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::CANCELBUILD)->action());
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->removeAction(
+    Core::ActionManager::command(
+    CMakeProjectManager::Constants::RUNCMAKE)->action());
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->clear();
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->addAction(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::RUN)->action());
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->addAction(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::BUILDSESSION)->action());
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->addAction(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::REBUILDSESSION)->action());
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->addAction(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::CLEANSESSION)->action());
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->addSeparator();
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->addAction(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::CANCELBUILD)->action());
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->addSeparator();
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->addAction(
+    Core::ActionManager::command(
+    CMakeProjectManager::Constants::RUNCMAKE)->action());
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    Core::ActionManager::actionContainer(
+    Core::Constants::MENU_BAR)->menuBar()->removeAction(
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_DEBUG)->menu()->menuAction());
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    QMainWindow *mainWindow =
+    qobject_cast<QMainWindow *>
+    (Core::ICore::mainWindow());
+
+    if(mainWindow)
+    {
+        Core::Internal::FancyTabWidget *widget =
+        qobject_cast<Core::Internal::FancyTabWidget *>
+        (mainWindow->centralWidget());
+
+        if(widget)
+        {
+            Core::Internal::FancyActionBar *actionBar0 =
+            new Core::Internal::FancyActionBar(widget);
+
+            widget->insertCornerWidget(0, actionBar0);
+
+            actionBar0->insertAction(0,
+            Core::ActionManager::command(Core::Constants::NEW)->action());
+
+            actionBar0->insertAction(1,
+            Core::ActionManager::command(Core::Constants::OPEN)->action());
+
+            actionBar0->insertAction(2,
+            Core::ActionManager::command(Core::Constants::SAVE)->action());
+
+            ///////////////////////////////////////////////////////////////////
+
+            Core::Internal::FancyActionBar *actionBar1 =
+            new Core::Internal::FancyActionBar(widget);
+
+            widget->insertCornerWidget(1, actionBar1);
+
+            actionBar1->insertAction(0,
+            Core::ActionManager::command(Core::Constants::UNDO)->action());
+
+            actionBar1->insertAction(1,
+            Core::ActionManager::command(Core::Constants::REDO)->action());
+
+            actionBar1->insertAction(2,
+            Core::ActionManager::command(Core::Constants::CUT)->action());
+
+            actionBar1->insertAction(3,
+            Core::ActionManager::command(Core::Constants::COPY)->action());
+
+            actionBar1->insertAction(4,
+            Core::ActionManager::command(Core::Constants::PASTE)->action());
+
+            ///////////////////////////////////////////////////////////////////
+
+            Core::Internal::FancyActionBar *actionBar2 =
+            new Core::Internal::FancyActionBar(widget);
+
+            widget->insertCornerWidget(2, actionBar2);
+
+            actionBar2->insertAction(0,
+            Core::ActionManager::command(
+            ProjectExplorer::Constants::RUN)->action());
+
+            actionBar2->insertAction(1,
+            Core::ActionManager::command(
+            ProjectExplorer::Constants::BUILDSESSION)->action());
+
+            ///////////////////////////////////////////////////////////////////
+
+            // Core::Internal::FancyActionBar *actionBar3 =
+            // new Core::Internal::FancyActionBar(widget);
+
+            // widget->insertCornerWidget(3, actionBar3);
+        }
+    }
 }
 
 void OmniaCreatorPlugin::environmentSetup()
 {
-    QObject *output = ExtensionSystem::PluginManager::getObjectByClassName
+    Core::ActionManager::actionContainer(
+    Core::Constants::M_WINDOW)->menu()->removeAction(
+    Core::ActionManager::command(
+    Core::Constants::TOGGLE_MODE_SELECTOR)->action());
+
+    QObject *object = ExtensionSystem::PluginManager::getObjectByClassName
     ("Core::Internal::MimeTypeSettings");
 
-    if(output)
+    if(object)
     {
-        ExtensionSystem::PluginManager::removeObject(output);
+        ExtensionSystem::PluginManager::removeObject(object);
     }
 }
 
-void OmniaCreatorPlugin::textEditorSetup()
+void OmniaCreatorPlugin::textEditorCppSetup()
 {
+    Core::ActionManager::actionContainer(
+    CppTools::Constants::M_TOOLS_CPP)->menu()->removeAction(
+    Core::ActionManager::command(
+    CppEditor::Constants::OPEN_PREPROCESSOR_DIALOG)->action());
+
+    Core::ActionManager::actionContainer(
+    CppTools::Constants::M_TOOLS_CPP)->menu()->removeAction(
+    Core::ActionManager::command(
+    CppEditor::Constants::INSPECT_CPP_CODEMODEL)->action());
+
     // To set settings... read from settings file with default values that
     // we will set. Then write those values back to settings file. Then
     // flush settings to settings widgets...
@@ -1305,12 +2543,279 @@ void OmniaCreatorPlugin::textEditorSetup()
 //    }
 }
 
+void OmniaCreatorPlugin::updateRecentProjects()
+{
+    QRegularExpression re("set\\(PROJECT_.*?\"(?<path>.*?)\"\\)");
+
+    foreach(QAction *action, Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_RECENTPROJECTS)->menu()->actions())
+    {
+        if((!action->isSeparator())
+        && (action->text() != Core::Constants::TR_CLEAR_MENU))
+        {
+            QFile file(action->text());
+
+            if(file.open(QIODevice::ReadOnly))
+            {
+                action->setText(re.match(file.readAll()).captured("path"));
+            }
+        }
+    }
+}
+
+void OmniaCreatorPlugin::updateRunCmake()
+{
+    Core::ActionManager::command(
+    CMakeProjectManager::Constants::RUNCMAKE)->action()->setEnabled(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::RUN)->action()->isEnabled());
+}
+
+void OmniaCreatorPlugin::closeProject()
+{
+    ProjectExplorer::Project *project =
+    ProjectExplorer::SessionManager::startupProject();
+
+    if(!project)
+    {
+        ProjectExplorer::Project *project =
+        ProjectExplorer::ProjectExplorerPlugin::currentProject();
+
+        if(!project)
+        {
+            return;
+        }
+    }
+
+    ProjectExplorer::ProjectExplorerPlugin::
+    instance()->unloadProject(project);
+}
+
+void OmniaCreatorPlugin::openProject()
+{
+    qputenv("OC_WORKSPACE_FOLDER", m_make->getWorkspaceFolder().toUtf8());
+    qputenv("OC_PROJECT_FOLDER", m_make->getProjectFolder().toUtf8());
+    qputenv("OC_SERIAL_PORT", m_make->getProjectPortName().toUtf8());
+    qputenv("OC_MAKE_FILE", m_make->getProjectMakeFile().toUtf8());
+
+    Core::DocumentManager::setProjectsDirectory(
+    m_make->getWorkspaceFolder());
+
+    Core::DocumentManager::setBuildDirectory(
+    m_make->getMakeBuildFolder());
+
+    if(QFileInfo(m_make->getMakeFile()).exists())
+    {
+        ProjectExplorer::ProjectExplorerPlugin::
+        instance()->openProject(m_make->getMakeFile(), NULL);
+    }
+}
+
+void OmniaCreatorPlugin::cmakeChanged()
+{
+    closeProject();
+    openProject();
+}
+
+void OmniaCreatorPlugin::buildClicked()
+{
+    CMakeProjectManager::Internal::CMakeProject *project =
+    qobject_cast<CMakeProjectManager::Internal::CMakeProject *>
+    (ProjectExplorer::SessionManager::startupProject());
+
+    if(!project)
+    {
+        CMakeProjectManager::Internal::CMakeProject *project =
+        qobject_cast<CMakeProjectManager::Internal::CMakeProject *>
+        (ProjectExplorer::ProjectExplorerPlugin::currentProject());
+
+        if(!project)
+        {
+            QMessageBox::critical(Core::ICore::mainWindow(),
+            tr("Build Failed"), tr("Build project not set"));
+
+            return;
+        }
+    }
+
+    ProjectExplorer::Target *target =
+    project->activeTarget();
+
+    if(!target)
+    {
+        QMessageBox::critical(Core::ICore::mainWindow(),
+        tr("Build Failed"), tr("Build target not set"));
+
+        return;
+    }
+
+    ProjectExplorer::BuildConfiguration *configuration =
+    target->activeBuildConfiguration();
+
+    if(!configuration)
+    {
+        QMessageBox::critical(Core::ICore::mainWindow(),
+        tr("Build Failed"), tr("Build configuration not set"));
+
+        return;
+    }
+
+    ProjectExplorer::BuildStepList *list =
+    configuration->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
+
+    if(!list)
+    {
+        QMessageBox::critical(Core::ICore::mainWindow(),
+        tr("Build Failed"), tr("Build list not set"));
+
+        return;
+    }
+
+    CMakeProjectManager::Internal::MakeStep *step =
+    qobject_cast<CMakeProjectManager::Internal::MakeStep *>(list->at(0));
+
+    if(!step)
+    {
+        QMessageBox::critical(Core::ICore::mainWindow(),
+        tr("Build Failed"), tr("Build step not set"));
+
+        return;
+    }
+
+    step->clearBuildTargets();
+
+    if(project->hasBuildTarget("all"))
+    {
+        step->setBuildTarget("all", true);
+    }
+    else
+    {
+        QMessageBox::critical(Core::ICore::mainWindow(),
+        tr("Build Failed"), tr("Build not set"));
+
+        return;
+    }
+
+    ProjectExplorer::ProjectExplorerPlugin::instance()->buildProject(project);
+}
+
+void OmniaCreatorPlugin::runClicked()
+{
+    CMakeProjectManager::Internal::CMakeProject *project =
+    qobject_cast<CMakeProjectManager::Internal::CMakeProject *>
+    (ProjectExplorer::SessionManager::startupProject());
+
+    if(!project)
+    {
+        CMakeProjectManager::Internal::CMakeProject *project =
+        qobject_cast<CMakeProjectManager::Internal::CMakeProject *>
+        (ProjectExplorer::ProjectExplorerPlugin::currentProject());
+
+        if(!project)
+        {
+            QMessageBox::critical(Core::ICore::mainWindow(),
+            tr("Run Failed"), tr("Run project not set"));
+
+            return;
+        }
+    }
+
+    ProjectExplorer::Target *target =
+    project->activeTarget();
+
+    if(!target)
+    {
+        QMessageBox::critical(Core::ICore::mainWindow(),
+        tr("Run Failed"), tr("Run target not set"));
+
+        return;
+    }
+
+    ProjectExplorer::BuildConfiguration *configuration =
+    target->activeBuildConfiguration();
+
+    if(!configuration)
+    {
+        QMessageBox::critical(Core::ICore::mainWindow(),
+        tr("Run Failed"), tr("Run configuration not set"));
+
+        return;
+    }
+
+    ProjectExplorer::BuildStepList *list =
+    configuration->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
+
+    if(!list)
+    {
+        QMessageBox::critical(Core::ICore::mainWindow(),
+        tr("Run Failed"), tr("Run list not set"));
+
+        return;
+    }
+
+    CMakeProjectManager::Internal::MakeStep *step =
+    qobject_cast<CMakeProjectManager::Internal::MakeStep *>(list->at(0));
+
+    if(!step)
+    {
+        QMessageBox::critical(Core::ICore::mainWindow(),
+        tr("Run Failed"), tr("Run step not set"));
+
+        return;
+    }
+
+    step->clearBuildTargets();
+
+    if(project->hasBuildTarget("upload"))
+    {
+        step->setBuildTarget("upload", true);
+    }
+    else
+    {
+        QMessageBox::critical(Core::ICore::mainWindow(),
+        tr("Run Failed"), tr("Run not set"));
+
+        return;
+    }
+
+    m_port->getPort()->close();
+
+    ProjectExplorer::BuildManager *manager =
+    qobject_cast<ProjectExplorer::BuildManager *>
+    (ProjectExplorer::BuildManager::instance());
+
+    connect(manager, SIGNAL(buildQueueFinished(bool)),
+            this, SLOT(reopenPort()));
+
+    ProjectExplorer::ProjectExplorerPlugin::instance()->buildProject(project);
+}
+
+void OmniaCreatorPlugin::reopenPort()
+{
+    QString port = m_port->getLastPort();
+
+    if(m_port->portInDemoPortList(port)
+    || m_port->portInSerialPortList(port))
+    {
+        m_escape->setPort(m_port->openPort(port, true));
+    }
+
+    ProjectExplorer::BuildManager *manager =
+    qobject_cast<ProjectExplorer::BuildManager *>
+    (ProjectExplorer::BuildManager::instance());
+
+    disconnect(manager, SIGNAL(buildQueueFinished(bool)),
+               this, SLOT(reopenPort()));
+}
+
 void OmniaCreatorPlugin::messageHandler(QtMsgType type, const char *text)
 {
     QStringList ignored;
 
     ignored << "No tool chain set from kit \"GCC\".";
     ignored << "PluginManagerPrivate::removeObject(): object not in list:";
+    ignored << "static Core::IEditor* Core::EditorManager::createEditor(const"
+               " Core::Id&, const QString&) unable to determine mime type of";
 
     foreach(const QString &string, ignored)
     {

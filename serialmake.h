@@ -19,14 +19,10 @@
 #include <QtCore>
 #include <QtGui>
 
-#include "serialport.h"
 #include "projectdefines.h"
+#include "serialport.h"
 
 #include "utilcolumndialog.h"
-
-#include <coreplugin/documentmanager.h>
-
-#define PROJECT_TIMEOUT 1000 // 1000 ms
 
 #define RED_CIRCLE ":icons/internal/circles/red/red24x24.png"
 #define GREEN_CIRCLE ":icons/internal/circles/green/green24x24.png"
@@ -41,6 +37,9 @@ class SerialMake : public QObject
     Q_OBJECT
 
 public:
+
+    static QString getCmakePath();
+    static QString getNinjaPath();
 
     explicit SerialMake(QWidget *widget = NULL,
                         QSettings *settings = NULL, QObject *parent = NULL);
@@ -61,11 +60,10 @@ public:
     bool getWorkspaceFolderWasSet() const;
     void setWorkspaceFolderWasSet();
 
-    void setProjectFile(const QString &path);
-    QString getProjectFile() const; // Native paths
-    QString getProjectFile2() const; // Unix paths
-    bool getProjectFileWasSet() const;
-    void setProjectFileWasSet();
+    void setProjectFolder(const QString &path);
+    QString getProjectFolder() const;
+    bool getProjectFolderWasSet() const;
+    void setProjectFolderWasSet();
 
     void setProjectPortName(const QString &portName);
     QString getProjectPortName() const;
@@ -73,33 +71,30 @@ public:
     void setProjectPortNameWasSet();
 
     void setProjectMakeFile(const QString &makeFile);
-    QString getProjectMakeFile() const; // Native paths
-    QString getProjectMakeFile2() const; // Unix paths
+    QString getProjectMakeFile() const;
     bool getProjectMakeFileWasSet() const;
     void setProjectMakeFileWasSet();
 
-    QStringList getCMakeFilePaths() const; // Native paths
-    QStringList getCMakeFilePaths2() const; // Unix paths
+    QStringList getCMakeFilePaths() const;
     QStringList getSystemCMakeFilePaths() const;
     QStringList getUserCMakeFilePaths() const;
 
-    QStringList getLibraryPaths() const; // Native paths
-    QStringList getLibraryPaths2() const; // Unix paths
+    QStringList getLibraryPaths() const;
     QStringList getSystemLibraryPaths() const;
     QStringList getUserLibraryPaths() const;
 
     QString getMakeSrcFolder() const;
     QString getMakeBuildFolder() const;
+    QString getMakeFile() const;
+
+    void updateProject();
+    void updateProject2();
 
     void setMakeFileWithDialog();
 
 private slots:
 
     void handlePortDestroyedOrChanged();
-
-    void updateProject();
-    void setupProject();
-    void setupProject2();
 
 signals:
 
@@ -126,8 +121,7 @@ private:
 
     QString m_makeSrcFolder;
     QString m_makeBuildFolder;
-
-    QMutex m_updateLock;
+    QString m_makeFile;
 };
 
 #endif // SERIALMAKE_H

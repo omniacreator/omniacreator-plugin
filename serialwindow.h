@@ -22,16 +22,16 @@
 #include "ilshared.h"
 #include "projectdefines.h"
 
-#define ONE_BYTE 0x1
-#define ONE_KILOBYTE (ONE_BYTE * 0x400)
-#define ONE_MEGABYTE (ONE_KILOBYTE * 0x400)
-#define ONE_GIGABYTE (ONE_MEGABYTE * 0x400)
-
 #ifdef Q_OS_WIN
     #define BY_NAME "USERNAME"
 #else
     #define BY_NAME "USER"
 #endif
+
+#define ONE_BYTE 0x1
+#define ONE_KILOBYTE (ONE_BYTE * 0x400)
+#define ONE_MEGABYTE (ONE_KILOBYTE * 0x400)
+#define ONE_GIGABYTE (ONE_MEGABYTE * 0x400)
 
 #define UPDATE_WAIT (1000 / 50)
 

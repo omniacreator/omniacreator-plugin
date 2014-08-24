@@ -15,6 +15,30 @@
 
 #include "serialmake.h"
 
+QString SerialMake::getCmakePath()
+{
+#if defined(Q_OS_WIN)
+    QString path = "/../../../tools/cmake/bin/cmake.exe";
+#else
+    QString path = "/../../../tools/cmake/bin/cmake";
+#endif
+
+    return QDir::fromNativeSeparators(QDir::cleanPath(
+    QApplication::applicationDirPath() + path));
+}
+
+QString SerialMake::getNinjaPath()
+{
+#if defined(Q_OS_WIN)
+    QString path = "/ninja.exe";
+#else
+    QString path = "/ninja";
+#endif
+
+    return QDir::fromNativeSeparators(QDir::cleanPath(
+    QApplication::applicationDirPath() + path));
+}
+
 SerialMake::SerialMake(QWidget *widget,
 QSettings *settings, QObject *parent) : QObject(parent)
 {
@@ -26,8 +50,7 @@ QSettings *settings, QObject *parent) : QObject(parent)
 
 SerialMake::~SerialMake()
 {
-    m_updateLock.tryLock();
-    m_updateLock.unlock();
+    // UNUSED //
 }
 
 void SerialMake::setWidget(QWidget *widget)
@@ -86,14 +109,15 @@ void SerialMake::setWorkspaceFolder(const QString &folder)
     QSettings settings(m_settings ? m_settings->fileName() : QString(),
     m_settings ? m_settings->format() : QSettings::Format());
 
-    settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
-    settings.setValue(SERIAL_MAKE_KEY_WORKSPACE_FOLDER, folder);
+    QString mFolder = QDir::fromNativeSeparators(QDir::cleanPath(folder));
 
-    // Start QtCreator Integration Stuff //////////////////////////////////////
-    Core::DocumentManager::setProjectsDirectory(folder);
-    // End QtCreator Integration Stuff ////////////////////////////////////////
+    if(mFolder != getWorkspaceFolder())
+    {
+        settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
+        settings.setValue(SERIAL_MAKE_KEY_WORKSPACE_FOLDER, mFolder);
 
-    emit workspaceOrProjectSettingsChanged(); updateProject();
+        updateProject2();
+    }
 }
 
 QString SerialMake::getWorkspaceFolder() const
@@ -108,7 +132,7 @@ QString SerialMake::getWorkspaceFolder() const
     }
     else
     {
-        return QDir::toNativeSeparators(QDir::cleanPath(
+        return QDir::fromNativeSeparators(QDir::cleanPath(
         QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) +
         QDir::separator() + QApplication::applicationName()));
     }
@@ -132,54 +156,54 @@ void SerialMake::setWorkspaceFolderWasSet()
     settings.setValue(SERIAL_MAKE_KEY_WORKSPACE_FOLDER, getWorkspaceFolder());
 }
 
-void SerialMake::setProjectFile(const QString &file)
+void SerialMake::setProjectFolder(const QString &file)
 {
     QSettings settings(m_settings ? m_settings->fileName() : QString(),
     m_settings ? m_settings->format() : QSettings::Format());
 
-    settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
-    settings.setValue(SERIAL_MAKE_KEY_PROJECT_FILE, file);
+    QString mFile = QDir::fromNativeSeparators(QDir::cleanPath(file));
 
-    emit workspaceOrProjectSettingsChanged(); updateProject();
+    if(mFile != getProjectFolder())
+    {
+        settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
+        settings.setValue(SERIAL_MAKE_KEY_PROJECT_FOLDER, mFile);
+
+        updateProject2();
+    }
 }
 
-QString SerialMake::getProjectFile() const
+QString SerialMake::getProjectFolder() const
 {
-    if(getProjectFileWasSet())
+    if(getProjectFolderWasSet())
     {
         QSettings settings(m_settings ? m_settings->fileName() : QString(),
         m_settings ? m_settings->format() : QSettings::Format());
 
         settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
-        return settings.value(SERIAL_MAKE_KEY_PROJECT_FILE).toString();
+        return settings.value(SERIAL_MAKE_KEY_PROJECT_FOLDER).toString();
     }
     else
     {
-        return QDir::toNativeSeparators(QDir::cleanPath(QString()));
+        return QString();
     }
 }
 
-QString SerialMake::getProjectFile2() const
-{
-    return QDir::fromNativeSeparators(getProjectFile());
-}
-
-bool SerialMake::getProjectFileWasSet() const
+bool SerialMake::getProjectFolderWasSet() const
 {
     QSettings settings(m_settings ? m_settings->fileName() : QString(),
     m_settings ? m_settings->format() : QSettings::Format());
 
     settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
-    return settings.contains(SERIAL_MAKE_KEY_PROJECT_FILE);
+    return settings.contains(SERIAL_MAKE_KEY_PROJECT_FOLDER);
 }
 
-void SerialMake::setProjectFileWasSet()
+void SerialMake::setProjectFolderWasSet()
 {
     QSettings settings(m_settings ? m_settings->fileName() : QString(),
     m_settings ? m_settings->format() : QSettings::Format());
 
     settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
-    settings.setValue(SERIAL_MAKE_KEY_PROJECT_FILE, getProjectFile());
+    settings.setValue(SERIAL_MAKE_KEY_PROJECT_FOLDER, getProjectFolder());
 }
 
 void SerialMake::setProjectPortName(const QString &portName)
@@ -187,10 +211,15 @@ void SerialMake::setProjectPortName(const QString &portName)
     QSettings settings(m_settings ? m_settings->fileName() : QString(),
     m_settings ? m_settings->format() : QSettings::Format());
 
-    settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
-    settings.setValue(SERIAL_MAKE_KEY_PROJECT_PORT_NAME, portName);
+    QString mPortName = portName;
 
-    emit workspaceOrProjectSettingsChanged(); updateProject();
+    if(mPortName != getProjectPortName())
+    {
+        settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
+        settings.setValue(SERIAL_MAKE_KEY_PROJECT_PORT_NAME, mPortName);
+
+        updateProject2();
+    }
 }
 
 QString SerialMake::getProjectPortName() const
@@ -225,10 +254,15 @@ void SerialMake::setProjectMakeFile(const QString &makeFile)
     QSettings settings(m_settings ? m_settings->fileName() : QString(),
     m_settings ? m_settings->format() : QSettings::Format());
 
-    settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
-    settings.setValue(SERIAL_MAKE_KEY_PROJECT_MAKE_FILE, makeFile);
+    QString mMakeFile = QDir::fromNativeSeparators(QDir::cleanPath(makeFile));
 
-    emit workspaceOrProjectSettingsChanged(); updateProject();
+    if(mMakeFile != getProjectMakeFile())
+    {
+        settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
+        settings.setValue(SERIAL_MAKE_KEY_PROJECT_MAKE_FILE, mMakeFile);
+
+        updateProject2();
+    }
 }
 
 QString SerialMake::getProjectMakeFile() const
@@ -238,11 +272,6 @@ QString SerialMake::getProjectMakeFile() const
 
     settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
     return settings.value(SERIAL_MAKE_KEY_PROJECT_MAKE_FILE).toString();
-}
-
-QString SerialMake::getProjectMakeFile2() const
-{
-    return QDir::fromNativeSeparators(getProjectMakeFile());
 }
 
 bool SerialMake::getProjectMakeFileWasSet() const
@@ -268,23 +297,11 @@ QStringList SerialMake::getCMakeFilePaths() const
     return getSystemCMakeFilePaths() + getUserCMakeFilePaths();
 }
 
-QStringList SerialMake::getCMakeFilePaths2() const
-{
-    QStringList list;
-
-    foreach(const QString &path, getCMakeFilePaths())
-    {
-        list.append(QDir::fromNativeSeparators(path));
-    }
-
-    return list;
-}
-
 QStringList SerialMake::getSystemCMakeFilePaths() const
 {
     QStringList list;
 
-    list.append(QDir::toNativeSeparators(QDir::cleanPath(
+    list.append(QDir::fromNativeSeparators(QDir::cleanPath(
     QApplication::applicationDirPath() +
     "/../share/qtcreator/cmake-board-types")));
 
@@ -295,7 +312,7 @@ QStringList SerialMake::getUserCMakeFilePaths() const
 {
     QStringList list;
 
-    list.append(QDir::toNativeSeparators(QDir::cleanPath(
+    list.append(QDir::fromNativeSeparators(QDir::cleanPath(
     getWorkspaceFolder() +
     "/cmake-board-types")));
 
@@ -307,23 +324,11 @@ QStringList SerialMake::getLibraryPaths() const
     return getSystemLibraryPaths() + getUserLibraryPaths();
 }
 
-QStringList SerialMake::getLibraryPaths2() const
-{
-    QStringList list;
-
-    foreach(const QString &path, getLibraryPaths())
-    {
-        list.append(QDir::fromNativeSeparators(path));
-    }
-
-    return list;
-}
-
 QStringList SerialMake::getSystemLibraryPaths() const
 {
     QStringList list;
 
-    list.append(QDir::toNativeSeparators(QDir::cleanPath(
+    list.append(QDir::fromNativeSeparators(QDir::cleanPath(
     QApplication::applicationDirPath() +
     "/../share/qtcreator/libraries")));
 
@@ -334,7 +339,7 @@ QStringList SerialMake::getUserLibraryPaths() const
 {
     QStringList list;
 
-    list.append(QDir::toNativeSeparators(QDir::cleanPath(
+    list.append(QDir::fromNativeSeparators(QDir::cleanPath(
     getWorkspaceFolder() +
     "/libraries")));
 
@@ -351,6 +356,122 @@ QString SerialMake::getMakeBuildFolder() const
     return m_makeBuildFolder;
 }
 
+QString SerialMake::getMakeFile() const
+{
+    return m_makeFile;
+}
+
+void SerialMake::updateProject()
+{
+    QCryptographicHash hash(QCryptographicHash::Sha1);
+
+    hash.addData(getWorkspaceFolder().toUtf8());
+    hash.addData(getProjectFolder().toUtf8());
+    hash.addData(getProjectPortName().toUtf8());
+    hash.addData(getProjectMakeFile().toUtf8());
+
+    QString tempLocation = QDir::fromNativeSeparators(QDir::cleanPath(
+    QStandardPaths::writableLocation(QStandardPaths::TempLocation) +
+    QDir::separator() + QApplication::applicationName() +
+    QDir::separator() + "CMake" +
+    QDir::separator() + hash.result().toHex().toUpper()));
+
+    m_makeSrcFolder = QDir::fromNativeSeparators(QDir::cleanPath(
+    tempLocation + QDir::separator() + "src"));
+
+    m_makeBuildFolder = QDir::fromNativeSeparators(QDir::cleanPath(
+    tempLocation + QDir::separator() + "build"));
+
+    m_makeFile = QDir::fromNativeSeparators(QDir::cleanPath(
+    m_makeSrcFolder + QDir::separator() + "CMakeLists.txt"));
+}
+
+void SerialMake::updateProject2()
+{
+    updateProject();
+
+    if((!getProjectFolder().isEmpty()) && (!getProjectMakeFile().isEmpty()))
+    {
+        if(!QDir().mkpath(m_makeSrcFolder))
+        {
+            QMessageBox::critical(m_widget, tr("Update Project"),
+            tr("Unable to create cmake \"src\" directory!"));
+            emit workspaceOrProjectSettingsChanged();
+            return;
+        }
+
+        if(!QDir().mkpath(m_makeBuildFolder))
+        {
+            QMessageBox::critical(m_widget, tr("Update Project"),
+            tr("Unable to create cmake \"build\" directory!"));
+            emit workspaceOrProjectSettingsChanged();
+            return;
+        }
+
+        QString text = "cmake_minimum_required(VERSION 2.8)\n\n";
+
+        text.append("cmake_policy(VERSION 2.8)\n\n");
+
+        text.append(QString("set(CMAKE_MAKE_PROGRAM \"%L1\")\n\n").
+        arg(getNinjaPath()));
+
+        text.append(QString("set(IDE_FOLDER \"%L1\")\n").
+        arg(QDir::fromNativeSeparators(QDir::cleanPath(
+        QApplication::applicationDirPath() +
+        "/../../../ide"))));
+
+        text.append(QString("set(TOOLS_FOLDER \"%L1\")\n\n").
+        arg(QDir::fromNativeSeparators(QDir::cleanPath(
+        QApplication::applicationDirPath() +
+        "/../../../tools"))));
+
+        text.append(QString("set(CMAKE_FILE_PATHS %L1)\n").
+        arg('\"' + getCMakeFilePaths().join("\" \"") + '\"'));
+
+        text.append(QString("set(LIBRARY_PATHS %L1)\n\n").
+        arg('\"' + getLibraryPaths().join("\" \"") + '\"'));
+
+        text.append(QString("set(PROJECT_FOLDER \"%L1\")\n\n").
+        arg(getProjectFolder()));
+
+        text.append(QString("set(SERIAL_PORT \"%L1\")\n\n").
+        arg(getProjectPortName()));
+
+        text.append("set(INCLUDE_SWITCH 0)\n");
+        text.append(QString("include(\"%L1\")\n\n").
+        arg(getProjectMakeFile()));
+
+        text.append(QString("project(\"%L1\")\n\n").
+        arg(QDir(getProjectFolder()).dirName().
+        replace(QRegularExpression("[^0-9A-Za-z]"),
+        "_")));
+
+        text.append("set(INCLUDE_SWITCH 1)\n");
+        text.append(QString("include(\"%L1\")\n").
+        arg(getProjectMakeFile()));
+
+        QFile file(m_makeFile);
+
+        if(file.open(QIODevice::WriteOnly))
+        {
+            QByteArray utf8 = text.toUtf8();
+
+            if(file.write(utf8) != utf8.size())
+            {
+                QMessageBox::critical(m_widget, tr("Update Project"),
+                file.errorString());
+            }
+        }
+        else
+        {
+            QMessageBox::critical(m_widget, tr("Update Project"),
+            file.errorString());
+        }
+    }
+
+    emit workspaceOrProjectSettingsChanged();
+}
+
 void SerialMake::handlePortDestroyedOrChanged()
 {
     QString portName = m_serialPort->getPortName();
@@ -361,117 +482,6 @@ void SerialMake::handlePortDestroyedOrChanged()
     {
         setProjectMakeFile(m_serialPort->getMakeFile(portName));
     }
-}
-
-void SerialMake::updateProject()
-{
-    if(m_updateLock.tryLock())
-    {
-        QTimer::singleShot(PROJECT_TIMEOUT, this, SLOT(setupProject()));
-    }
-}
-
-void SerialMake::setupProject()
-{
-    // Setup Build Folder /////////////////////////////////////////////////////
-
-    QCryptographicHash hash(QCryptographicHash::Sha1);
-
-    hash.addData(getWorkspaceFolder().toUtf8());
-    hash.addData(getProjectFile().toUtf8());
-    hash.addData(getProjectPortName().toUtf8());
-    hash.addData(getProjectMakeFile().toUtf8());
-
-    QString tempLocation = QDir::toNativeSeparators(QDir::cleanPath(
-    QStandardPaths::writableLocation(QStandardPaths::TempLocation) +
-    QDir::separator() + QApplication::applicationName() +
-    QDir::separator() + "CMake" +
-    QDir::separator() + hash.result().toHex().toUpper()));
-
-    m_makeSrcFolder = tempLocation + QDir::separator() + "src";
-    m_makeBuildFolder = tempLocation + QDir::separator() + "build";
-
-    // Start QtCreator Integration Stuff //////////////////////////////////////
-    Core::DocumentManager::setBuildDirectory(m_makeBuildFolder);
-    // End QtCreator Integration Stuff ////////////////////////////////////////
-
-    if(!QDir().mkpath(m_makeSrcFolder))
-    {
-        QMessageBox::critical(m_widget, tr("Setup Project"),
-        tr("Unable to create cmake \"src\" directory!"));
-        m_updateLock.unlock(); return;
-    }
-
-    if(!QDir().mkpath(m_makeBuildFolder))
-    {
-        QMessageBox::critical(m_widget, tr("Setup Project"),
-        tr("Unable to create cmake \"build\" directory!"));
-        m_updateLock.unlock(); return;
-    }
-
-    // Setup Build File ///////////////////////////////////////////////////////
-
-    QFile file(m_makeSrcFolder + QDir::separator() + "CMakeLists.txt");
-
-    if(file.open(QIODevice::ReadWrite))
-    {
-        file.write("cmake_minimum_required(VERSION 2.8)\n\n");
-
-        file.write(QString("set(IDE_FOLDER \"%L1\")\n").
-        arg(QDir::fromNativeSeparators(QDir::cleanPath( // '\' -> '/'
-        QApplication::applicationDirPath() +
-        "/../../../ide"))).toUtf8());
-
-        file.write(QString("set(TOOLS_FOLDER \"%L1\")\n\n").
-        arg(QDir::fromNativeSeparators(QDir::cleanPath( // '\' -> '/'
-        QApplication::applicationDirPath() +
-        "/../../../tools"))).toUtf8());
-
-        file.write(QString("set(CMAKE_FILE_PATHS %L1)\n").
-        arg('\"' + getCMakeFilePaths2().join("\" \"") + '\"').toUtf8());
-
-        file.write(QString("set(LIBRARY_PATHS %L1)\n\n").
-        arg('\"' + getLibraryPaths2().join("\" \"") + '\"').toUtf8());
-
-        file.write(QString("set(PROJECT_FILE \"%L1\")\n\n").
-        arg(getProjectFile2()).toUtf8());
-        file.write(QString("set(SERIAL_PORT \"%L1\")\n\n").
-        arg(getProjectPortName()).toUtf8());
-
-        file.write("set(BEFORE_PROJECT_COMMAND true)\n");
-        file.write(QString("include(\"%L1\")\n\n").
-        arg(getProjectMakeFile2()).toUtf8());
-
-        if(getProjectFile2().isEmpty())
-        {
-            file.write("project(Default C CXX)\n\n");
-        }
-        else
-        {
-            file.write(QString("project(%L1 C CXX)\n\n").
-            arg(QFileInfo(getProjectFile2()).baseName().
-            replace(QRegularExpression("[^0-9A-Za-z]"), "_")).toUtf8());
-        }
-
-        file.write("set(AFTER_PROJECT_COMMAND true)\n");
-        file.write(QString("include(\"%L1\")\n").
-        arg(getProjectMakeFile2()).toUtf8());
-
-        file.close();
-    }
-    else
-    {
-        QMessageBox::critical(m_widget, tr("Setup Project"),
-        tr("Unable to create cmake lists file!"));
-        m_updateLock.unlock(); return;
-    }
-
-    m_updateLock.unlock();
-}
-
-void SerialMake::setupProject2()
-{
-
 }
 
 void SerialMake::setMakeFileWithDialog()
@@ -556,7 +566,7 @@ void SerialMake::entryList(const QString &path, QStandardItem *parent)
     {
         QString baseName =
         QFileInfo(path + QDir::separator() + itemName).isDir() ?
-        itemName : QFileInfo(itemName).baseName();
+        itemName : QFileInfo(itemName).completeBaseName();
         int modelIndex = indexOf(baseName, parent);
 
         QStandardItem *item;

@@ -65,6 +65,10 @@ HEADERS += omniacreatorplugin.h \
            serialtable.h \
            serialterminal.h \
            serialtree.h \
+           newfiledialog.h \
+           newprojectdialog.h \
+           newfileorprojectdialog.h \
+           openfileorprojectdialog.h \
            utilitempicker.h \
            utilpathpicker.h \
            utilcolumndialog.h \
@@ -85,6 +89,10 @@ SOURCES += omniacreatorplugin.cpp \
            serialtable.cpp \
            serialterminal.cpp \
            serialtree.cpp \
+           newfiledialog.cpp \
+           newprojectdialog.cpp \
+           newfileorprojectdialog.cpp \
+           openfileorprojectdialog.cpp \
            utilitempicker.cpp \
            utilpathpicker.cpp \
            utilcolumndialog.cpp \
@@ -99,6 +107,10 @@ FORMS += serialgraphics.ui \
          serialtable.ui \
          serialterminal.ui \
          serialtree.ui \
+         newfiledialog.ui \
+         newprojectdialog.ui \
+         newfileorprojectdialog.ui \
+         openfileorprojectdialog.ui \
          utilitempicker.ui \
          utilpathpicker.ui \
          utilcolumndialog.ui \

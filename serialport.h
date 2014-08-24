@@ -21,8 +21,8 @@
 #include <QtSerialPort>
 #include <QtWidgets>
 
-#include "serialmake.h"
 #include "projectdefines.h"
+#include "serialmake.h"
 
 #include "demoport.h"
 

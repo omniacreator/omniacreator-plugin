@@ -18,6 +18,18 @@
 
 #include "projectconstants.h"
 
+// Plugin Dailog //////////////////////////////////////////////////////////////
+
+#define PLUGIN_DIALOG "PluginDialog"
+
+#define PLUGIN_DIALOG_KEY_GROUP \
+(PROJECT_FULL_NAME_WO_SPACES_STR "/" PLUGIN_DIALOG)
+
+#define PLUGIN_DIALOG_KEY_NEW_FILE "newFile"
+#define PLUGIN_DIALOG_KEY_NEW_PROJECT "newProject"
+#define PLUGIN_DIALOG_KEY_OPEN_FILE "openFile"
+#define PLUGIN_DIALOG_KEY_OPEN_PROJECT "openProject"
+
 // Serial Make ////////////////////////////////////////////////////////////////
 
 #define SERIAL_MAKE "SerialMake"
@@ -26,7 +38,7 @@
 (PROJECT_FULL_NAME_WO_SPACES_STR "/" SERIAL_MAKE)
 
 #define SERIAL_MAKE_KEY_WORKSPACE_FOLDER "workspaceFolder"
-#define SERIAL_MAKE_KEY_PROJECT_FILE "projectFile"
+#define SERIAL_MAKE_KEY_PROJECT_FOLDER "projectFolder"
 #define SERIAL_MAKE_KEY_PROJECT_PORT_NAME "projectPortName"
 #define SERIAL_MAKE_KEY_PROJECT_MAKE_FILE "projectMakeFile"
 

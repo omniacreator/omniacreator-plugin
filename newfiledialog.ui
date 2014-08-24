@@ -1,33 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>UtilPathPicker</class>
- <widget class="QDialog" name="UtilPathPicker">
+ <class>NewFileDialog</class>
+ <widget class="QDialog" name="NewFileDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>340</width>
-    <height>89</height>
+    <width>380</width>
+    <height>117</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Path Picker</string>
+   <string>New File Dialog</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <property name="sizeConstraint">
     <enum>QLayout::SetFixedSize</enum>
    </property>
    <item row="0" column="0">
-    <widget class="QLabel" name="label">
-     <property name="wordWrap">
-      <bool>true</bool>
+    <widget class="QLabel" name="nameLabel">
+     <property name="text">
+      <string>Name</string>
      </property>
-     <property name="openExternalLinks">
-      <bool>true</bool>
+     <property name="buddy">
+      <cstring>nameEdit</cstring>
      </property>
     </widget>
    </item>
-   <item row="1" column="0">
+   <item row="0" column="1">
+    <widget class="QLineEdit" name="nameEdit"/>
+   </item>
+   <item row="1" column="0" colspan="2">
     <widget class="QWidget" name="widget1" native="true">
      <layout class="QGridLayout" name="gridLayout1">
       <property name="leftMargin">
@@ -43,15 +46,41 @@
        <number>0</number>
       </property>
       <item row="0" column="0">
-       <widget class="QLineEdit" name="edit"/>
+       <widget class="QLabel" name="path">
+        <property name="text">
+         <string>Create in folder</string>
+        </property>
+        <property name="buddy">
+         <cstring>edit</cstring>
+        </property>
+       </widget>
       </item>
       <item row="0" column="1">
+       <widget class="QLineEdit" name="edit"/>
+      </item>
+      <item row="0" column="2">
        <widget class="QPushButton" name="button"/>
       </item>
      </layout>
     </widget>
    </item>
-   <item row="2" column="0">
+   <item row="2" column="0" colspan="2">
+    <widget class="QLabel" name="label">
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Sunken</enum>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+     <property name="openExternalLinks">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0" colspan="2">
     <widget class="QWidget" name="widget2" native="true">
      <layout class="QGridLayout" name="gridLayout2">
       <property name="leftMargin">
@@ -73,7 +102,7 @@
         </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>160</width>
+          <width>200</width>
           <height>20</height>
          </size>
         </property>
@@ -94,18 +123,24 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>nameEdit</tabstop>
+  <tabstop>edit</tabstop>
+  <tabstop>button</tabstop>
+  <tabstop>box</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
    <sender>box</sender>
    <signal>accepted()</signal>
-   <receiver>UtilPathPicker</receiver>
+   <receiver>NewFileDialog</receiver>
    <slot>accept()</slot>
   </connection>
   <connection>
    <sender>box</sender>
    <signal>rejected()</signal>
-   <receiver>UtilPathPicker</receiver>
+   <receiver>NewFileDialog</receiver>
    <slot>reject()</slot>
   </connection>
  </connections>
