@@ -89,6 +89,7 @@
 #include <projectexplorer/buildstep.h>
 
 // Environment Includes
+#include <coreplugin/variablemanager.h>
 
 // Text Editor Cpp Includes
 #include <texteditor/texteditorsettings.h>

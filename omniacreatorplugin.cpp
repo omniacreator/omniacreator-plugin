@@ -32,6 +32,39 @@ OmniaCreatorPlugin::OmniaCreatorPlugin()
     wno_path.append(',' + QDir::fromNativeSeparators(QDir::cleanPath(
     QApplication::applicationDirPath() + QDir::separator() + "../../..")));
     qputenv("WNO_PATH", wno_path.toUtf8());
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    QSettings settings(Core::ICore::settings()->fileName(),
+                       Core::ICore::settings()->format());
+
+    settings.beginGroup(PLUGIN_DIALOG_KEY_GROUP);
+
+    if(!settings.value(PLUGIN_DIALOG_KEY_INITIAL_SETTINGS, false).toBool())
+    {
+        QSettings initSettings(Core::ICore::settings()->fileName(),
+                               Core::ICore::settings()->format());
+
+        initSettings.beginGroup("Navigation");
+
+        initSettings.setValue("Views",
+        QStringList() << "File System" << "Bookmarks" << "Open Documents");
+
+        initSettings.setValue("Visible",
+        false);
+
+        initSettings.endGroup();
+
+        ///////////////////////////////////////////////////////////////////////
+
+
+
+        ///////////////////////////////////////////////////////////////////////
+
+        settings.setValue(PLUGIN_DIALOG_KEY_INITIAL_SETTINGS, true);
+    }
+
+    settings.endGroup();
 }
 
 OmniaCreatorPlugin::~OmniaCreatorPlugin()
@@ -582,6 +615,25 @@ void OmniaCreatorPlugin::extensionsInitialized()
 
 bool OmniaCreatorPlugin::delayedInitialize()
 {
+    QSettings settings(Core::ICore::settings()->fileName(),
+                       Core::ICore::settings()->format());
+
+    settings.beginGroup(PLUGIN_DIALOG_KEY_GROUP);
+
+    if(!settings.value(PLUGIN_DIALOG_KEY_NEW_SOFTWARE, false).toBool())
+    {
+        QMessageBox::information(Core::ICore::mainWindow(), tr("New Software"),
+        tr("%L1 is new software. Please report any issues found at: "
+        "<a href=\"https://github.com/omniacreator/omniacreator/issues\">"
+        "%L1's GitHub</a>.").arg(QApplication::applicationName()));
+
+        settings.setValue(PLUGIN_DIALOG_KEY_NEW_SOFTWARE, true);
+    }
+
+    settings.endGroup();
+
+    ///////////////////////////////////////////////////////////////////////////
+
     if(!m_make->getWorkspaceFolderWasSet())
     {
         UtilPathPicker picker(tr("Select Workspace Location"),
@@ -594,6 +646,8 @@ bool OmniaCreatorPlugin::delayedInitialize()
             m_make->setWorkspaceFolderWasSet();
         }
     }
+
+    ///////////////////////////////////////////////////////////////////////////
 
     if(!m_port->getLastPortWasSet())
     {
@@ -705,6 +759,8 @@ bool OmniaCreatorPlugin::delayedInitialize()
         }
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+
     QProcess *update = new QProcess(this);
 
     connect(update, SIGNAL(finished(int)), this, SLOT(processMessage(int)));
@@ -719,6 +775,8 @@ bool OmniaCreatorPlugin::delayedInitialize()
 #endif
 
     QStringList() << "--mode" << "unattended");
+
+    ///////////////////////////////////////////////////////////////////////////
 
     return true;
 }
@@ -2211,6 +2269,16 @@ void OmniaCreatorPlugin::projectManagerSetup()
 
     Core::ActionManager::actionContainer(
     Core::Constants::M_FILE)->menu()->removeAction(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::UNLOAD)->action());
+
+    Core::ActionManager::actionContainer(
+    Core::Constants::M_FILE)->menu()->removeAction(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::CLEARSESSION)->action());
+
+    Core::ActionManager::actionContainer(
+    Core::Constants::M_FILE)->menu()->removeAction(
     Core::ActionManager::actionContainer(
     ProjectExplorer::Constants::M_SESSION)->menu()->menuAction());
 
@@ -2516,6 +2584,14 @@ void OmniaCreatorPlugin::environmentSetup()
     {
         ExtensionSystem::PluginManager::removeObject(object);
     }
+
+    object = ExtensionSystem::PluginManager::getObjectByClassName
+    ("CMakeProjectManager::Internal::CMakeLocatorFilter");
+
+    if(object)
+    {
+        ExtensionSystem::PluginManager::removeObject(object);
+    }
 }
 
 void OmniaCreatorPlugin::textEditorCppSetup()
@@ -2530,17 +2606,63 @@ void OmniaCreatorPlugin::textEditorCppSetup()
     Core::ActionManager::command(
     CppEditor::Constants::INSPECT_CPP_CODEMODEL)->action());
 
-    // To set settings... read from settings file with default values that
-    // we will set. Then write those values back to settings file. Then
-    // flush settings to settings widgets...
+    QObject *object = ExtensionSystem::PluginManager::getObjectByClassName
+    ("TextEditor::HighlighterSettingsPage");
 
-//    QObject *output = ExtensionSystem::PluginManager::getObjectByClassName
-//    ("TextEditor::HighlighterSettingsPage");
+    if(object)
+    {
+        ExtensionSystem::PluginManager::removeObject(object);
+    }
 
-//    if(output)
-//    {
-//        ExtensionSystem::PluginManager::removeObject(output);
-//    }
+    // Doesn't actually work... had to comment out in code...
+    object = ExtensionSystem::PluginManager::getObjectByClassName
+    ("CppTools::Internal::Ui::CppFileSettingsPage");
+
+    if(object)
+    {
+        ExtensionSystem::PluginManager::removeObject(object);
+    }
+
+    // Doesn't actually work... had to comment out in code...
+    object = ExtensionSystem::PluginManager::getObjectByClassName
+    ("CppTools::Internal::Ui::CppCodeModelSettingsPage");
+
+    if(object)
+    {
+        ExtensionSystem::PluginManager::removeObject(object);
+    }
+
+    object = ExtensionSystem::PluginManager::getObjectByClassName
+    ("CppEditor::Internal::ConvertCStringToNSString");
+
+    if(object)
+    {
+        ExtensionSystem::PluginManager::removeObject(object);
+    }
+
+    object = ExtensionSystem::PluginManager::getObjectByClassName
+    ("CppEditor::Internal::TranslateStringLiteral");
+
+    if(object)
+    {
+        ExtensionSystem::PluginManager::removeObject(object);
+    }
+
+    object = ExtensionSystem::PluginManager::getObjectByClassName
+    ("CppEditor::Internal::WrapStringLiteral");
+
+    if(object)
+    {
+        ExtensionSystem::PluginManager::removeObject(object);
+    }
+
+    object = ExtensionSystem::PluginManager::getObjectByClassName
+    ("CppEditor::Internal::InsertQtPropertyMembers");
+
+    if(object)
+    {
+        ExtensionSystem::PluginManager::removeObject(object);
+    }
 }
 
 void OmniaCreatorPlugin::updateRecentProjects()
@@ -2816,6 +2938,10 @@ void OmniaCreatorPlugin::messageHandler(QtMsgType type, const char *text)
     ignored << "PluginManagerPrivate::removeObject(): object not in list:";
     ignored << "static Core::IEditor* Core::EditorManager::createEditor(const"
                " Core::Id&, const QString&) unable to determine mime type of";
+    ignored << "QTextStream: No device"; // This might not be harmless...
+    ignored << "SOFT ASSERT: \"existingParamCount == "
+               "declaredParameterCount(targetFunction)\" in file";
+               // This might not be harmless...
 
     foreach(const QString &string, ignored)
     {
@@ -2825,7 +2951,7 @@ void OmniaCreatorPlugin::messageHandler(QtMsgType type, const char *text)
         }
     }
 
-    switch (type)
+    switch(type)
     {
         case QtDebugMsg:
         {
