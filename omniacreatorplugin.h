@@ -87,6 +87,7 @@
 #include <projectexplorer/buildconfiguration.h>
 #include <projectexplorer/buildsteplist.h>
 #include <projectexplorer/buildstep.h>
+#include <projectexplorer/ioutputparser.h>
 
 // Environment Includes
 #include <coreplugin/variablemanager.h>
@@ -127,11 +128,8 @@ public:
 
     virtual bool initialize(const QStringList &arguments,
                             QString *errorString);
-
     virtual void extensionsInitialized();
-
     virtual bool delayedInitialize();
-
     virtual ExtensionSystem::IPlugin::ShutdownFlag aboutToShutdown();
 
 private slots:
@@ -183,8 +181,8 @@ private slots:
     void updateRecentProjects();
     void updateRunCmake();
 
+    void openRecent();
     void closeProject();
-    void openProject();
     void cmakeChanged();
 
     void buildClicked();
@@ -195,11 +193,11 @@ private:
 
     Q_DISABLE_COPY(OmniaCreatorPlugin)
 
-    bool m_upload;
-
     SerialMake *m_make;
     SerialPort *m_port;
     SerialEscape *m_escape;
+
+    QStatusBar *m_status;
 
     Core::ActionContainer *m_boardMenu;
     Core::ActionContainer *m_widgetsMenu;
@@ -221,6 +219,12 @@ private:
 
     Core::Command *m_resetSerialPort;
     Core::Command *m_resetSerialTerminal;
+
+    QLabel *m_projectFolder;
+    QLabel *m_boardType;
+
+    QLabel *m_codeSpaceUsed;
+    QLabel *m_dataSpaceUsed;
 
     // Begin Qt Creator Setup Variables ///////////////////////////////////////
 
@@ -392,6 +396,108 @@ private:
     // End Qt Creator Setup Variables /////////////////////////////////////////
 
     static void messageHandler(QtMsgType type, const char *text);
+};
+
+class CodeUsedParser : public ProjectExplorer::IOutputParser
+{
+    Q_OBJECT
+
+public:
+
+    explicit CodeUsedParser(QLabel *label)
+    {
+        m_regex = QRegularExpression(
+        "Firmware Size: .*?\\[Program: (.*?)\\]");
+        m_label = label;
+    }
+
+    virtual void stdOutput(const QString &line)
+    {
+        if(m_label)
+        {
+            QRegularExpressionMatch match = m_regex.match(line);
+
+            if(match.hasMatch())
+            {
+                m_label->setText(match.captured(1));
+            }
+        }
+
+        IOutputParser::stdOutput(line);
+    }
+
+    virtual void stdError(const QString &line)
+    {
+        if(m_label)
+        {
+            QRegularExpressionMatch match = m_regex.match(line);
+
+            if(match.hasMatch())
+            {
+                m_label->setText(match.captured(1));
+            }
+        }
+
+        IOutputParser::stdError(line);
+    }
+
+private:
+
+    Q_DISABLE_COPY(CodeUsedParser)
+
+    QRegularExpression m_regex;
+    QPointer<QLabel> m_label;
+};
+
+class DataUsedParser : public ProjectExplorer::IOutputParser
+{
+    Q_OBJECT
+
+public:
+
+    explicit DataUsedParser(QLabel *label)
+    {
+        m_regex = QRegularExpression(
+        "Firmware Size: .*?\\[Data: (.*?)\\]");
+        m_label = label;
+    }
+
+    virtual void stdOutput(const QString &line)
+    {
+        if(m_label)
+        {
+            QRegularExpressionMatch match = m_regex.match(line);
+
+            if(match.hasMatch())
+            {
+                m_label->setText(match.captured(1));
+            }
+        }
+
+        IOutputParser::stdOutput(line);
+    }
+
+    virtual void stdError(const QString &line)
+    {
+        if(m_label)
+        {
+            QRegularExpressionMatch match = m_regex.match(line);
+
+            if(match.hasMatch())
+            {
+                m_label->setText(match.captured(1));
+            }
+        }
+
+        IOutputParser::stdError(line);
+    }
+
+private:
+
+    Q_DISABLE_COPY(DataUsedParser)
+
+    QRegularExpression m_regex;
+    QPointer<QLabel> m_label;
 };
 
 #endif // OMNIACREATORPLUGIN_H

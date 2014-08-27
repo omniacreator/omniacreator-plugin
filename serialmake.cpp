@@ -206,6 +206,19 @@ void SerialMake::setProjectFolderWasSet()
     settings.setValue(SERIAL_MAKE_KEY_PROJECT_FOLDER, getProjectFolder());
 }
 
+QString SerialMake::getProjectFolderRelativeTo() const
+{
+    foreach(QString path, getWorkspaceFolder())
+    {
+        if(getProjectFolder().startsWith(path, Qt::CaseInsensitive))
+        {
+            return QDir(path).relativeFilePath(getProjectFolder());
+        }
+    }
+
+    return QString();
+}
+
 void SerialMake::setProjectPortName(const QString &portName)
 {
     QSettings settings(m_settings ? m_settings->fileName() : QString(),
@@ -290,6 +303,19 @@ void SerialMake::setProjectMakeFileWasSet()
 
     settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
     settings.setValue(SERIAL_MAKE_KEY_PROJECT_MAKE_FILE, getProjectMakeFile());
+}
+
+QString SerialMake::getProjectMakeFileRelativeTo() const
+{
+    foreach(QString path, getCMakeFilePaths())
+    {
+        if(getProjectMakeFile().startsWith(path, Qt::CaseInsensitive))
+        {
+            return QDir(path).relativeFilePath(getProjectMakeFile());
+        }
+    }
+
+    return QString();
 }
 
 QStringList SerialMake::getCMakeFilePaths() const

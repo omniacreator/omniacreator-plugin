@@ -64,6 +64,7 @@ public:
     QString getProjectFolder() const;
     bool getProjectFolderWasSet() const;
     void setProjectFolderWasSet();
+    QString getProjectFolderRelativeTo() const;
 
     void setProjectPortName(const QString &portName);
     QString getProjectPortName() const;
@@ -74,6 +75,7 @@ public:
     QString getProjectMakeFile() const;
     bool getProjectMakeFileWasSet() const;
     void setProjectMakeFileWasSet();
+    QString getProjectMakeFileRelativeTo() const;
 
     QStringList getCMakeFilePaths() const;
     QStringList getSystemCMakeFilePaths() const;
