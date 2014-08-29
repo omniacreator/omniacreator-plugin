@@ -33,7 +33,7 @@
 #define ONE_MEGABYTE (ONE_KILOBYTE * 0x400)
 #define ONE_GIGABYTE (ONE_MEGABYTE * 0x400)
 
-#define UPDATE_WAIT (1000 / 50)
+#define UPDATE_WAIT (1000 / 50) // 50 hz
 
 class SerialWindow : public QDockWidget
 {

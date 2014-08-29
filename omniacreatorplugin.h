@@ -226,6 +226,8 @@ private:
     QLabel *m_codeSpaceUsed;
     QLabel *m_dataSpaceUsed;
 
+    QFileSystemWatcher *m_projectWatcher;
+
     // Begin Qt Creator Setup Variables ///////////////////////////////////////
 
     class MicrocontrollerDPSO :

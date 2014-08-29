@@ -125,6 +125,19 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
     connect(m_make, SIGNAL(workspaceOrProjectSettingsChanged()),
             this, SLOT(cmakeChanged()));
 
+    m_projectWatcher =
+    new QFileSystemWatcher(QStringList(m_make->getProjectFolder()), this);
+
+    connect(m_projectWatcher, SIGNAL(directoryChanged(QString)),
+    Core::ActionManager::command(
+    CMakeProjectManager::Constants::RUNCMAKE)->action(),
+    SIGNAL(triggered()));
+
+    connect(m_projectWatcher, SIGNAL(fileChanged(QString)),
+    Core::ActionManager::command(
+    CMakeProjectManager::Constants::RUNCMAKE)->action(),
+    SIGNAL(triggered()));
+
     // Serial Port Init ///////////////////////////////////////////////////////
 
     m_port = new SerialPort(Core::ICore::mainWindow(),
@@ -2743,7 +2756,6 @@ void OmniaCreatorPlugin::textEditorCppSetup()
 void OmniaCreatorPlugin::updateRecentProjects()
 {
     QStringList repeated;
-
     QRegularExpression re("set\\(PROJECT_.*?\"(?<path>.*?)\"\\)");
 
     foreach(QAction *action, Core::ActionManager::actionContainer(
@@ -2814,7 +2826,8 @@ void OmniaCreatorPlugin::cmakeChanged()
 
     if(!project)
     {
-        project = ProjectExplorer::ProjectExplorerPlugin::currentProject();
+        project =
+        ProjectExplorer::ProjectExplorerPlugin::currentProject();
     }
 
     if(project)
@@ -2834,11 +2847,16 @@ void OmniaCreatorPlugin::cmakeChanged()
     Core::DocumentManager::setBuildDirectory(
     m_make->getMakeBuildFolder());
 
+    m_projectWatcher->removePaths(m_projectWatcher->directories());
+    m_projectWatcher->removePaths(m_projectWatcher->files());
+
     if(QFileInfo(m_make->getMakeFile()).exists())
     {
         ProjectExplorer::ProjectExplorerPlugin::
         instance()->openProject(m_make->getMakeFile(),
         NULL);
+
+        m_projectWatcher->addPath(m_make->getProjectFolder());
     }
 
     m_projectFolder->setText(m_make->getProjectFolder());

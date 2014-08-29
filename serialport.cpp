@@ -82,14 +82,14 @@ void SerialPort::setPort(QIODevice *port)
                 attachOverride(port);
             }
 
-//            connect(port, SIGNAL(aboutToClose()),
-//                    port, SLOT(deleteLater()));
+            // connect(port, SIGNAL(aboutToClose()),
+            //         port, SLOT(deleteLater()));
 
-            connect(port, SIGNAL(aboutToClose()),
-                    this, SIGNAL(portAboutToClose()));
+            // connect(port, SIGNAL(aboutToClose()),
+            //         this, SIGNAL(portAboutToClose()));
 
-//            connect(port, SIGNAL(destroyed()),
-//                    this, SIGNAL(portDestroyedOrChanged()));
+            // connect(port, SIGNAL(destroyed()),
+            //         this, SIGNAL(portDestroyedOrChanged()));
         }
 
         QSettings settings(m_settings ? m_settings->fileName() : QString(),

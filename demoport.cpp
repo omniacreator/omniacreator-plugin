@@ -36,16 +36,16 @@ void DemoPort::setup()
     core->init();
     core->clearAll();
 
-    oscilloscope->initDocked(core, "Sin & Cos Waves");
+    oscilloscope->initDocked(core, "Sine & Cosine Waves");
     oscilloscope->setBackgroundColor(0xFFFFFF);
     oscilloscope->setXAxisLabel("x");
     oscilloscope->setYAxisLabel("y");
 
-    graph0->init(oscilloscope, "Sin");
+    graph0->init(oscilloscope, "Sine");
     graph0->setFillColor(0x7FC8C8FF);
     graph0->setFillStyle(FS_SOLID_PATTERN);
 
-    graph1->init(oscilloscope, "Cos");
+    graph1->init(oscilloscope, "Cosine");
     graph1->setFillColor(0x7FFFC8C8);
     graph1->setFillStyle(FS_SOLID_PATTERN);
 }

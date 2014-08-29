@@ -18,6 +18,8 @@
 
 #include <QtCore>
 
+#define CALL_WAIT 20 // 50 hz
+
 class SerialDevice : public QIODevice
 {
     Q_OBJECT

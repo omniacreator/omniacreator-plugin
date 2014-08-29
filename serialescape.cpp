@@ -15935,6 +15935,10 @@ SerialWindow *SerialEscape::newTerminalWindow(int windowHandle,
             myWindow->show();
         }
     }
+    else // Silently handle error...
+    {
+        m_windows.value(windowHandle)->setWindowTitle(name);
+    }
 
     return myWindow;
 }
@@ -15964,6 +15968,10 @@ SerialWindow *SerialEscape::newOscilloscopeWindow(int windowHandle,
         {
             myWindow->show();
         }
+    }
+    else // Silently handle error...
+    {
+        m_windows.value(windowHandle)->setWindowTitle(name);
     }
 
     return myWindow;
@@ -15995,6 +16003,10 @@ SerialWindow *SerialEscape::newTableWindow(int windowHandle,
             myWindow->show();
         }
     }
+    else // Silently handle error...
+    {
+        m_windows.value(windowHandle)->setWindowTitle(name);
+    }
 
     return myWindow;
 }
@@ -16025,6 +16037,10 @@ SerialWindow *SerialEscape::newTreeWindow(int windowHandle,
             myWindow->show();
         }
     }
+    else // Silently handle error...
+    {
+        m_windows.value(windowHandle)->setWindowTitle(name);
+    }
 
     return myWindow;
 }
@@ -16054,6 +16070,10 @@ SerialWindow *SerialEscape::newGraphicsWindow(int windowHandle,
         {
             myWindow->show();
         }
+    }
+    else // Silently handle error...
+    {
+        m_windows.value(windowHandle)->setWindowTitle(name);
     }
 
     return myWindow;
@@ -16089,6 +16109,10 @@ SerialWindow *SerialEscape::newInterfaceWindow(int windowHandle,
         {
             myWindow->show();
         }
+    }
+    else // Silently handle error...
+    {
+        m_windows.value(windowHandle)->setWindowTitle(name);
     }
 
     return myWindow;
@@ -16399,14 +16423,16 @@ SerialWindow *SerialEscape::windowExists(const QString &FName, int window)
 
 bool SerialEscape::windowDoesNotExist(const QString &FName, int window)
 {
+    Q_UNUSED(FName); // Silently handle error...
+
     bool ok = !m_windows.contains(window);
 
     if(!ok)
     {
-        emit errorMessage(QString(metaObject()->className()) +
+        /* emit errorMessage(QString(metaObject()->className()) +
         "::" + FName + " -> " +
         tr("Window %L1 already exists").
-        arg(window));
+        arg(window)); */
     }
 
     return ok;

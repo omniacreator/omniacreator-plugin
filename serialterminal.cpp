@@ -462,7 +462,7 @@ void SerialTerminal::userReset()
 
 void SerialTerminal::returnPressed()
 {
-    QString text = m_ui->tx->text() + "\r\n\0";
+    QString text = m_ui->tx->text() + "\r\n";
     emit transmit(text.toUtf8(), this);
 
     QBrush temp = m_brushColor; m_brushColor = Qt::black; insertText(text);
@@ -500,9 +500,9 @@ void SerialTerminal::sendTextFile()
             {
                 QByteArray data = file.readAll();
 
-                data.remove(data.indexOf(CC_XON), sizeof(char));
-                data.remove(data.indexOf(CC_XOFF), sizeof(char));
-                data.remove(data.indexOf(CC_ESCAPE), sizeof(char));
+                data.replace(CC_XON, "");
+                data.replace(CC_XOFF, "");
+                data.replace(CC_ESCAPE, "");
 
                 emit transmit(data, this);
 

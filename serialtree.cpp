@@ -92,6 +92,10 @@ bool SerialTree::newItem(const QString &key, const QString &value)
 
         pair.first->setText(TREE_VALUE_COLUMN, value);
     }
+    else // Silently handle error...
+    {
+        return setItemValue(key, value);
+    }
 
     return ok;
 }
@@ -429,6 +433,8 @@ bool SerialTree::itemDoesNotExist(const QString &FName,
                                   const QString &key,
                                   QPair<QTreeWidgetItem *, QStringList> *pair)
 {
+    Q_UNUSED(FName); // Silently handle error...
+
     QStringList list = QString(key).simplified().
     replace('\\', '/').split('/', QString::SkipEmptyParts);
 
@@ -454,17 +460,17 @@ bool SerialTree::itemDoesNotExist(const QString &FName,
             }
         }
 
-        emit errorMessage(QString(metaObject()->className()) +
+        /* emit errorMessage(QString(metaObject()->className()) +
         "::" + FName + "[" + windowTitle() + "] -> " +
         tr("Item \"%L1\" already exists in key \"%L2\"").
-        arg(string).arg(key)); return false;
+        arg(string).arg(key)); */ return false;
     }
     else
     {
-        emit errorMessage(QString(metaObject()->className()) +
+        /* emit errorMessage(QString(metaObject()->className()) +
         "::" + FName + "[" + windowTitle() + "] -> " +
         tr("No items found in key \"%L1\"").
-        arg(key)); return false;
+        arg(key)); */ return false;
     }
 }
 

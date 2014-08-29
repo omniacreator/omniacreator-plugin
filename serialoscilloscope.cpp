@@ -1964,6 +1964,10 @@ bool SerialOscilloscope::newBar(int plottable, const QString &name)
 
         updatePlots();
     }
+    else // Silently handle error...
+    {
+        return setBarName(plottable, name); updatePlots();
+    }
 
     return ok;
 }
@@ -2058,9 +2062,13 @@ bool SerialOscilloscope::newCurve(int plottable, const QString &name)
 
         ///////////////////////////////////////////////////////////////////////
 
-        ok = setGraphName(plottable, name);
+        ok = setCurveName(plottable, name);
 
         updatePlots();
+    }
+    else // Silently handle error...
+    {
+        return setCurveName(plottable, name); updatePlots();
     }
 
     return ok;
@@ -2160,6 +2168,10 @@ bool SerialOscilloscope::newGraph(int plottable, const QString &name)
 
         updatePlots();
     }
+    else // Silently handle error...
+    {
+        return setGraphName(plottable, name); updatePlots();
+    }
 
     return ok;
 }
@@ -2242,6 +2254,10 @@ bool SerialOscilloscope::newBox(int plottable, const QString &name)
         ok = setBoxName(plottable, name);
 
         updatePlots();
+    }
+    else // Silently handle error...
+    {
+        return setBoxName(plottable, name); updatePlots();
     }
 
     return ok;
@@ -8394,14 +8410,16 @@ QCPAbstractPlottable *SerialOscilloscope::plottableExists(const QString &FName,
 bool SerialOscilloscope::plottableDoesNotExist(const QString &FName,
                                                int plottable)
 {
+    Q_UNUSED(FName); // Silently handle error...
+
     bool ok = !m_plottables.contains(plottable);
 
     if(!ok)
     {
-        emit errorMessage(QString(metaObject()->className()) +
+        /* emit errorMessage(QString(metaObject()->className()) +
         "::" + FName + "[" + windowTitle() + "] -> " +
         tr("Plottable %L1 already exists").
-        arg(plottable));
+        arg(plottable)); */
     }
 
     return ok;

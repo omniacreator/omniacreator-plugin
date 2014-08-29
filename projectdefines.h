@@ -18,7 +18,7 @@
 
 #include "projectconstants.h"
 
-// Plugin Dailog //////////////////////////////////////////////////////////////
+// Plugin Dialog //////////////////////////////////////////////////////////////
 
 #define PLUGIN_DIALOG "PluginDialog"
 
@@ -26,6 +26,7 @@
 (PROJECT_FULL_NAME_WO_SPACES_STR "/" PLUGIN_DIALOG)
 
 #define PLUGIN_DIALOG_KEY_INITIAL_SETTINGS "initialSettings"
+
 #define PLUGIN_DIALOG_KEY_NEW_SOFTWARE "newSoftware"
 
 #define PLUGIN_DIALOG_KEY_NEW_FILE "newFile"

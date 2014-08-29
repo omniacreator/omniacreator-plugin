@@ -95,6 +95,10 @@ bool SerialTable::newRow(int row, const QString &name)
         m_ui->tableWidget->setVerticalHeaderItem(index, item);
         item->setData(Qt::UserRole, index);
     }
+    else // Silently handle error...
+    {
+        return setRowName(row, name);
+    }
 
     return ok;
 }
@@ -161,6 +165,10 @@ bool SerialTable::newColumn(int column, const QString &name)
         m_ui->tableWidget->setHorizontalHeaderItem(index, item);
         item->setData(Qt::UserRole, index);
     }
+    else // Silently handle error...
+    {
+        return setColumnName(column, name);
+    }
 
     return ok;
 }
@@ -220,6 +228,10 @@ bool SerialTable::newItem(int row, int column, const QString &text)
         item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 
         m_ui->tableWidget->setItem(r, c, item);
+    }
+    else // Silently handle error...
+    {
+        return setItemText(row, column, text);
     }
 
     return ok;
@@ -623,6 +635,8 @@ bool SerialTable::itemDoesNotExist(const QString &FName,
                                    int *rowIndex,
                                    int *columnIndex)
 {
+    Q_UNUSED(FName); // Silently handle error...
+
     bool ok = false;
 
     QTableWidgetItem *rowItem = rowHeaderExists(FName, row);
@@ -640,11 +654,11 @@ bool SerialTable::itemDoesNotExist(const QString &FName,
 
             if(!ok)
             {
-                emit errorMessage(QString(metaObject()->className()) +
+                /* emit errorMessage(QString(metaObject()->className()) +
                 "::" + FName + "[" + windowTitle() + "][" +
                 rowItem->text() + "][" + columnItem->text() + "] -> " +
                 tr("Item at (row == %L1) and (column == %L2) already exists").
-                arg(row).arg(column));
+                arg(row).arg(column)); */
             }
         }
     }
@@ -685,13 +699,15 @@ QTableWidgetItem *SerialTable::columnHeaderExists(const QString &FName,
 bool SerialTable::rowHeaderDoesNotExist(const QString &FName,
                                         int row)
 {
+    Q_UNUSED(FName); // Silently handle error...
+
     bool ok = !m_rowHeaders.contains(row);
 
     if(!ok)
     {
-        emit errorMessage(QString(metaObject()->className()) +
+        /* emit errorMessage(QString(metaObject()->className()) +
         "::" + FName + "[" + windowTitle() + "] -> " +
-        tr("Row %L1 already exists").arg(row));
+        tr("Row %L1 already exists").arg(row)); */
     }
 
     return ok;
@@ -700,13 +716,15 @@ bool SerialTable::rowHeaderDoesNotExist(const QString &FName,
 bool SerialTable::columnHeaderDoesNotExist(const QString &FName,
                                            int column)
 {
+    Q_UNUSED(FName); // Silently handle error...
+
     bool ok = !m_columnHeaders.contains(column);
 
     if(!ok)
     {
-        emit errorMessage(QString(metaObject()->className()) +
+        /* emit errorMessage(QString(metaObject()->className()) +
         "::" + FName + "[" + windowTitle() + "] -> " +
-        tr("Column %L1 already exists").arg(column));
+        tr("Column %L1 already exists").arg(column)); */
     }
 
     return ok;

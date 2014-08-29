@@ -246,7 +246,7 @@ void SerialDevice::setupRunner()
 {
     if(isOpen())
     {
-        setup(); QTimer::singleShot(10, this, SLOT(loopRunner()));
+        setup(); QTimer::singleShot(CALL_WAIT, this, SLOT(loopRunner()));
     }
 }
 
@@ -254,7 +254,7 @@ void SerialDevice::loopRunner()
 {
     if(isOpen())
     {
-        loop(); QTimer::singleShot(10, this, SLOT(loopRunner()));
+        loop(); QTimer::singleShot(CALL_WAIT, this, SLOT(loopRunner()));
     }
 }
 

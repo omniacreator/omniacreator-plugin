@@ -82,6 +82,10 @@ bool SerialInterface::newGroupBox(int groupBox,
 
         myWidget->show();
     }
+    else // Silently handle error...
+    {
+        return setGroupBoxName(groupBox, name);
+    }
 
     return ok;
 }
@@ -112,6 +116,10 @@ bool SerialInterface::newPushButton(int groupBox,
         gBox->m_layout->insertRow(index, myWidget);
 
         myWidget->show();
+    }
+    else if(m_children.contains(groupBox)) // Silently handle error...
+    {
+        return setPushButtonName(groupBox, interfaceBox, name);
     }
 
     return gBox;
@@ -144,6 +152,10 @@ bool SerialInterface::newRadioButton(int groupBox,
 
         myWidget->show();
     }
+    else if(m_children.contains(groupBox)) // Silently handle error...
+    {
+        return setRadioButtonName(groupBox, interfaceBox, name);
+    }
 
     return gBox;
 }
@@ -174,6 +186,10 @@ bool SerialInterface::newCheckBox(int groupBox,
         gBox->m_layout->insertRow(index, myWidget);
 
         myWidget->show();
+    }
+    else if(m_children.contains(groupBox)) // Silently handle error...
+    {
+        return setCheckBoxName(groupBox, interfaceBox, name);
     }
 
     return gBox;
@@ -206,6 +222,10 @@ bool SerialInterface::newLineEdit(int groupBox,
 
         myWidget->show();
     }
+    else if(m_children.contains(groupBox)) // Silently handle error...
+    {
+        return setLineEditName(groupBox, interfaceBox, name);
+    }
 
     return gBox;
 }
@@ -236,6 +256,10 @@ bool SerialInterface::newIntSpinBox(int groupBox,
         gBox->m_layout->insertRow(index, name, myWidget);
 
         myWidget->show();
+    }
+    else if(m_children.contains(groupBox)) // Silently handle error...
+    {
+        return setIntSpinBoxName(groupBox, interfaceBox, name);
     }
 
     return gBox;
@@ -268,6 +292,10 @@ bool SerialInterface::newBinSpinBox(int groupBox,
 
         myWidget->show();
     }
+    else if(m_children.contains(groupBox)) // Silently handle error...
+    {
+        return setBinSpinBoxName(groupBox, interfaceBox, name);
+    }
 
     return gBox;
 }
@@ -299,6 +327,10 @@ bool SerialInterface::newHexSpinBox(int groupBox,
 
         myWidget->show();
     }
+    else if(m_children.contains(groupBox)) // Silently handle error...
+    {
+        return setHexSpinBoxName(groupBox, interfaceBox, name);
+    }
 
     return gBox;
 }
@@ -329,6 +361,10 @@ bool SerialInterface::newDoubleSpinBox(int groupBox,
         gBox->m_layout->insertRow(index, name, myWidget);
 
         myWidget->show();
+    }
+    else if(m_children.contains(groupBox)) // Silently handle error...
+    {
+        return setDoubleSpinBoxName(groupBox, interfaceBox, name);
     }
 
     return gBox;
@@ -362,6 +398,10 @@ bool SerialInterface::newTimeEdit(int groupBox,
 
         myWidget->show();
     }
+    else if(m_children.contains(groupBox)) // Silently handle error...
+    {
+        return setTimeEditName(groupBox, interfaceBox, name);
+    }
 
     return gBox;
 }
@@ -392,6 +432,10 @@ bool SerialInterface::newDateEdit(int groupBox,
         gBox->m_layout->insertRow(index, name, myWidget);
 
         myWidget->show();
+    }
+    else if(m_children.contains(groupBox)) // Silently handle error...
+    {
+        return setDateEditName(groupBox, interfaceBox, name);
     }
 
     return gBox;
@@ -424,6 +468,10 @@ bool SerialInterface::newDateTimeEdit(int groupBox,
 
         myWidget->show();
     }
+    else if(m_children.contains(groupBox)) // Silently handle error...
+    {
+        return setDateTimeEditName(groupBox, interfaceBox, name);
+    }
 
     return gBox;
 }
@@ -455,6 +503,10 @@ bool SerialInterface::newSlider(int groupBox,
 
         myWidget->show();
     }
+    else if(m_children.contains(groupBox)) // Silently handle error...
+    {
+        return setSliderName(groupBox, interfaceBox, name);
+    }
 
     return gBox;
 }
@@ -477,6 +529,10 @@ bool SerialInterface::newLabel(int groupBox,
         gBox->m_layout->insertRow(index, myWidget);
 
         myWidget->show();
+    }
+    else if(m_children.contains(groupBox)) // Silently handle error...
+    {
+        return setLabelText(groupBox, interfaceBox, text);
     }
 
     return gBox;
@@ -501,6 +557,10 @@ bool SerialInterface::newProgressBar(int groupBox,
 
         myWidget->show();
     }
+    else if(m_children.contains(groupBox)) // Silently handle error...
+    {
+        return setProgressBarName(groupBox, interfaceBox, name);
+    }
 
     return gBox;
 }
@@ -522,6 +582,10 @@ bool SerialInterface::newSeperator(int groupBox,
         gBox->m_layout->insertRow(index, myWidget);
 
         myWidget->show();
+    }
+    else if(m_children.contains(groupBox)) // Silently handle error...
+    {
+        //
     }
 
     return gBox;
@@ -3272,6 +3336,8 @@ MyGroupBox *SerialInterface::interfaceBoxDoesNotExist(const QString &FName,
                                                       int groupBox,
                                                       int interfaceBox)
 {
+    Q_UNUSED(FName); // Silently handle error...
+
     MyGroupBox *gBox = groupBoxExists(FName, groupBox);
 
     if(gBox)
@@ -3280,11 +3346,11 @@ MyGroupBox *SerialInterface::interfaceBoxDoesNotExist(const QString &FName,
 
         if(!ok)
         {
-            emit errorMessage(QString(metaObject()->className()) +
+            /* emit errorMessage(QString(metaObject()->className()) +
             "::" + FName + "[" + windowTitle() + "][" +
             gBox->title() + "] -> " +
             tr("Interface Box %L1 already exists").
-            arg(interfaceBox));
+            arg(interfaceBox)); */
         }
 
         return ok ? gBox : NULL;
@@ -3311,14 +3377,16 @@ MyGroupBox *SerialInterface::groupBoxExists(const QString &FName,
 
 bool SerialInterface::groupBoxDoesNotExist(const QString &FName, int groupBox)
 {
+    Q_UNUSED(FName); // Silently handle error...
+
     bool ok = !m_children.contains(groupBox);
 
     if(!ok)
     {
-        emit errorMessage(QString(metaObject()->className()) +
+        /* emit errorMessage(QString(metaObject()->className()) +
         "::" + FName + "[" + windowTitle() + "] -> " +
         tr("Group Box %L1 already exists").
-        arg(groupBox));
+        arg(groupBox)); */
     }
 
     return ok;
