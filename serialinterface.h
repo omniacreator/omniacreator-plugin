@@ -24,23 +24,6 @@
 namespace Ui
 {
     class SerialInterface;
-
-    class MyGroupBox;
-    class MyPushButton;
-    class MyRadioButton;
-    class MyCheckBox;
-    class MyLineEdit;
-    class MyIntSpinBox;
-    class MyBinSpinBox;
-    class MyHexSpinBox;
-    class MyDoubleSpinBox;
-    class MyTimeEdit;
-    class MyDateEdit;
-    class MyDateTimeEdit;
-    class MySlider;
-    class MyLabel;
-    class MyProgressBar;
-    class MySeperator;
 }
 
 class MyGroupBox : public QGroupBox ///////////////////////////////////////////
@@ -540,7 +523,6 @@ public:
     explicit MySlider() : QWidget()
     {
         QHBoxLayout *layout = new QHBoxLayout(this);
-
         layout->setMargin(0);
 
         m_slider = new QSlider(Qt::Horizontal);

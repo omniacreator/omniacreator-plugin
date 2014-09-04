@@ -185,6 +185,8 @@ private slots:
     void closeProject();
     void cmakeChanged();
 
+    void cleanClicked();
+    void rebuildClicked();
     void buildClicked();
     void runClicked();
     void reopenPort();
@@ -193,11 +195,17 @@ private:
 
     Q_DISABLE_COPY(OmniaCreatorPlugin)
 
-    SerialMake *m_make;
+    SerialMake *m_make; bool m_runClicked; QFileSystemModel *m_projectModel;
     SerialPort *m_port;
     SerialEscape *m_escape;
 
     QStatusBar *m_status;
+
+    QLabel *m_projectFolder;
+    QLabel *m_boardType;
+
+    QLabel *m_codeSpaceUsed;
+    QLabel *m_dataSpaceUsed;
 
     Core::ActionContainer *m_boardMenu;
     Core::ActionContainer *m_widgetsMenu;
@@ -219,14 +227,6 @@ private:
 
     Core::Command *m_resetSerialPort;
     Core::Command *m_resetSerialTerminal;
-
-    QLabel *m_projectFolder;
-    QLabel *m_boardType;
-
-    QLabel *m_codeSpaceUsed;
-    QLabel *m_dataSpaceUsed;
-
-    QFileSystemWatcher *m_projectWatcher;
 
     // Begin Qt Creator Setup Variables ///////////////////////////////////////
 

@@ -526,9 +526,11 @@ SerialWindow(title, settings, parent), m_ui(new Ui::SerialOscilloscope)
 
     m_plottables = QMap<int, QCPAbstractPlottable*>();
 
-    m_plotAutoScale = true; m_mathAutoScale = true;
+    m_plotXAutoScale = true; m_plotYAutoScale = true;
     m_plotXAxisRangeBackup = m_plot->xAxis->range();
     m_plotYAxisRangeBackup = m_plot->yAxis->range();
+
+    m_mathXAutoScale = true; m_mathYAutoScale = true;
     m_mathXAxisRangeBackup = m_math->xAxis->range();
     m_mathYAxisRangeBackup = m_math->yAxis->range();
 
@@ -1313,26 +1315,6 @@ QRgb SerialOscilloscope::getBackgroundColor() const
     return m_background.color().rgb(); // NO APLHA!
 }
 
-void SerialOscilloscope::setAxesAutoScale(bool autoScale)
-{
-    m_plotAutoScale = autoScale;
-}
-
-bool SerialOscilloscope::getAxesAutoScale() const
-{
-    return m_plotAutoScale;
-}
-
-void SerialOscilloscope::setFFTAxesAutoScale(bool autoScale)
-{
-    m_mathAutoScale = autoScale;
-}
-
-bool SerialOscilloscope::getFFTAxesAutoScale() const
-{
-    return m_mathAutoScale;
-}
-
 bool SerialOscilloscope::setXAxisScaleType(QCPAxis::ScaleType scaleType)
 {
     bool ok = notInvalid(__FUNCTION__, "scaleType", scaleType,
@@ -1388,6 +1370,18 @@ bool SerialOscilloscope::setXAxisScaleLogBase(double base)
 double SerialOscilloscope::getXAxisScaleLogBase() const
 {
     return m_plot->xAxis->scaleLogBase();
+}
+
+void SerialOscilloscope::setXAxisRangeAutoScale(bool on)
+{
+    m_plotXAutoScale = on;
+
+    updatePlots();
+}
+
+bool SerialOscilloscope::getXAxisRangeAutoScale() const
+{
+    return m_plotXAutoScale;
 }
 
 bool SerialOscilloscope::setXAxisRangeLower(double lower)
@@ -1518,6 +1512,18 @@ bool SerialOscilloscope::setYAxisScaleLogBase(double base)
 double SerialOscilloscope::getYAxisScaleLogBase() const
 {
     return m_plot->yAxis->scaleLogBase();
+}
+
+void SerialOscilloscope::setYAxisRangeAutoScale(bool on)
+{
+    m_plotYAutoScale = on;
+
+    updatePlots();
+}
+
+bool SerialOscilloscope::getYAxisRangeAutoScale() const
+{
+    return m_plotYAutoScale;
 }
 
 bool SerialOscilloscope::setYAxisRangeLower(double lower)
@@ -1652,11 +1658,31 @@ double SerialOscilloscope::getFFTXAxisScaleLogBase() const
     return m_math->xAxis->scaleLogBase();
 }
 
+bool SerialOscilloscope::setFFTXAxisRangeAutoScale(bool on)
+{
+    bool ok = FFTWEnabled(__FUNCTION__);
+
+    if(ok)
+    {
+        m_mathXAutoScale = on;
+
+        updatePlots();
+    }
+
+    return ok;
+}
+
+bool SerialOscilloscope::getFFTXAxisRangeAutoScale() const
+{
+    return m_mathXAutoScale;
+}
+
 bool SerialOscilloscope::setFFTXAxisRangeLower(double lower)
 {
-    bool ok = notInvalid(__FUNCTION__, "lower", lower,
+    bool ok = (FFTWEnabled(__FUNCTION__)
+            && notInvalid(__FUNCTION__, "lower", lower,
                          -m_math->xAxis->range().maxRange,
-                         +m_math->xAxis->range().maxRange);
+                         +m_math->xAxis->range().maxRange));
 
     if(ok)
     {
@@ -1678,9 +1704,10 @@ double SerialOscilloscope::getFFTXAxisRangeLower() const
 
 bool SerialOscilloscope::setFFTXAxisRangeUpper(double upper)
 {
-    bool ok = notInvalid(__FUNCTION__, "upper", upper,
+    bool ok = (FFTWEnabled(__FUNCTION__)
+            && notInvalid(__FUNCTION__, "upper", upper,
                          -m_math->xAxis->range().maxRange,
-                         +m_math->xAxis->range().maxRange);
+                         +m_math->xAxis->range().maxRange));
 
     if(ok)
     {
@@ -1798,11 +1825,31 @@ double SerialOscilloscope::getFFTYAxisScaleLogBase() const
     return m_math->yAxis->scaleLogBase();
 }
 
+bool SerialOscilloscope::setFFTYAxisRangeAutoScale(bool on)
+{
+    bool ok = FFTWEnabled(__FUNCTION__);
+
+    if(ok)
+    {
+        m_mathYAutoScale = on;
+
+        updatePlots();
+    }
+
+    return ok;
+}
+
+bool SerialOscilloscope::getFFTYAxisRangeAutoScale() const
+{
+    return m_mathYAutoScale;
+}
+
 bool SerialOscilloscope::setFFTYAxisRangeLower(double lower)
 {
-    bool ok = notInvalid(__FUNCTION__, "lower", lower,
+    bool ok = (FFTWEnabled(__FUNCTION__)
+            && notInvalid(__FUNCTION__, "lower", lower,
                          -m_math->yAxis->range().maxRange,
-                         +m_math->yAxis->range().maxRange);
+                         +m_math->yAxis->range().maxRange));
 
     if(ok)
     {
@@ -1824,9 +1871,10 @@ double SerialOscilloscope::getFFTYAxisRangeLower() const
 
 bool SerialOscilloscope::setFFTYAxisRangeUpper(double upper)
 {
-    bool ok = notInvalid(__FUNCTION__, "upper", upper,
+    bool ok = (FFTWEnabled(__FUNCTION__)
+            && notInvalid(__FUNCTION__, "upper", upper,
                          -m_math->yAxis->range().maxRange,
-                         +m_math->yAxis->range().maxRange);
+                         +m_math->yAxis->range().maxRange));
 
     if(ok)
     {
@@ -6508,48 +6556,48 @@ void SerialOscilloscope::zoomFit()
     if(!m_math->underMouse())
     {
         m_plot->deselectAll();
+        m_plot->rescaleAxes(true);
 
-        if(m_plotAutoScale)
-        {
-            m_plot->rescaleAxes(true);
-
-            m_plotXAxisRangeBackup = m_plot->xAxis->range();
-            m_plotYAxisRangeBackup = m_plot->yAxis->range();
-        }
-        else
+        if(!m_plotXAutoScale)
         {
             m_plot->xAxis->setRange(m_plotXAxisRangeBackup);
             m_plot->xAxis2->setRange(m_plotXAxisRangeBackup);
+        }
+
+        if(!m_plotYAutoScale)
+        {
             m_plot->yAxis->setRange(m_plotYAxisRangeBackup);
             m_plot->yAxis2->setRange(m_plotYAxisRangeBackup);
         }
 
-        m_plot->replot();
+        m_plotXAxisRangeBackup = m_plot->xAxis->range();
+        m_plotYAxisRangeBackup = m_plot->yAxis->range();
 
+        m_plot->replot();
         m_plotResize = true;
     }
 
     if(!m_plot->underMouse())
     {
         m_math->deselectAll();
+        m_math->rescaleAxes(true);
 
-        if(m_mathAutoScale)
-        {
-            m_math->rescaleAxes(true);
-
-            m_mathXAxisRangeBackup = m_math->xAxis->range();
-            m_mathYAxisRangeBackup = m_math->yAxis->range();
-        }
-        else
+        if(!m_mathXAutoScale)
         {
             m_math->xAxis->setRange(m_mathXAxisRangeBackup);
             m_math->xAxis2->setRange(m_mathXAxisRangeBackup);
+        }
+
+        if(!m_mathYAutoScale)
+        {
             m_math->yAxis->setRange(m_mathYAxisRangeBackup);
             m_math->yAxis2->setRange(m_mathYAxisRangeBackup);
         }
 
-        m_math->replot();
+        m_mathXAxisRangeBackup = m_math->xAxis->range();
+        m_mathYAxisRangeBackup = m_math->yAxis->range();
 
+        m_math->replot();
         m_mathResize = true;
     }
 }
@@ -6605,6 +6653,30 @@ void SerialOscilloscope::saveRasterImage()
                 if(!dialog.getSaveCurrentView())
                 {
                     m_plot->rescaleAxes(true); m_math->rescaleAxes(true);
+
+                    if(!m_plotXAutoScale)
+                    {
+                        m_plot->xAxis->setRange(m_plotXAxisRangeBackup);
+                        m_plot->xAxis2->setRange(m_plotXAxisRangeBackup);
+                    }
+
+                    if(!m_plotYAutoScale)
+                    {
+                        m_plot->yAxis->setRange(m_plotYAxisRangeBackup);
+                        m_plot->yAxis2->setRange(m_plotYAxisRangeBackup);
+                    }
+
+                    if(!m_mathXAutoScale)
+                    {
+                        m_math->xAxis->setRange(m_mathXAxisRangeBackup);
+                        m_math->xAxis2->setRange(m_mathXAxisRangeBackup);
+                    }
+
+                    if(!m_mathYAutoScale)
+                    {
+                        m_math->yAxis->setRange(m_mathYAxisRangeBackup);
+                        m_math->yAxis2->setRange(m_mathYAxisRangeBackup);
+                    }
                 }
 
                 if(m_math->parentWidget()->isHidden())
@@ -6729,6 +6801,30 @@ void SerialOscilloscope::saveVectorImage()
                 if(!dialog.getSaveCurrentView())
                 {
                     m_plot->rescaleAxes(true); m_math->rescaleAxes(true);
+
+                    if(!m_plotXAutoScale)
+                    {
+                        m_plot->xAxis->setRange(m_plotXAxisRangeBackup);
+                        m_plot->xAxis2->setRange(m_plotXAxisRangeBackup);
+                    }
+
+                    if(!m_plotYAutoScale)
+                    {
+                        m_plot->yAxis->setRange(m_plotYAxisRangeBackup);
+                        m_plot->yAxis2->setRange(m_plotYAxisRangeBackup);
+                    }
+
+                    if(!m_mathXAutoScale)
+                    {
+                        m_math->xAxis->setRange(m_mathXAxisRangeBackup);
+                        m_math->xAxis2->setRange(m_mathXAxisRangeBackup);
+                    }
+
+                    if(!m_mathYAutoScale)
+                    {
+                        m_math->yAxis->setRange(m_mathYAxisRangeBackup);
+                        m_math->yAxis2->setRange(m_mathYAxisRangeBackup);
+                    }
                 }
 
                 if(m_math->parentWidget()->isHidden())
@@ -6827,6 +6923,30 @@ void SerialOscilloscope::saveVectorImage()
                     if(!dialog.getSaveCurrentView())
                     {
                         m_plot->rescaleAxes(true); m_math->rescaleAxes(true);
+
+                        if(!m_plotXAutoScale)
+                        {
+                            m_plot->xAxis->setRange(m_plotXAxisRangeBackup);
+                            m_plot->xAxis2->setRange(m_plotXAxisRangeBackup);
+                        }
+
+                        if(!m_plotYAutoScale)
+                        {
+                            m_plot->yAxis->setRange(m_plotYAxisRangeBackup);
+                            m_plot->yAxis2->setRange(m_plotYAxisRangeBackup);
+                        }
+
+                        if(!m_mathXAutoScale)
+                        {
+                            m_math->xAxis->setRange(m_mathXAxisRangeBackup);
+                            m_math->xAxis2->setRange(m_mathXAxisRangeBackup);
+                        }
+
+                        if(!m_mathYAutoScale)
+                        {
+                            m_math->yAxis->setRange(m_mathYAxisRangeBackup);
+                            m_math->yAxis2->setRange(m_mathYAxisRangeBackup);
+                        }
                     }
 
                     if(m_math->parentWidget()->isHidden())
@@ -6923,14 +7043,6 @@ void SerialOscilloscope::importState(const QString &fileName)
                         setBackgroundColor(QColor(background).rgba());
                     }
 
-                    setAxesAutoScale(
-                    object.value("axesAutoScale").
-                    toBool(getAxesAutoScale()));
-
-                    setFFTAxesAutoScale(
-                    object.value("FFTAxesAutoScale").
-                    toBool(getFFTAxesAutoScale()));
-
                     setXAxisScaleType(static_cast<QCPAxis::ScaleType>(
                     object.value("XAxisScaleType").
                     toInt(getXAxisScaleType())));
@@ -6938,6 +7050,10 @@ void SerialOscilloscope::importState(const QString &fileName)
                     setXAxisScaleLogBase(
                     object.value("XAxisScaleLogBase").
                     toDouble(getXAxisScaleLogBase()));
+
+                    setXAxisRangeAutoScale(
+                    object.value("XAxisRangeAutoScale").
+                    toBool(getXAxisRangeAutoScale()));
 
                     setXAxisRangeLower(
                     object.value("XAxisRangeLower").
@@ -6963,6 +7079,10 @@ void SerialOscilloscope::importState(const QString &fileName)
                     object.value("YAxisScaleLogBase").
                     toDouble(getYAxisScaleLogBase()));
 
+                    setYAxisRangeAutoScale(
+                    object.value("YAxisRangeAutoScale").
+                    toBool(getYAxisRangeAutoScale()));
+
                     setYAxisRangeLower(
                     object.value("YAxisRangeLower").
                     toDouble(getYAxisRangeLower()));
@@ -6987,6 +7107,10 @@ void SerialOscilloscope::importState(const QString &fileName)
                     object.value("FFTXAxisScaleLogBase").
                     toDouble(getFFTXAxisScaleLogBase()));
 
+                    setFFTXAxisRangeAutoScale(
+                    object.value("FFTXAxisRangeAutoScale").
+                    toBool(getFFTXAxisRangeAutoScale()));
+
                     setFFTXAxisRangeLower(
                     object.value("FFTXAxisRangeLower").
                     toDouble(getFFTXAxisRangeLower()));
@@ -7010,6 +7134,10 @@ void SerialOscilloscope::importState(const QString &fileName)
                     setFFTYAxisScaleLogBase(
                     object.value("FFTYAxisScaleLogBase").
                     toDouble(getFFTYAxisScaleLogBase()));
+
+                    setFFTYAxisRangeAutoScale(
+                    object.value("FFTYAxisRangeAutoScale").
+                    toBool(getFFTYAxisRangeAutoScale()));
 
                     setFFTYAxisRangeLower(
                     object.value("FFTYAxisRangeLower").
@@ -7453,36 +7581,66 @@ void SerialOscilloscope::exportState(const QString &fileName)
 
             object.insert("background",
             QColor::fromRgba(getBackgroundColor()).name(QColor::HexArgb));
-            object.insert("axesAutoScale", getAxesAutoScale());
-            object.insert("FFTAxesAutoScale", getFFTAxesAutoScale());
 
-            object.insert("XAxisScaleType", getXAxisScaleType());
-            object.insert("XAxisScaleLogBase", getXAxisScaleLogBase());
-            object.insert("XAxisRangeReversed", getXAxisRangeReversed());
-            object.insert("XAxisRangeLower", getXAxisRangeLower());
-            object.insert("XAxisRangeUpper", getXAxisRangeUpper());
-            object.insert("XAxisLabel", getXAxisLabel());
+            object.insert("XAxisScaleType",
+                          getXAxisScaleType());
+            object.insert("XAxisScaleLogBase",
+                          getXAxisScaleLogBase());
+            object.insert("XAxisRangeAutoScale",
+                          getXAxisRangeAutoScale());
+            object.insert("XAxisRangeLower",
+                          getXAxisRangeLower());
+            object.insert("XAxisRangeUpper",
+                          getXAxisRangeUpper());
+            object.insert("XAxisRangeReversed",
+                          getXAxisRangeReversed());
+            object.insert("XAxisLabel",
+                          getXAxisLabel());
 
-            object.insert("YAxisScaleType", getYAxisScaleType());
-            object.insert("YAxisScaleLogBase", getYAxisScaleLogBase());
-            object.insert("YAxisRangeReversed", getYAxisRangeReversed());
-            object.insert("YAxisRangeLower", getYAxisRangeLower());
-            object.insert("YAxisRangeUpper", getYAxisRangeUpper());
-            object.insert("YAxisLabel", getYAxisLabel());
+            object.insert("YAxisScaleType",
+                          getYAxisScaleType());
+            object.insert("YAxisScaleLogBase",
+                          getYAxisScaleLogBase());
+            object.insert("YAxisRangeAutoScale",
+                          getYAxisRangeAutoScale());
+            object.insert("YAxisRangeLower",
+                          getYAxisRangeLower());
+            object.insert("YAxisRangeUpper",
+                          getYAxisRangeUpper());
+            object.insert("YAxisRangeReversed",
+                          getYAxisRangeReversed());
+            object.insert("YAxisLabel",
+                          getYAxisLabel());
 
-            object.insert("FFTXAxisScaleType", getFFTXAxisScaleType());
-            object.insert("FFTXAxisScaleLogBase", getFFTXAxisScaleLogBase());
-            object.insert("FFTXAxisRangeReversed", getFFTXAxisRangeReversed());
-            object.insert("FFTXAxisRangeLower", getFFTXAxisRangeLower());
-            object.insert("FFTXAxisRangeUpper", getFFTXAxisRangeUpper());
-            object.insert("FFTXAxisLabel", getFFTXAxisLabel());
+            object.insert("FFTXAxisScaleType",
+                          getFFTXAxisScaleType());
+            object.insert("FFTXAxisScaleLogBase",
+                          getFFTXAxisScaleLogBase());
+            object.insert("FFTXAxisRangeAutoScale",
+                          getFFTXAxisRangeAutoScale());
+            object.insert("FFTXAxisRangeLower",
+                          getFFTXAxisRangeLower());
+            object.insert("FFTXAxisRangeUpper",
+                          getFFTXAxisRangeUpper());
+            object.insert("FFTXAxisRangeReversed",
+                          getFFTXAxisRangeReversed());
+            object.insert("FFTXAxisLabel",
+                          getFFTXAxisLabel());
 
-            object.insert("FFTYAxisScaleType", getFFTYAxisScaleType());
-            object.insert("FFTYAxisScaleLogBase", getFFTYAxisScaleLogBase());
-            object.insert("FFTYAxisRangeReversed", getFFTYAxisRangeReversed());
-            object.insert("FFTYAxisRangeLower", getFFTYAxisRangeLower());
-            object.insert("FFTYAxisRangeUpper", getFFTYAxisRangeUpper());
-            object.insert("FFTYAxisLabel", getFFTYAxisLabel());
+            object.insert("FFTYAxisScaleType",
+                          getFFTYAxisScaleType());
+            object.insert("FFTYAxisScaleLogBase",
+                          getFFTYAxisScaleLogBase());
+            object.insert("FFTYAxisRangeAutoScale",
+                          getFFTYAxisRangeAutoScale());
+            object.insert("FFTYAxisRangeLower",
+                          getFFTYAxisRangeLower());
+            object.insert("FFTYAxisRangeUpper",
+                          getFFTYAxisRangeUpper());
+            object.insert("FFTYAxisRangeReversed",
+                          getFFTYAxisRangeReversed());
+            object.insert("FFTYAxisLabel",
+                          getFFTYAxisLabel());
 
             QJsonArray plottables;
 
@@ -8008,9 +8166,24 @@ void SerialOscilloscope::repaintPlots()
 
         ///////////////////////////////////////////////////////////////////////
 
-        if(m_plotResize && m_plotAutoScale)
+        if(m_plotResize)
         {
             m_plot->rescaleAxes(true);
+
+            if(!m_plotXAutoScale)
+            {
+                m_plot->xAxis->setRange(m_plotXAxisRangeBackup);
+                m_plot->xAxis2->setRange(m_plotXAxisRangeBackup);
+            }
+
+            if(!m_plotYAutoScale)
+            {
+                m_plot->yAxis->setRange(m_plotYAxisRangeBackup);
+                m_plot->yAxis2->setRange(m_plotYAxisRangeBackup);
+            }
+
+            m_plotXAxisRangeBackup = m_plot->xAxis->range();
+            m_plotYAxisRangeBackup = m_plot->yAxis->range();
         }
 
         // QCP-BUG: Spacing is not removed for hidden items...
@@ -8031,9 +8204,24 @@ void SerialOscilloscope::repaintPlots()
 
         ///////////////////////////////////////////////////////////////////////
 
-        if(m_mathResize && m_mathAutoScale)
+        if(m_mathResize)
         {
             m_math->rescaleAxes(true);
+
+            if(!m_mathXAutoScale)
+            {
+                m_math->xAxis->setRange(m_mathXAxisRangeBackup);
+                m_math->xAxis2->setRange(m_mathXAxisRangeBackup);
+            }
+
+            if(!m_mathYAutoScale)
+            {
+                m_math->yAxis->setRange(m_mathYAxisRangeBackup);
+                m_math->yAxis2->setRange(m_mathYAxisRangeBackup);
+            }
+
+            m_mathXAxisRangeBackup = m_math->xAxis->range();
+            m_mathYAxisRangeBackup = m_math->yAxis->range();
         }
 
         // QCP-BUG: Spacing is not removed for hidden items...
@@ -8053,47 +8241,47 @@ bool SerialOscilloscope::eventFilter(QObject *object, QEvent *event)
             if(object == m_plot)
             {
                 m_plot->deselectAll();
+                m_plot->rescaleAxes(true);
 
-                if(m_plotAutoScale)
-                {
-                    m_plot->rescaleAxes(true);
-
-                    m_plotXAxisRangeBackup = m_plot->xAxis->range();
-                    m_plotYAxisRangeBackup = m_plot->yAxis->range();
-                }
-                else
+                if(!m_plotXAutoScale)
                 {
                     m_plot->xAxis->setRange(m_plotXAxisRangeBackup);
                     m_plot->xAxis2->setRange(m_plotXAxisRangeBackup);
+                }
+
+                if(!m_plotYAutoScale)
+                {
                     m_plot->yAxis->setRange(m_plotYAxisRangeBackup);
                     m_plot->yAxis2->setRange(m_plotYAxisRangeBackup);
                 }
 
-                m_plot->replot();
+                m_plotXAxisRangeBackup = m_plot->xAxis->range();
+                m_plotYAxisRangeBackup = m_plot->yAxis->range();
 
+                m_plot->replot();
                 m_plotResize = true;
             }
             else if(object == m_math)
             {
                 m_math->deselectAll();
+                m_math->rescaleAxes(true);
 
-                if(m_mathAutoScale)
-                {
-                    m_math->rescaleAxes(true);
-
-                    m_mathXAxisRangeBackup = m_math->xAxis->range();
-                    m_mathYAxisRangeBackup = m_math->yAxis->range();
-                }
-                else
+                if(!m_mathXAutoScale)
                 {
                     m_math->xAxis->setRange(m_mathXAxisRangeBackup);
                     m_math->xAxis2->setRange(m_mathXAxisRangeBackup);
+                }
+
+                if(!m_mathYAutoScale)
+                {
                     m_math->yAxis->setRange(m_mathYAxisRangeBackup);
                     m_math->yAxis2->setRange(m_mathYAxisRangeBackup);
                 }
 
-                m_math->replot();
+                m_mathXAxisRangeBackup = m_math->xAxis->range();
+                m_mathYAxisRangeBackup = m_math->yAxis->range();
 
+                m_math->replot();
                 m_mathResize = true;
             }
         }

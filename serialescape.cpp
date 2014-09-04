@@ -592,87 +592,124 @@ void SerialEscape::writeTask()
 void SerialEscape::sendVariantPacket(SerialFunction function,
                                      const QVariant &value)
 {
-    switch(function)
+    if(m_enabled && m_port && m_port->isOpen() && m_sendRecurseLock.tryLock())
     {
-        case INTERFACE_PUSH_BUTTON_SIGNAL:
+        m_cancelTask = false;
+
+        ///////////////////////////////////////////////////////////////////////
+
+        int diff = qMax(m_writeList.size() - DTE_MAX_QUEUE_DEPTH, 0);
+
+        QProgressDialog dialog(m_widget, Qt::MSWindowsFixedSizeDialogHint |
+        Qt::WindowTitleHint | Qt::WindowSystemMenuHint |
+        Qt::WindowCloseButtonHint);
+
+        connect(this, SIGNAL(cancelTask()),
+                &dialog, SLOT(cancel()));
+
+        dialog.setWindowTitle(tr("Serial Port"));
+        dialog.setWindowModality(Qt::ApplicationModal);
+        dialog.setLabelText(tr("Sending Packets..."));
+        dialog.setRange(0, diff); dialog.setValue(0);
+
+        while(m_writeList.size() > DTE_MAX_QUEUE_DEPTH)
         {
-            sendIntPacket(function,
-            value.toInt()); break;
+            writeTask();
+
+            dialog.setValue(diff - (m_writeList.size() - DTE_MAX_QUEUE_DEPTH));
+
+            if(dialog.wasCanceled())
+            {
+                m_sendRecurseLock.unlock(); return;
+            }
         }
 
-        case INTERFACE_RADIO_BUTTON_SIGNAL:
+        ///////////////////////////////////////////////////////////////////////
+
+        switch(function)
         {
-            sendIntPacket(function,
-            value.toInt()); break;
+            case INTERFACE_PUSH_BUTTON_SIGNAL:
+            {
+                sendIntPacket(function,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_RADIO_BUTTON_SIGNAL:
+            {
+                sendIntPacket(function,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_CHECK_BOX_SIGNAL:
+            {
+                sendIntPacket(function,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_LINE_EDIT_SIGNAL:
+            {
+                sendStringPacket(function,
+                value.toString().toUtf8()); break;
+            }
+
+            case INTERFACE_INT_SPIN_BOX_SIGNAL:
+            {
+                sendIntPacket(function,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_BIN_SPIN_BOX_SIGNAL:
+            {
+                sendIntPacket(function,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_HEX_SPIN_BOX_SIGNAL:
+            {
+                sendIntPacket(function,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_DOUBLE_SPIN_BOX_SIGNAL:
+            {
+                sendFloatPacket(function,
+                value.toFloat()); break;
+            }
+
+            case INTERFACE_TIME_EDIT_SIGNAL:
+            {
+                sendStringPacket(function,
+                value.toString().toUtf8()); break;
+            }
+
+            case INTERFACE_DATE_EDIT_SIGNAL:
+            {
+                sendStringPacket(function,
+                value.toString().toUtf8()); break;
+            }
+
+            case INTERFACE_DATE_TIME_EDIT_SIGNAL:
+            {
+                sendStringPacket(function,
+                value.toString().toUtf8()); break;
+            }
+
+            case INTERFACE_SLIDER_SIGNAL:
+            {
+                sendIntPacket(function,
+                value.toInt()); break;
+            }
+
+            default:
+            {
+                qDebug() <<
+                Q_FUNC_INFO <<
+                "no case statement for function:" <<
+                function; break;
+            }
         }
 
-        case INTERFACE_CHECK_BOX_SIGNAL:
-        {
-            sendIntPacket(function,
-            value.toInt()); break;
-        }
-
-        case INTERFACE_LINE_EDIT_SIGNAL:
-        {
-            sendStringPacket(function,
-            value.toString().toUtf8()); break;
-        }
-
-        case INTERFACE_INT_SPIN_BOX_SIGNAL:
-        {
-            sendIntPacket(function,
-            value.toInt()); break;
-        }
-
-        case INTERFACE_BIN_SPIN_BOX_SIGNAL:
-        {
-            sendIntPacket(function,
-            value.toInt()); break;
-        }
-
-        case INTERFACE_HEX_SPIN_BOX_SIGNAL:
-        {
-            sendIntPacket(function,
-            value.toInt()); break;
-        }
-
-        case INTERFACE_DOUBLE_SPIN_BOX_SIGNAL:
-        {
-            sendFloatPacket(function,
-            value.toFloat()); break;
-        }
-
-        case INTERFACE_TIME_EDIT_SIGNAL:
-        {
-            sendStringPacket(function,
-            value.toString().toUtf8()); break;
-        }
-
-        case INTERFACE_DATE_EDIT_SIGNAL:
-        {
-            sendStringPacket(function,
-            value.toString().toUtf8()); break;
-        }
-
-        case INTERFACE_DATE_TIME_EDIT_SIGNAL:
-        {
-            sendStringPacket(function,
-            value.toString().toUtf8()); break;
-        }
-
-        case INTERFACE_SLIDER_SIGNAL:
-        {
-            sendIntPacket(function,
-            value.toInt()); break;
-        }
-
-        default:
-        {
-            qDebug() <<
-            Q_FUNC_INFO <<
-            "no case statement for function:" <<
-            function; break;
-        }
+        m_sendRecurseLock.unlock();
     }
 }
 
@@ -680,87 +717,124 @@ void SerialEscape::sendVariantPacket(SerialFunction function,
                                      int handle0,
                                      const QVariant &value)
 {
-    switch(function)
+    if(m_enabled && m_port && m_port->isOpen() && m_sendRecurseLock.tryLock())
     {
-        case INTERFACE_PUSH_BUTTON_SIGNAL:
+        m_cancelTask = false;
+
+        ///////////////////////////////////////////////////////////////////////
+
+        int diff = qMax(m_writeList.size() - DTE_MAX_QUEUE_DEPTH, 0);
+
+        QProgressDialog dialog(m_widget, Qt::MSWindowsFixedSizeDialogHint |
+        Qt::WindowTitleHint | Qt::WindowSystemMenuHint |
+        Qt::WindowCloseButtonHint);
+
+        connect(this, SIGNAL(cancelTask()),
+                &dialog, SLOT(cancel()));
+
+        dialog.setWindowTitle(tr("Serial Port"));
+        dialog.setWindowModality(Qt::ApplicationModal);
+        dialog.setLabelText(tr("Sending Packets..."));
+        dialog.setRange(0, diff); dialog.setValue(0);
+
+        while(m_writeList.size() > DTE_MAX_QUEUE_DEPTH)
         {
-            sendIntPacket(function, handle0,
-            value.toInt()); break;
+            writeTask();
+
+            dialog.setValue(diff - (m_writeList.size() - DTE_MAX_QUEUE_DEPTH));
+
+            if(dialog.wasCanceled())
+            {
+                m_sendRecurseLock.unlock(); return;
+            }
         }
 
-        case INTERFACE_RADIO_BUTTON_SIGNAL:
+        ///////////////////////////////////////////////////////////////////////
+
+        switch(function)
         {
-            sendIntPacket(function, handle0,
-            value.toInt()); break;
+            case INTERFACE_PUSH_BUTTON_SIGNAL:
+            {
+                sendIntPacket(function, handle0,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_RADIO_BUTTON_SIGNAL:
+            {
+                sendIntPacket(function, handle0,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_CHECK_BOX_SIGNAL:
+            {
+                sendIntPacket(function, handle0,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_LINE_EDIT_SIGNAL:
+            {
+                sendStringPacket(function, handle0,
+                value.toString().toUtf8()); break;
+            }
+
+            case INTERFACE_INT_SPIN_BOX_SIGNAL:
+            {
+                sendIntPacket(function, handle0,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_BIN_SPIN_BOX_SIGNAL:
+            {
+                sendIntPacket(function, handle0,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_HEX_SPIN_BOX_SIGNAL:
+            {
+                sendIntPacket(function, handle0,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_DOUBLE_SPIN_BOX_SIGNAL:
+            {
+                sendFloatPacket(function, handle0,
+                value.toFloat()); break;
+            }
+
+            case INTERFACE_TIME_EDIT_SIGNAL:
+            {
+                sendStringPacket(function, handle0,
+                value.toString().toUtf8()); break;
+            }
+
+            case INTERFACE_DATE_EDIT_SIGNAL:
+            {
+                sendStringPacket(function, handle0,
+                value.toString().toUtf8()); break;
+            }
+
+            case INTERFACE_DATE_TIME_EDIT_SIGNAL:
+            {
+                sendStringPacket(function, handle0,
+                value.toString().toUtf8()); break;
+            }
+
+            case INTERFACE_SLIDER_SIGNAL:
+            {
+                sendIntPacket(function, handle0,
+                value.toInt()); break;
+            }
+
+            default:
+            {
+                qDebug() <<
+                Q_FUNC_INFO <<
+                "no case statement for function:" <<
+                function; break;
+            }
         }
 
-        case INTERFACE_CHECK_BOX_SIGNAL:
-        {
-            sendIntPacket(function, handle0,
-            value.toInt()); break;
-        }
-
-        case INTERFACE_LINE_EDIT_SIGNAL:
-        {
-            sendStringPacket(function, handle0,
-            value.toString().toUtf8()); break;
-        }
-
-        case INTERFACE_INT_SPIN_BOX_SIGNAL:
-        {
-            sendIntPacket(function, handle0,
-            value.toInt()); break;
-        }
-
-        case INTERFACE_BIN_SPIN_BOX_SIGNAL:
-        {
-            sendIntPacket(function, handle0,
-            value.toInt()); break;
-        }
-
-        case INTERFACE_HEX_SPIN_BOX_SIGNAL:
-        {
-            sendIntPacket(function, handle0,
-            value.toInt()); break;
-        }
-
-        case INTERFACE_DOUBLE_SPIN_BOX_SIGNAL:
-        {
-            sendFloatPacket(function, handle0,
-            value.toFloat()); break;
-        }
-
-        case INTERFACE_TIME_EDIT_SIGNAL:
-        {
-            sendStringPacket(function, handle0,
-            value.toString().toUtf8()); break;
-        }
-
-        case INTERFACE_DATE_EDIT_SIGNAL:
-        {
-            sendStringPacket(function, handle0,
-            value.toString().toUtf8()); break;
-        }
-
-        case INTERFACE_DATE_TIME_EDIT_SIGNAL:
-        {
-            sendStringPacket(function, handle0,
-            value.toString().toUtf8()); break;
-        }
-
-        case INTERFACE_SLIDER_SIGNAL:
-        {
-            sendIntPacket(function, handle0,
-            value.toInt()); break;
-        }
-
-        default:
-        {
-            qDebug() <<
-            Q_FUNC_INFO <<
-            "no case statement for function:" <<
-            function; break;
-        }
+        m_sendRecurseLock.unlock();
     }
 }
 
@@ -769,87 +843,124 @@ void SerialEscape::sendVariantPacket(SerialFunction function,
                                      int handle1,
                                      const QVariant &value)
 {
-    switch(function)
+    if(m_enabled && m_port && m_port->isOpen() && m_sendRecurseLock.tryLock())
     {
-        case INTERFACE_PUSH_BUTTON_SIGNAL:
+        m_cancelTask = false;
+
+        ///////////////////////////////////////////////////////////////////////
+
+        int diff = qMax(m_writeList.size() - DTE_MAX_QUEUE_DEPTH, 0);
+
+        QProgressDialog dialog(m_widget, Qt::MSWindowsFixedSizeDialogHint |
+        Qt::WindowTitleHint | Qt::WindowSystemMenuHint |
+        Qt::WindowCloseButtonHint);
+
+        connect(this, SIGNAL(cancelTask()),
+                &dialog, SLOT(cancel()));
+
+        dialog.setWindowTitle(tr("Serial Port"));
+        dialog.setWindowModality(Qt::ApplicationModal);
+        dialog.setLabelText(tr("Sending Packets..."));
+        dialog.setRange(0, diff); dialog.setValue(0);
+
+        while(m_writeList.size() > DTE_MAX_QUEUE_DEPTH)
         {
-            sendIntPacket(function, handle0, handle1,
-            value.toInt()); break;
+            writeTask();
+
+            dialog.setValue(diff - (m_writeList.size() - DTE_MAX_QUEUE_DEPTH));
+
+            if(dialog.wasCanceled())
+            {
+                m_sendRecurseLock.unlock(); return;
+            }
         }
 
-        case INTERFACE_RADIO_BUTTON_SIGNAL:
+        ///////////////////////////////////////////////////////////////////////
+
+        switch(function)
         {
-            sendIntPacket(function, handle0, handle1,
-            value.toInt()); break;
+            case INTERFACE_PUSH_BUTTON_SIGNAL:
+            {
+                sendIntPacket(function, handle0, handle1,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_RADIO_BUTTON_SIGNAL:
+            {
+                sendIntPacket(function, handle0, handle1,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_CHECK_BOX_SIGNAL:
+            {
+                sendIntPacket(function, handle0, handle1,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_LINE_EDIT_SIGNAL:
+            {
+                sendStringPacket(function, handle0, handle1,
+                value.toString().toUtf8()); break;
+            }
+
+            case INTERFACE_INT_SPIN_BOX_SIGNAL:
+            {
+                sendIntPacket(function, handle0, handle1,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_BIN_SPIN_BOX_SIGNAL:
+            {
+                sendIntPacket(function, handle0, handle1,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_HEX_SPIN_BOX_SIGNAL:
+            {
+                sendIntPacket(function, handle0, handle1,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_DOUBLE_SPIN_BOX_SIGNAL:
+            {
+                sendFloatPacket(function, handle0, handle1,
+                value.toFloat()); break;
+            }
+
+            case INTERFACE_TIME_EDIT_SIGNAL:
+            {
+                sendStringPacket(function, handle0, handle1,
+                value.toString().toUtf8()); break;
+            }
+
+            case INTERFACE_DATE_EDIT_SIGNAL:
+            {
+                sendStringPacket(function, handle0, handle1,
+                value.toString().toUtf8()); break;
+            }
+
+            case INTERFACE_DATE_TIME_EDIT_SIGNAL:
+            {
+                sendStringPacket(function, handle0, handle1,
+                value.toString().toUtf8()); break;
+            }
+
+            case INTERFACE_SLIDER_SIGNAL:
+            {
+                sendIntPacket(function, handle0, handle1,
+                value.toInt()); break;
+            }
+
+            default:
+            {
+                qDebug() <<
+                Q_FUNC_INFO <<
+                "no case statement for function:" <<
+                function; break;
+            }
         }
 
-        case INTERFACE_CHECK_BOX_SIGNAL:
-        {
-            sendIntPacket(function, handle0, handle1,
-            value.toInt()); break;
-        }
-
-        case INTERFACE_LINE_EDIT_SIGNAL:
-        {
-            sendStringPacket(function, handle0, handle1,
-            value.toString().toUtf8()); break;
-        }
-
-        case INTERFACE_INT_SPIN_BOX_SIGNAL:
-        {
-            sendIntPacket(function, handle0, handle1,
-            value.toInt()); break;
-        }
-
-        case INTERFACE_BIN_SPIN_BOX_SIGNAL:
-        {
-            sendIntPacket(function, handle0, handle1,
-            value.toInt()); break;
-        }
-
-        case INTERFACE_HEX_SPIN_BOX_SIGNAL:
-        {
-            sendIntPacket(function, handle0, handle1,
-            value.toInt()); break;
-        }
-
-        case INTERFACE_DOUBLE_SPIN_BOX_SIGNAL:
-        {
-            sendFloatPacket(function, handle0, handle1,
-            value.toFloat()); break;
-        }
-
-        case INTERFACE_TIME_EDIT_SIGNAL:
-        {
-            sendStringPacket(function, handle0, handle1,
-            value.toString().toUtf8()); break;
-        }
-
-        case INTERFACE_DATE_EDIT_SIGNAL:
-        {
-            sendStringPacket(function, handle0, handle1,
-            value.toString().toUtf8()); break;
-        }
-
-        case INTERFACE_DATE_TIME_EDIT_SIGNAL:
-        {
-            sendStringPacket(function, handle0, handle1,
-            value.toString().toUtf8()); break;
-        }
-
-        case INTERFACE_SLIDER_SIGNAL:
-        {
-            sendIntPacket(function, handle0, handle1,
-            value.toInt()); break;
-        }
-
-        default:
-        {
-            qDebug() <<
-            Q_FUNC_INFO <<
-            "no case statement for function:" <<
-            function; break;
-        }
+        m_sendRecurseLock.unlock();
     }
 }
 
@@ -859,87 +970,124 @@ void SerialEscape::sendVariantPacket(SerialFunction function,
                                      int handle2,
                                      const QVariant &value)
 {
-    switch(function)
+    if(m_enabled && m_port && m_port->isOpen() && m_sendRecurseLock.tryLock())
     {
-        case INTERFACE_PUSH_BUTTON_SIGNAL:
+        m_cancelTask = false;
+
+        ///////////////////////////////////////////////////////////////////////
+
+        int diff = qMax(m_writeList.size() - DTE_MAX_QUEUE_DEPTH, 0);
+
+        QProgressDialog dialog(m_widget, Qt::MSWindowsFixedSizeDialogHint |
+        Qt::WindowTitleHint | Qt::WindowSystemMenuHint |
+        Qt::WindowCloseButtonHint);
+
+        connect(this, SIGNAL(cancelTask()),
+                &dialog, SLOT(cancel()));
+
+        dialog.setWindowTitle(tr("Serial Port"));
+        dialog.setWindowModality(Qt::ApplicationModal);
+        dialog.setLabelText(tr("Sending Packets..."));
+        dialog.setRange(0, diff); dialog.setValue(0);
+
+        while(m_writeList.size() > DTE_MAX_QUEUE_DEPTH)
         {
-            sendIntPacket(function, handle0, handle1, handle2,
-            value.toInt()); break;
+            writeTask();
+
+            dialog.setValue(diff - (m_writeList.size() - DTE_MAX_QUEUE_DEPTH));
+
+            if(dialog.wasCanceled())
+            {
+                m_sendRecurseLock.unlock(); return;
+            }
         }
 
-        case INTERFACE_RADIO_BUTTON_SIGNAL:
+        ///////////////////////////////////////////////////////////////////////
+
+        switch(function)
         {
-            sendIntPacket(function, handle0, handle1, handle2,
-            value.toInt()); break;
+            case INTERFACE_PUSH_BUTTON_SIGNAL:
+            {
+                sendIntPacket(function, handle0, handle1, handle2,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_RADIO_BUTTON_SIGNAL:
+            {
+                sendIntPacket(function, handle0, handle1, handle2,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_CHECK_BOX_SIGNAL:
+            {
+                sendIntPacket(function, handle0, handle1, handle2,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_LINE_EDIT_SIGNAL:
+            {
+                sendStringPacket(function, handle0, handle1, handle2,
+                value.toString().toUtf8()); break;
+            }
+
+            case INTERFACE_INT_SPIN_BOX_SIGNAL:
+            {
+                sendIntPacket(function, handle0, handle1, handle2,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_BIN_SPIN_BOX_SIGNAL:
+            {
+                sendIntPacket(function, handle0, handle1, handle2,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_HEX_SPIN_BOX_SIGNAL:
+            {
+                sendIntPacket(function, handle0, handle1, handle2,
+                value.toInt()); break;
+            }
+
+            case INTERFACE_DOUBLE_SPIN_BOX_SIGNAL:
+            {
+                sendFloatPacket(function, handle0, handle1, handle2,
+                value.toFloat()); break;
+            }
+
+            case INTERFACE_TIME_EDIT_SIGNAL:
+            {
+                sendStringPacket(function, handle0, handle1, handle2,
+                value.toString().toUtf8()); break;
+            }
+
+            case INTERFACE_DATE_EDIT_SIGNAL:
+            {
+                sendStringPacket(function, handle0, handle1, handle2,
+                value.toString().toUtf8()); break;
+            }
+
+            case INTERFACE_DATE_TIME_EDIT_SIGNAL:
+            {
+                sendStringPacket(function, handle0, handle1, handle2,
+                value.toString().toUtf8()); break;
+            }
+
+            case INTERFACE_SLIDER_SIGNAL:
+            {
+                sendIntPacket(function, handle0, handle1, handle2,
+                value.toInt()); break;
+            }
+
+            default:
+            {
+                qDebug() <<
+                Q_FUNC_INFO <<
+                "no case statement for function:" <<
+                function; break;
+            }
         }
 
-        case INTERFACE_CHECK_BOX_SIGNAL:
-        {
-            sendIntPacket(function, handle0, handle1, handle2,
-            value.toInt()); break;
-        }
-
-        case INTERFACE_LINE_EDIT_SIGNAL:
-        {
-            sendStringPacket(function, handle0, handle1, handle2,
-            value.toString().toUtf8()); break;
-        }
-
-        case INTERFACE_INT_SPIN_BOX_SIGNAL:
-        {
-            sendIntPacket(function, handle0, handle1, handle2,
-            value.toInt()); break;
-        }
-
-        case INTERFACE_BIN_SPIN_BOX_SIGNAL:
-        {
-            sendIntPacket(function, handle0, handle1, handle2,
-            value.toInt()); break;
-        }
-
-        case INTERFACE_HEX_SPIN_BOX_SIGNAL:
-        {
-            sendIntPacket(function, handle0, handle1, handle2,
-            value.toInt()); break;
-        }
-
-        case INTERFACE_DOUBLE_SPIN_BOX_SIGNAL:
-        {
-            sendFloatPacket(function, handle0, handle1, handle2,
-            value.toFloat()); break;
-        }
-
-        case INTERFACE_TIME_EDIT_SIGNAL:
-        {
-            sendStringPacket(function, handle0, handle1, handle2,
-            value.toString().toUtf8()); break;
-        }
-
-        case INTERFACE_DATE_EDIT_SIGNAL:
-        {
-            sendStringPacket(function, handle0, handle1, handle2,
-            value.toString().toUtf8()); break;
-        }
-
-        case INTERFACE_DATE_TIME_EDIT_SIGNAL:
-        {
-            sendStringPacket(function, handle0, handle1, handle2,
-            value.toString().toUtf8()); break;
-        }
-
-        case INTERFACE_SLIDER_SIGNAL:
-        {
-            sendIntPacket(function, handle0, handle1, handle2,
-            value.toInt()); break;
-        }
-
-        default:
-        {
-            qDebug() <<
-            Q_FUNC_INFO <<
-            "no case statement for function:" <<
-            function; break;
-        }
+        m_sendRecurseLock.unlock();
     }
 }
 
@@ -1347,7 +1495,7 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
         {
             *response = SR_INT;
 
-            int version = 0;
+            int version = int();
             int multiplier = 100 * 100 * 100;
 
             QStringList list = QString(PROJECT_VERSION_STR).split('.');
@@ -1385,8 +1533,7 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
             {
                 emit errorMessage(QString(metaObject()->className()) +
                 "::" + __FUNCTION__ + " -> " +
-                tr("OpenProcess has been disabled for your security. "
-                   "Please see the options panel to enable this function."));
+                tr("OpenProcess has been disabled for your security."));
             }
 
             return false;
@@ -1404,8 +1551,7 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
             {
                 emit errorMessage(QString(metaObject()->className()) +
                 "::" + __FUNCTION__ + " -> " +
-                tr("OpenUrl has been disabled for your security. "
-                   "Please see the options panel to enable this function."));
+                tr("OpenUrl has been disabled for your security."));
             }
 
             return false;
@@ -2829,7 +2975,7 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
             {
                 QByteArray bytes; streamIn(reader, bytes);
 
-                myWindow->receive(bytes + '\0');
+                myWindow->receive(bytes);
             }
 
             return myWindow;
@@ -3011,72 +3157,6 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
             return myWindow;
         }
 
-        case OSCILLOSCOPE_SET_AXES_AUTO_SCALE:
-        {
-            quint8 window; streamIn(reader, window);
-
-            SerialOscilloscope *myWindow = windowCast
-            <SerialOscilloscope>(__FUNCTION__, window);
-
-            if(myWindow)
-            {
-                qint32 autoScale; streamIn(reader, autoScale);
-
-                myWindow->setAxesAutoScale(autoScale);
-            }
-
-            return myWindow;
-        }
-
-        case OSCILLOSCOPE_GET_AXES_AUTO_SCALE:
-        {
-            quint8 window; streamIn(reader, window);
-
-            SerialOscilloscope *myWindow = windowCast
-            <SerialOscilloscope>(__FUNCTION__, window);
-
-            if(myWindow)
-            {
-                *response = SR_INT; *result = static_cast<qint32>(
-                myWindow->getAxesAutoScale());
-            }
-
-            return myWindow;
-        }
-
-        case OSCILLOSCOPE_SET_FFTAXES_AUTO_SCALE:
-        {
-            quint8 window; streamIn(reader, window);
-
-            SerialOscilloscope *myWindow = windowCast
-            <SerialOscilloscope>(__FUNCTION__, window);
-
-            if(myWindow)
-            {
-                qint32 autoScale; streamIn(reader, autoScale);
-
-                myWindow->setFFTAxesAutoScale(autoScale);
-            }
-
-            return myWindow;
-        }
-
-        case OSCILLOSCOPE_GET_FFTAXES_AUTO_SCALE:
-        {
-            quint8 window; streamIn(reader, window);
-
-            SerialOscilloscope *myWindow = windowCast
-            <SerialOscilloscope>(__FUNCTION__, window);
-
-            if(myWindow)
-            {
-                *response = SR_INT; *result = static_cast<qint32>(
-                myWindow->getFFTAxesAutoScale());
-            }
-
-            return myWindow;
-        }
-
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ////
@@ -3180,6 +3260,39 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
             {
                 *response = SR_FLOAT; *result = static_cast<float>(
                 myWindow->getXAxisScaleLogBase());
+            }
+
+            return myWindow;
+        }
+
+        case OSCILLOSCOPE_SET_XAXIS_RANGE_AUTO_SCALE:
+        {
+            quint8 window; streamIn(reader, window);
+
+            SerialOscilloscope *myWindow = windowCast
+            <SerialOscilloscope>(__FUNCTION__, window);
+
+            if(myWindow)
+            {
+                qint32 on; streamIn(reader, on);
+
+                myWindow->setXAxisRangeAutoScale(on);
+            }
+
+            return myWindow;
+        }
+
+        case OSCILLOSCOPE_GET_XAXIS_RANGE_AUTO_SCALE:
+        {
+            quint8 window; streamIn(reader, window);
+
+            SerialOscilloscope *myWindow = windowCast
+            <SerialOscilloscope>(__FUNCTION__, window);
+
+            if(myWindow)
+            {
+                *response = SR_INT; *result = static_cast<qint32>(
+                myWindow->getXAxisRangeAutoScale());
             }
 
             return myWindow;
@@ -3557,6 +3670,39 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
             return myWindow;
         }
 
+        case OSCILLOSCOPE_SET_YAXIS_RANGE_AUTO_SCALE:
+        {
+            quint8 window; streamIn(reader, window);
+
+            SerialOscilloscope *myWindow = windowCast
+            <SerialOscilloscope>(__FUNCTION__, window);
+
+            if(myWindow)
+            {
+                qint32 on; streamIn(reader, on);
+
+                myWindow->setYAxisRangeAutoScale(on);
+            }
+
+            return myWindow;
+        }
+
+        case OSCILLOSCOPE_GET_YAXIS_RANGE_AUTO_SCALE:
+        {
+            quint8 window; streamIn(reader, window);
+
+            SerialOscilloscope *myWindow = windowCast
+            <SerialOscilloscope>(__FUNCTION__, window);
+
+            if(myWindow)
+            {
+                *response = SR_INT; *result = static_cast<qint32>(
+                myWindow->getYAxisRangeAutoScale());
+            }
+
+            return myWindow;
+        }
+
         case OSCILLOSCOPE_SET_YAXIS_RANGE_UPPER:
         {
             quint8 window; streamIn(reader, window);
@@ -3792,6 +3938,39 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
             {
                 *response = SR_FLOAT; *result = static_cast<float>(
                 myWindow->getFFTXAxisScaleLogBase());
+            }
+
+            return myWindow;
+        }
+
+        case OSCILLOSCOPE_SET_FFTXAXIS_RANGE_AUTO_SCALE:
+        {
+            quint8 window; streamIn(reader, window);
+
+            SerialOscilloscope *myWindow = windowCast
+            <SerialOscilloscope>(__FUNCTION__, window);
+
+            if(myWindow)
+            {
+                qint32 on; streamIn(reader, on);
+
+                myWindow->setFFTXAxisRangeAutoScale(on);
+            }
+
+            return myWindow;
+        }
+
+        case OSCILLOSCOPE_GET_FFTXAXIS_RANGE_AUTO_SCALE:
+        {
+            quint8 window; streamIn(reader, window);
+
+            SerialOscilloscope *myWindow = windowCast
+            <SerialOscilloscope>(__FUNCTION__, window);
+
+            if(myWindow)
+            {
+                *response = SR_INT; *result = static_cast<qint32>(
+                myWindow->getFFTXAxisRangeAutoScale());
             }
 
             return myWindow;
@@ -4098,6 +4277,39 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
             {
                 *response = SR_FLOAT; *result = static_cast<float>(
                 myWindow->getFFTYAxisScaleLogBase());
+            }
+
+            return myWindow;
+        }
+
+        case OSCILLOSCOPE_SET_FFTYAXIS_RANGE_AUTO_SCALE:
+        {
+            quint8 window; streamIn(reader, window);
+
+            SerialOscilloscope *myWindow = windowCast
+            <SerialOscilloscope>(__FUNCTION__, window);
+
+            if(myWindow)
+            {
+                qint32 on; streamIn(reader, on);
+
+                myWindow->setFFTYAxisRangeAutoScale(on);
+            }
+
+            return myWindow;
+        }
+
+        case OSCILLOSCOPE_GET_FFTYAXIS_RANGE_AUTO_SCALE:
+        {
+            quint8 window; streamIn(reader, window);
+
+            SerialOscilloscope *myWindow = windowCast
+            <SerialOscilloscope>(__FUNCTION__, window);
+
+            if(myWindow)
+            {
+                *response = SR_INT; *result = static_cast<qint32>(
+                myWindow->getFFTYAxisRangeAutoScale());
             }
 
             return myWindow;

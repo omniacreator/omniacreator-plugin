@@ -39,13 +39,6 @@
 namespace Ui
 {
     class SerialOscilloscope;
-
-    class MyCustomPlot;
-
-    class MyBars;
-    class MyCurve;
-    class MyGraph;
-    class MyStatisticalBox;
 }
 
 class MyCustomPlot : public QCustomPlot ///////////////////////////////////////
@@ -300,12 +293,6 @@ public:
     void setBackgroundColor(QRgb rgba);
     QRgb getBackgroundColor() const;
 
-    void setAxesAutoScale(bool autoScale);
-    bool getAxesAutoScale() const;
-
-    void setFFTAxesAutoScale(bool autoScale);
-    bool getFFTAxesAutoScale() const;
-
     ///////////////////////////////////////////////////////////////////////////
 
     bool setXAxisScaleType(QCPAxis::ScaleType scaleType);
@@ -313,6 +300,9 @@ public:
 
     bool setXAxisScaleLogBase(double base);
     double getXAxisScaleLogBase() const;
+
+    void setXAxisRangeAutoScale(bool on);
+    bool getXAxisRangeAutoScale() const;
 
     bool setXAxisRangeLower(double lower);
     double getXAxisRangeLower() const;
@@ -334,6 +324,9 @@ public:
     bool setYAxisScaleLogBase(double base);
     double getYAxisScaleLogBase() const;
 
+    void setYAxisRangeAutoScale(bool on);
+    bool getYAxisRangeAutoScale() const;
+
     bool setYAxisRangeLower(double lower);
     double getYAxisRangeLower() const;
 
@@ -354,6 +347,9 @@ public:
     bool setFFTXAxisScaleLogBase(double base);
     double getFFTXAxisScaleLogBase() const;
 
+    bool setFFTXAxisRangeAutoScale(bool on);
+    bool getFFTXAxisRangeAutoScale() const;
+
     bool setFFTXAxisRangeLower(double lower);
     double getFFTXAxisRangeLower() const;
 
@@ -373,6 +369,9 @@ public:
 
     bool setFFTYAxisScaleLogBase(double base);
     double getFFTYAxisScaleLogBase() const;
+
+    bool setFFTYAxisRangeAutoScale(bool on);
+    bool getFFTYAxisRangeAutoScale() const;
 
     bool setFFTYAxisRangeLower(double lower);
     double getFFTYAxisRangeLower() const;
@@ -1045,14 +1044,17 @@ private:
 
     MyCustomPlot *m_plot, *m_math; bool m_plotResize, m_mathResize;
     QCPPlotTitle *m_plotTitle, *m_mathTitle;
+
     QMutex m_replotLock;
 
     QBrush m_background;
 
     QMap<int, QCPAbstractPlottable *> m_plottables;
 
-    bool m_plotAutoScale, m_mathAutoScale;
+    bool m_plotXAutoScale, m_plotYAutoScale;
     QCPRange m_plotXAxisRangeBackup, m_plotYAxisRangeBackup;
+
+    bool m_mathXAutoScale, m_mathYAutoScale;
     QCPRange m_mathXAxisRangeBackup, m_mathYAxisRangeBackup;
 
     int m_rasterWidth, m_rasterHeight, m_vectorWidth, m_vectorHeight;

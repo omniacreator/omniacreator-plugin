@@ -62,28 +62,31 @@ public:
     ILOscilloscope() : ILWindow()
     {
         m_backgroundColor = argb();
-        m_axesAutoScale = true; m_FFTAxesAutoScale = true;
 
         m_XAxisScaleType = ScaleType();
         m_XAxisScaleLogBase = int32(); m_XAxisScaleLogBaseF = float32();
+        m_XAxisRangeAutoScale = true;
         m_XAxisRangeLower = int32(); m_XAxisRangeLowerF = float32();
         m_XAxisRangeUpper = int32(); m_XAxisRangeUpperF = float32();
         m_XAxisRangeReversed = bool();
 
         m_YAxisScaleType = ScaleType();
         m_YAxisScaleLogBase = int32(); m_YAxisScaleLogBaseF = float32();
+        m_YAxisRangeAutoScale = true;
         m_YAxisRangeLower = int32(); m_YAxisRangeLowerF = float32();
         m_YAxisRangeUpper = int32(); m_YAxisRangeUpperF = float32();
         m_YAxisRangeReversed = bool();
 
         m_FFTXAxisScaleType = ScaleType();
         m_FFTXAxisScaleLogBase = int32(); m_FFTXAxisScaleLogBaseF = float32();
+        m_FFTXAxisRangeAutoScale = true;
         m_FFTXAxisRangeLower = int32(); m_FFTXAxisRangeLowerF = float32();
         m_FFTXAxisRangeUpper = int32(); m_FFTXAxisRangeUpperF = float32();
         m_FFTXAxisRangeReversed = bool();
 
         m_FFTYAxisScaleType = ScaleType();
         m_FFTYAxisScaleLogBase = int32(); m_FFTYAxisScaleLogBaseF = float32();
+        m_FFTYAxisRangeAutoScale = true;
         m_FFTYAxisRangeLower = int32(); m_FFTYAxisRangeLowerF = float32();
         m_FFTYAxisRangeUpper = int32(); m_FFTYAxisRangeUpperF = float32();
         m_FFTYAxisRangeReversed = bool();
@@ -243,86 +246,6 @@ public:
         return result ? m_backgroundColor : argb();
     }
 
-    bool setAxisAutoScale(bool autoScale,
-                          bool waitForResponse = false)
-    {
-        bool result;
-
-        if((result =
-        sendPacket(OSCILLOSCOPE_SET_AXES_AUTO_SCALE,
-        int32(autoScale), waitForResponse)))
-        {
-            m_axesAutoScale = autoScale;
-        }
-
-        return result;
-    }
-
-    bool getAxisAutoScale(bool bypassCache = false,
-                          bool *ok = 0)
-    {
-        bool result = m_enabled;
-
-        if(result && bypassCache)
-        {
-            int32 response;
-
-            if((result =
-            receivePacket(OSCILLOSCOPE_GET_AXES_AUTO_SCALE,
-            &response)))
-            {
-               m_axesAutoScale = bool(response);
-            }
-        }
-
-        if(ok)
-        {
-            *ok = result;
-        }
-
-        return result ? m_axesAutoScale : bool();
-    }
-
-    bool setFFTAxisAutoScale(bool autoScale,
-                             bool waitForResponse = false)
-    {
-        bool result;
-
-        if((result =
-        sendPacket(OSCILLOSCOPE_SET_FFTAXES_AUTO_SCALE,
-        int32(autoScale), waitForResponse)))
-        {
-            m_FFTAxesAutoScale = autoScale;
-        }
-
-        return result;
-    }
-
-    bool getFFTAxisAutoScale(bool bypassCache = false,
-                             bool *ok = 0)
-    {
-        bool result = m_enabled;
-
-        if(result && bypassCache)
-        {
-            int32 response;
-
-            if((result =
-            receivePacket(OSCILLOSCOPE_GET_FFTAXES_AUTO_SCALE,
-            &response)))
-            {
-               m_FFTAxesAutoScale = bool(response);
-            }
-        }
-
-        if(ok)
-        {
-            *ok = result;
-        }
-
-        return result ? m_FFTAxesAutoScale : bool();
-    }
-
     // X Axis /////////////////////////////////////////////////////////////////
 
     bool setXAxisScaleType(ScaleType scaleType,
@@ -470,6 +393,46 @@ public:
 
 //        return result;
 //    }
+
+    bool setXAxisRangeAutoScale(bool on,
+                                bool waitForResponse = false)
+    {
+        bool result;
+
+        if((result =
+        sendPacket(OSCILLOSCOPE_SET_XAXIS_RANGE_AUTO_SCALE,
+        int32(on), waitForResponse)))
+        {
+            m_XAxisRangeAutoScale = on;
+        }
+
+        return result;
+    }
+
+    bool getXAxisRangeAutoScale(bool bypassCache = false,
+                                bool *ok = 0)
+    {
+        bool result = m_enabled;
+
+        if(result && bypassCache)
+        {
+            int32 response;
+
+            if((result =
+            receivePacket(OSCILLOSCOPE_GET_XAXIS_RANGE_AUTO_SCALE,
+            &response)))
+            {
+               m_XAxisRangeAutoScale = bool(response);
+            }
+        }
+
+        if(ok)
+        {
+            *ok = result;
+        }
+
+        return result ? m_XAxisRangeAutoScale : bool();
+    }
 
     bool setXAxisRangeLower(int32 rangeLower,
                             bool waitForResponse = false)
@@ -885,6 +848,46 @@ public:
 //        return result;
 //    }
 
+    bool setYAxisRangeAutoScale(bool on,
+                                bool waitForResponse = false)
+    {
+        bool result;
+
+        if((result =
+        sendPacket(OSCILLOSCOPE_SET_YAXIS_RANGE_AUTO_SCALE,
+        int32(on), waitForResponse)))
+        {
+            m_YAxisRangeAutoScale = on;
+        }
+
+        return result;
+    }
+
+    bool getYAxisRangeAutoScale(bool bypassCache = false,
+                                bool *ok = 0)
+    {
+        bool result = m_enabled;
+
+        if(result && bypassCache)
+        {
+            int32 response;
+
+            if((result =
+            receivePacket(OSCILLOSCOPE_GET_YAXIS_RANGE_AUTO_SCALE,
+            &response)))
+            {
+               m_YAxisRangeAutoScale = bool(response);
+            }
+        }
+
+        if(ok)
+        {
+            *ok = result;
+        }
+
+        return result ? m_YAxisRangeAutoScale : bool();
+    }
+
     bool setYAxisRangeLower(int32 rangeLower,
                             bool waitForResponse = false)
     {
@@ -1298,6 +1301,46 @@ public:
 
 //        return result;
 //    }
+
+    bool setFFTXAxisRangeAutoScale(bool on,
+                                   bool waitForResponse = false)
+    {
+        bool result;
+
+        if((result =
+        sendPacket(OSCILLOSCOPE_SET_FFTXAXIS_RANGE_AUTO_SCALE,
+        int32(on), waitForResponse)))
+        {
+            m_FFTXAxisRangeAutoScale = on;
+        }
+
+        return result;
+    }
+
+    bool getFFTXAxisRangeAutoScale(bool bypassCache = false,
+                                   bool *ok = 0)
+    {
+        bool result = m_enabled;
+
+        if(result && bypassCache)
+        {
+            int32 response;
+
+            if((result =
+            receivePacket(OSCILLOSCOPE_GET_FFTXAXIS_RANGE_AUTO_SCALE,
+            &response)))
+            {
+               m_FFTXAxisRangeAutoScale = bool(response);
+            }
+        }
+
+        if(ok)
+        {
+            *ok = result;
+        }
+
+        return result ? m_FFTXAxisRangeAutoScale : bool();
+    }
 
     bool setFFTXAxisRangeLower(int32 rangeLower,
                             bool waitForResponse = false)
@@ -1713,6 +1756,46 @@ public:
 //        return result;
 //    }
 
+    bool setFFTYAxisRangeAutoScale(bool on,
+                                   bool waitForResponse = false)
+    {
+        bool result;
+
+        if((result =
+        sendPacket(OSCILLOSCOPE_SET_FFTYAXIS_RANGE_AUTO_SCALE,
+        int32(on), waitForResponse)))
+        {
+            m_FFTYAxisRangeAutoScale = on;
+        }
+
+        return result;
+    }
+
+    bool getFFTYAxisRangeAutoScale(bool bypassCache = false,
+                                   bool *ok = 0)
+    {
+        bool result = m_enabled;
+
+        if(result && bypassCache)
+        {
+            int32 response;
+
+            if((result =
+            receivePacket(OSCILLOSCOPE_GET_FFTYAXIS_RANGE_AUTO_SCALE,
+            &response)))
+            {
+               m_FFTYAxisRangeAutoScale = bool(response);
+            }
+        }
+
+        if(ok)
+        {
+            *ok = result;
+        }
+
+        return result ? m_FFTYAxisRangeAutoScale : bool();
+    }
+
     bool setFFTYAxisRangeLower(int32 rangeLower,
                             bool waitForResponse = false)
     {
@@ -1985,28 +2068,31 @@ private:
     ILOscilloscope &operator=(const ILOscilloscope &);
 
     argb m_backgroundColor;
-    bool m_axesAutoScale, m_FFTAxesAutoScale;
 
     ScaleType m_XAxisScaleType;
     int32 m_XAxisScaleLogBase; float32 m_XAxisScaleLogBaseF;
+    bool m_XAxisRangeAutoScale;
     int32 m_XAxisRangeLower; float32 m_XAxisRangeLowerF;
     int32 m_XAxisRangeUpper; float32 m_XAxisRangeUpperF;
     bool m_XAxisRangeReversed;
 
     ScaleType m_YAxisScaleType;
     int32 m_YAxisScaleLogBase; float32 m_YAxisScaleLogBaseF;
+    bool m_YAxisRangeAutoScale;
     int32 m_YAxisRangeLower; float32 m_YAxisRangeLowerF;
     int32 m_YAxisRangeUpper; float32 m_YAxisRangeUpperF;
     bool m_YAxisRangeReversed;
 
     ScaleType m_FFTXAxisScaleType;
     int32 m_FFTXAxisScaleLogBase; float32 m_FFTXAxisScaleLogBaseF;
+    bool m_FFTXAxisRangeAutoScale;
     int32 m_FFTXAxisRangeLower; float32 m_FFTXAxisRangeLowerF;
     int32 m_FFTXAxisRangeUpper; float32 m_FFTXAxisRangeUpperF;
     bool m_FFTXAxisRangeReversed;
 
     ScaleType m_FFTYAxisScaleType;
     int32 m_FFTYAxisScaleLogBase; float32 m_FFTYAxisScaleLogBaseF;
+    bool m_FFTYAxisRangeAutoScale;
     int32 m_FFTYAxisRangeLower; float32 m_FFTYAxisRangeLowerF;
     int32 m_FFTYAxisRangeUpper; float32 m_FFTYAxisRangeUpperF;
     bool m_FFTYAxisRangeReversed;

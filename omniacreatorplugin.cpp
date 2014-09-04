@@ -125,18 +125,23 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
     connect(m_make, SIGNAL(workspaceOrProjectSettingsChanged()),
             this, SLOT(cmakeChanged()));
 
-    m_projectWatcher =
-    new QFileSystemWatcher(QStringList(m_make->getProjectFolder()), this);
+    m_runClicked = false; m_projectModel = new QFileSystemModel(this);
+    m_projectModel->setRootPath(m_make->getProjectFolder());
 
-    connect(m_projectWatcher, SIGNAL(directoryChanged(QString)),
+    connect(m_projectModel,
+    SIGNAL(rowsInserted(QModelIndex,int,int)),
     Core::ActionManager::command(
-    CMakeProjectManager::Constants::RUNCMAKE)->action(),
-    SIGNAL(triggered()));
+    CMakeProjectManager::Constants::RUNCMAKE)->action(), SIGNAL(triggered()));
 
-    connect(m_projectWatcher, SIGNAL(fileChanged(QString)),
+    connect(m_projectModel,
+    SIGNAL(rowsMoved(QModelIndex,int,int,QModelIndex,int)),
     Core::ActionManager::command(
-    CMakeProjectManager::Constants::RUNCMAKE)->action(),
-    SIGNAL(triggered()));
+    CMakeProjectManager::Constants::RUNCMAKE)->action(), SIGNAL(triggered()));
+
+    connect(m_projectModel,
+    SIGNAL(rowsRemoved(QModelIndex,int,int)),
+    Core::ActionManager::command(
+    CMakeProjectManager::Constants::RUNCMAKE)->action(), SIGNAL(triggered()));
 
     // Serial Port Init ///////////////////////////////////////////////////////
 
@@ -206,8 +211,8 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
     m_status->addPermanentWidget(new QLabel(tr("Data Space Used:"), m_status));
     m_status->addPermanentWidget(m_dataSpaceUsed = new QLabel(m_status));
 
-    m_codeSpaceUsed->setText(tr("N/A"));
-    m_dataSpaceUsed->setText(tr("N/A"));
+    m_codeSpaceUsed->setText(tr("..."));
+    m_dataSpaceUsed->setText(tr("..."));
 
     // Begin Registering //////////////////////////////////////////////////////
 
@@ -238,16 +243,12 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
 
     // New File or Project //
     {
-        Core::ActionManager::command(
-        Core::Constants::NEW)->action()->disconnect();
-
         connect(Core::ActionManager::command(
         Core::Constants::NEW)->action(),
         SIGNAL(triggered()), this,
         SLOT(newFileOrProject()));
 
-        Core::ActionManager::command(
-        ProjectExplorer::Constants::NEWPROJECT)->action()->disconnect();
+        ///////////////////////////////////////////////////////////////////////
 
         connect(Core::ActionManager::command(
         ProjectExplorer::Constants::NEWPROJECT)->action(),
@@ -257,16 +258,12 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
 
     // Open File or Project //
     {
-        Core::ActionManager::command(
-        Core::Constants::OPEN)->action()->disconnect();
-
         connect(Core::ActionManager::command(
         Core::Constants::OPEN)->action(),
         SIGNAL(triggered()), this,
         SLOT(openFileOrProject()));
 
-        Core::ActionManager::command(
-        ProjectExplorer::Constants::LOAD)->action()->disconnect();
+        ///////////////////////////////////////////////////////////////////////
 
         connect(Core::ActionManager::command(
         ProjectExplorer::Constants::LOAD)->action(),
@@ -276,16 +273,12 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
 
     // Close Actions //
     {
-        Core::ActionManager::command(
-        ProjectExplorer::Constants::UNLOAD)->action()->disconnect();
-
         connect(Core::ActionManager::command(
         ProjectExplorer::Constants::UNLOAD)->action(),
         SIGNAL(triggered()), this,
         SLOT(closeProject()));
 
-        Core::ActionManager::command(
-        ProjectExplorer::Constants::CLEARSESSION)->action()->disconnect();
+        ///////////////////////////////////////////////////////////////////////
 
         connect(Core::ActionManager::command(
         ProjectExplorer::Constants::CLEARSESSION)->action(),
@@ -293,34 +286,86 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
         SLOT(closeProject()));
     }
 
+    // Clean Actions //
+    {
+        connect(Core::ActionManager::command(
+        ProjectExplorer::Constants::CLEANPROJECTONLY)->action(),
+        SIGNAL(triggered()), this,
+        SLOT(cleanClicked()));
+
+        ///////////////////////////////////////////////////////////////////////
+
+        connect(Core::ActionManager::command(
+        ProjectExplorer::Constants::CLEAN)->action(),
+        SIGNAL(triggered()), this,
+        SLOT(cleanClicked()));
+
+        ///////////////////////////////////////////////////////////////////////
+
+        connect(Core::ActionManager::command(
+        ProjectExplorer::Constants::CLEANCM)->action(),
+        SIGNAL(triggered()), this,
+        SLOT(cleanClicked()));
+
+        ///////////////////////////////////////////////////////////////////////
+
+        connect(Core::ActionManager::command(
+        ProjectExplorer::Constants::CLEANSESSION)->action(),
+        SIGNAL(triggered()), this,
+        SLOT(cleanClicked()));
+    }
+
+    // Rebuild Actions //
+    {
+        connect(Core::ActionManager::command(
+        ProjectExplorer::Constants::REBUILDPROJECTONLY)->action(),
+        SIGNAL(triggered()), this,
+        SLOT(rebuildClicked()));
+
+        ///////////////////////////////////////////////////////////////////////
+
+        connect(Core::ActionManager::command(
+        ProjectExplorer::Constants::REBUILD)->action(),
+        SIGNAL(triggered()), this,
+        SLOT(rebuildClicked()));
+
+        ///////////////////////////////////////////////////////////////////////
+
+        connect(Core::ActionManager::command(
+        ProjectExplorer::Constants::REBUILDCM)->action(),
+        SIGNAL(triggered()), this,
+        SLOT(rebuildClicked()));
+
+        ///////////////////////////////////////////////////////////////////////
+
+        connect(Core::ActionManager::command(
+        ProjectExplorer::Constants::REBUILDSESSION)->action(),
+        SIGNAL(triggered()), this,
+        SLOT(rebuildClicked()));
+    }
+
     // Build Buttons //
     {
-        Core::ActionManager::command(
-        ProjectExplorer::Constants::BUILDPROJECTONLY)->action()->disconnect();
-
         connect(Core::ActionManager::command(
         ProjectExplorer::Constants::BUILDPROJECTONLY)->action(),
         SIGNAL(triggered()), this,
         SLOT(buildClicked()));
 
-        Core::ActionManager::command(
-        ProjectExplorer::Constants::BUILD)->action()->disconnect();
+        ///////////////////////////////////////////////////////////////////////
 
         connect(Core::ActionManager::command(
         ProjectExplorer::Constants::BUILD)->action(),
         SIGNAL(triggered()), this,
         SLOT(buildClicked()));
 
-        Core::ActionManager::command(
-        ProjectExplorer::Constants::BUILDCM)->action()->disconnect();
+        ///////////////////////////////////////////////////////////////////////
 
         connect(Core::ActionManager::command(
         ProjectExplorer::Constants::BUILDCM)->action(),
         SIGNAL(triggered()), this,
         SLOT(buildClicked()));
 
-        Core::ActionManager::command(
-        ProjectExplorer::Constants::BUILDSESSION)->action()->disconnect();
+        ///////////////////////////////////////////////////////////////////////
 
         connect(Core::ActionManager::command(
         ProjectExplorer::Constants::BUILDSESSION)->action(),
@@ -330,24 +375,19 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
 
     // Run Buttons //
     {
-        Core::ActionManager::command(
-        ProjectExplorer::Constants::RUN)->action()->disconnect();
-
         connect(Core::ActionManager::command(
         ProjectExplorer::Constants::RUN)->action(),
         SIGNAL(triggered()), this,
         SLOT(runClicked()));
 
-        Core::ActionManager::command(
-        ProjectExplorer::Constants::RUNCONTEXTMENU)->action()->disconnect();
+        ///////////////////////////////////////////////////////////////////////
 
         connect(Core::ActionManager::command(
         ProjectExplorer::Constants::RUNCONTEXTMENU)->action(),
         SIGNAL(triggered()), this,
         SLOT(runClicked()));
 
-        Core::ActionManager::command(
-        ProjectExplorer::Constants::RUNWITHOUTDEPLOY)->action()->disconnect();
+        ///////////////////////////////////////////////////////////////////////
 
         connect(Core::ActionManager::command(
         ProjectExplorer::Constants::RUNWITHOUTDEPLOY)->action(),
@@ -866,7 +906,7 @@ ExtensionSystem::IPlugin::ShutdownFlag OmniaCreatorPlugin::aboutToShutdown()
     delete m_port;
     delete m_escape;
 
-    delete m_status;
+    delete m_projectModel;
 
     SerialOscilloscope::finiFftw();
 
@@ -2350,10 +2390,10 @@ void OmniaCreatorPlugin::projectManagerSetup()
 
     ///////////////////////////////////////////////////////////////////////////
 
-    Core::ActionManager::actionContainer(
-    Core::Constants::M_FILE)->menu()->removeAction(
-    Core::ActionManager::command(
-    ProjectExplorer::Constants::UNLOAD)->action());
+    // Core::ActionManager::actionContainer(
+    // Core::Constants::M_FILE)->menu()->removeAction(
+    // Core::ActionManager::command(
+    // ProjectExplorer::Constants::UNLOAD)->action());
 
     Core::ActionManager::actionContainer(
     Core::Constants::M_FILE)->menu()->removeAction(
@@ -2755,8 +2795,8 @@ void OmniaCreatorPlugin::textEditorCppSetup()
 
 void OmniaCreatorPlugin::updateRecentProjects()
 {
-    QStringList repeated;
     QRegularExpression re("set\\(PROJECT_.*?\"(?<path>.*?)\"\\)");
+    QStringList repeated;
 
     foreach(QAction *action, Core::ActionManager::actionContainer(
     ProjectExplorer::Constants::M_RECENTPROJECTS)->menu()->actions())
@@ -2778,8 +2818,8 @@ void OmniaCreatorPlugin::updateRecentProjects()
                 repeated.append(action->text());
 
                 action->disconnect();
-                connect(action, SIGNAL(triggered()),
-                this, SLOT(openRecent()));
+
+                connect(action, SIGNAL(triggered()), this, SLOT(openRecent()));
             }
         }
     }
@@ -2821,61 +2861,256 @@ void OmniaCreatorPlugin::closeProject()
 
 void OmniaCreatorPlugin::cmakeChanged()
 {
-    ProjectExplorer::Project *project =
-    ProjectExplorer::SessionManager::startupProject();
+    if(!m_runClicked)
+    {
+        ProjectExplorer::Project *project =
+        ProjectExplorer::SessionManager::startupProject();
+
+        if(!project)
+        {
+            project =
+            ProjectExplorer::ProjectExplorerPlugin::currentProject();
+        }
+
+        if(project)
+        {
+            if(project->projectFilePath() == m_make->getMakeFile())
+            {
+                return;
+            }
+
+            ProjectExplorer::ProjectExplorerPlugin::
+            instance()->unloadProject(project);
+        }
+
+        ///////////////////////////////////////////////////////////////////////
+
+        qputenv("OC_WORKSPACE_FOLDER", m_make->getWorkspaceFolder().toUtf8());
+        qputenv("OC_PROJECT_FOLDER", m_make->getProjectFolder().toUtf8());
+        qputenv("OC_SERIAL_PORT", m_make->getProjectPortName().toUtf8());
+        qputenv("OC_MAKE_FILE", m_make->getProjectMakeFile().toUtf8());
+
+        Core::DocumentManager::setProjectsDirectory(
+        m_make->getWorkspaceFolder());
+
+        Core::DocumentManager::setBuildDirectory(
+        m_make->getMakeBuildFolder());
+
+        m_projectModel->setRootPath(m_make->getProjectFolder());
+
+        if(QFileInfo(m_make->getMakeFile()).exists())
+        {
+            ProjectExplorer::Project *openProject =
+            ProjectExplorer::ProjectExplorerPlugin::
+            instance()->openProject(m_make->getMakeFile(), NULL);
+
+            if(openProject)
+            {
+                ProjectExplorer::ProjectExplorerPlugin::
+                instance()->setCurrentNode(openProject->rootProjectNode());
+            }
+        }
+
+        ///////////////////////////////////////////////////////////////////////
+
+        m_projectFolder->setText(m_make->getProjectFolder());
+        m_boardType->setText(m_make->getProjectMakeFileRelativeTo().
+                             remove(".cmake",
+                             Qt::CaseInsensitive));
+
+        if(m_projectFolder->text().isEmpty())
+        {
+            m_projectFolder->setText(tr("None"));
+        }
+
+        if(m_boardType->text().isEmpty())
+        {
+            m_boardType->setText(tr("None"));
+        }
+
+        m_codeSpaceUsed->setText(tr("..."));
+        m_dataSpaceUsed->setText(tr("..."));
+    }
+}
+
+void OmniaCreatorPlugin::cleanClicked()
+{
+    if(m_make->getProjectMakeFile().isEmpty())
+    {
+        QMessageBox::warning(Core::ICore::mainWindow(), tr("Build Halted"),
+        tr("Please select a <b>Board Type</b> from the "
+           "<b>Board Menu</b> first")); return;
+    }
+
+    CMakeProjectManager::Internal::CMakeProject *project =
+    qobject_cast<CMakeProjectManager::Internal::CMakeProject *>
+    (ProjectExplorer::SessionManager::startupProject());
 
     if(!project)
     {
-        project =
-        ProjectExplorer::ProjectExplorerPlugin::currentProject();
+        project = qobject_cast<CMakeProjectManager::Internal::CMakeProject *>
+        (ProjectExplorer::ProjectExplorerPlugin::currentProject());
+
+        if(!project)
+        {
+            QMessageBox::critical(Core::ICore::mainWindow(),
+            tr("Build Failed"), tr("Build project not set"));
+
+            return;
+        }
     }
 
-    if(project)
+    ProjectExplorer::Target *target =
+    project->activeTarget();
+
+    if(!target)
     {
-        ProjectExplorer::ProjectExplorerPlugin::
-        instance()->unloadProject(project);
+        QMessageBox::critical(Core::ICore::mainWindow(),
+        tr("Build Failed"), tr("Build target not set"));
+
+        return;
     }
 
-    qputenv("OC_WORKSPACE_FOLDER", m_make->getWorkspaceFolder().toUtf8());
-    qputenv("OC_PROJECT_FOLDER", m_make->getProjectFolder().toUtf8());
-    qputenv("OC_SERIAL_PORT", m_make->getProjectPortName().toUtf8());
-    qputenv("OC_MAKE_FILE", m_make->getProjectMakeFile().toUtf8());
+    ProjectExplorer::BuildConfiguration *configuration =
+    target->activeBuildConfiguration();
 
-    Core::DocumentManager::setProjectsDirectory(
-    m_make->getWorkspaceFolder());
-
-    Core::DocumentManager::setBuildDirectory(
-    m_make->getMakeBuildFolder());
-
-    m_projectWatcher->removePaths(m_projectWatcher->directories());
-    m_projectWatcher->removePaths(m_projectWatcher->files());
-
-    if(QFileInfo(m_make->getMakeFile()).exists())
+    if(!configuration)
     {
-        ProjectExplorer::ProjectExplorerPlugin::
-        instance()->openProject(m_make->getMakeFile(),
-        NULL);
+        QMessageBox::critical(Core::ICore::mainWindow(),
+        tr("Build Failed"), tr("Build configuration not set"));
 
-        m_projectWatcher->addPath(m_make->getProjectFolder());
+        return;
     }
 
-    m_projectFolder->setText(m_make->getProjectFolder());
-    m_boardType->setText(m_make->getProjectMakeFileRelativeTo().
-                         remove(".cmake",
-                         Qt::CaseInsensitive));
+    ProjectExplorer::BuildStepList *list =
+    configuration->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
 
-    if(m_projectFolder->text().isEmpty())
+    if(!list)
     {
-        m_projectFolder->setText(tr("None"));
+        QMessageBox::critical(Core::ICore::mainWindow(),
+        tr("Build Failed"), tr("Build list not set"));
+
+        return;
     }
 
-    if(m_boardType->text().isEmpty())
+    CMakeProjectManager::Internal::MakeStep *step =
+    qobject_cast<CMakeProjectManager::Internal::MakeStep *>(list->at(0));
+
+    if(!step)
     {
-        m_boardType->setText(tr("None"));
+        QMessageBox::critical(Core::ICore::mainWindow(),
+        tr("Build Failed"), tr("Build step not set"));
+
+        return;
     }
 
-    m_codeSpaceUsed->setText(tr("N/A"));
-    m_dataSpaceUsed->setText(tr("N/A"));
+    step->clearBuildTargets();
+
+    if(project->hasBuildTarget("all"))
+    {
+        step->setBuildTarget("all", true);
+    }
+    else
+    {
+        QMessageBox::critical(Core::ICore::mainWindow(),
+        tr("Build Failed"), tr("Build target missing!"));
+
+        return;
+    }
+
+    ProjectExplorer::ProjectExplorerPlugin::instance()->cleanProject();
+    step->appendOutputParser(new CodeUsedParser(m_codeSpaceUsed));
+    step->appendOutputParser(new DataUsedParser(m_dataSpaceUsed));
+}
+
+void OmniaCreatorPlugin::rebuildClicked()
+{
+    if(m_make->getProjectMakeFile().isEmpty())
+    {
+        QMessageBox::warning(Core::ICore::mainWindow(), tr("Build Halted"),
+        tr("Please select a <b>Board Type</b> from the "
+           "<b>Board Menu</b> first")); return;
+    }
+
+    CMakeProjectManager::Internal::CMakeProject *project =
+    qobject_cast<CMakeProjectManager::Internal::CMakeProject *>
+    (ProjectExplorer::SessionManager::startupProject());
+
+    if(!project)
+    {
+        project = qobject_cast<CMakeProjectManager::Internal::CMakeProject *>
+        (ProjectExplorer::ProjectExplorerPlugin::currentProject());
+
+        if(!project)
+        {
+            QMessageBox::critical(Core::ICore::mainWindow(),
+            tr("Build Failed"), tr("Build project not set"));
+
+            return;
+        }
+    }
+
+    ProjectExplorer::Target *target =
+    project->activeTarget();
+
+    if(!target)
+    {
+        QMessageBox::critical(Core::ICore::mainWindow(),
+        tr("Build Failed"), tr("Build target not set"));
+
+        return;
+    }
+
+    ProjectExplorer::BuildConfiguration *configuration =
+    target->activeBuildConfiguration();
+
+    if(!configuration)
+    {
+        QMessageBox::critical(Core::ICore::mainWindow(),
+        tr("Build Failed"), tr("Build configuration not set"));
+
+        return;
+    }
+
+    ProjectExplorer::BuildStepList *list =
+    configuration->stepList(ProjectExplorer::Constants::BUILDSTEPS_BUILD);
+
+    if(!list)
+    {
+        QMessageBox::critical(Core::ICore::mainWindow(),
+        tr("Build Failed"), tr("Build list not set"));
+
+        return;
+    }
+
+    CMakeProjectManager::Internal::MakeStep *step =
+    qobject_cast<CMakeProjectManager::Internal::MakeStep *>(list->at(0));
+
+    if(!step)
+    {
+        QMessageBox::critical(Core::ICore::mainWindow(),
+        tr("Build Failed"), tr("Build step not set"));
+
+        return;
+    }
+
+    step->clearBuildTargets();
+
+    if(project->hasBuildTarget("all"))
+    {
+        step->setBuildTarget("all", true);
+    }
+    else
+    {
+        QMessageBox::critical(Core::ICore::mainWindow(),
+        tr("Build Failed"), tr("Build target missing!"));
+
+        return;
+    }
+
+    ProjectExplorer::ProjectExplorerPlugin::instance()->rebuildProject();
+    step->appendOutputParser(new CodeUsedParser(m_codeSpaceUsed));
+    step->appendOutputParser(new DataUsedParser(m_dataSpaceUsed));
 }
 
 void OmniaCreatorPlugin::buildClicked()
@@ -2958,7 +3193,7 @@ void OmniaCreatorPlugin::buildClicked()
     else
     {
         QMessageBox::critical(Core::ICore::mainWindow(),
-        tr("Build Failed"), tr("Build not set"));
+        tr("Build Failed"), tr("Build target missing!"));
 
         return;
     }
@@ -3064,12 +3299,14 @@ void OmniaCreatorPlugin::runClicked()
     else
     {
         QMessageBox::critical(Core::ICore::mainWindow(),
-        tr("Run Failed"), tr("Run not set"));
+        tr("Run Failed"), tr("Run target missing!"));
 
         return;
     }
 
-    m_port->getPort()->close();
+    ///////////////////////////////////////////////////////////////////////////
+
+    m_runClicked = true;
 
     ProjectExplorer::BuildManager *manager =
     qobject_cast<ProjectExplorer::BuildManager *>
@@ -3078,6 +3315,13 @@ void OmniaCreatorPlugin::runClicked()
     connect(manager, SIGNAL(buildQueueFinished(bool)),
     this, SLOT(reopenPort()));
 
+    ///////////////////////////////////////////////////////////////////////////
+
+    if(m_port->getPort())
+    {
+        m_port->getPort()->close(); delete m_port->getPort();
+    }
+
     ProjectExplorer::ProjectExplorerPlugin::instance()->buildProject(project);
     step->appendOutputParser(new CodeUsedParser(m_codeSpaceUsed));
     step->appendOutputParser(new DataUsedParser(m_dataSpaceUsed));
@@ -3085,13 +3329,9 @@ void OmniaCreatorPlugin::runClicked()
 
 void OmniaCreatorPlugin::reopenPort()
 {
-    QString port = m_port->getLastPort();
+    ///////////////////////////////////////////////////////////////////////////
 
-    if(m_port->portInDemoPortList(port)
-    || m_port->portInSerialPortList(port))
-    {
-        m_escape->setPort(m_port->openPort(port, true));
-    }
+    m_runClicked = false;
 
     ProjectExplorer::BuildManager *manager =
     qobject_cast<ProjectExplorer::BuildManager *>
@@ -3099,6 +3339,16 @@ void OmniaCreatorPlugin::reopenPort()
 
     disconnect(manager, SIGNAL(buildQueueFinished(bool)),
     this, SLOT(reopenPort()));
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    QString port = m_port->getLastPort();
+
+    if(m_port->portInDemoPortList(port)
+    || m_port->portInSerialPortList(port))
+    {
+        m_escape->setPort(m_port->openPort(port, true));
+    }
 }
 
 void OmniaCreatorPlugin::messageHandler(QtMsgType type, const char *text)
@@ -3114,6 +3364,8 @@ void OmniaCreatorPlugin::messageHandler(QtMsgType type, const char *text)
                "declaredParameterCount(targetFunction)\" in file";
                // This might not be harmless...
     ignored << "No deployment configuration factory found for target id";
+               // This might not be harmless...
+    ignored << "SOFT ASSERT: \"m_outputParserChain\" in file";
                // This might not be harmless...
 
     foreach(const QString &string, ignored)

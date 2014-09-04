@@ -95,6 +95,8 @@
 #define SERIAL_TERMINAL_KEY_OPEN_FILE "openFile"
 #define SERIAL_TERMINAL_KEY_SAVE_FILE "saveFile"
 
+#define SERIAL_TERMINAL_KEY_TAB_WIDTH "tabWidth"
+
 // Serial Oscilloscope ////////////////////////////////////////////////////////
 
 #define SERIAL_OSCILLOSCOPE "SerialOscilloscope"

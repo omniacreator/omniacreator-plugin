@@ -416,7 +416,7 @@ void SerialMake::updateProject2()
 {
     updateProject();
 
-    if((!getProjectFolder().isEmpty()) && (!getProjectMakeFile().isEmpty()))
+    if(!getProjectFolder().isEmpty())
     {
         if(!QDir().mkpath(m_makeSrcFolder))
         {
@@ -463,18 +463,24 @@ void SerialMake::updateProject2()
         text.append(QString("set(SERIAL_PORT \"%L1\")\n\n").
         arg(getProjectPortName()));
 
-        text.append("set(INCLUDE_SWITCH 0)\n");
-        text.append(QString("include(\"%L1\")\n\n").
-        arg(getProjectMakeFile()));
+        if(!getProjectMakeFile().isEmpty())
+        {
+            text.append("set(INCLUDE_SWITCH 0)\n");
+            text.append(QString("include(\"%L1\")\n\n").
+            arg(getProjectMakeFile()));
+        }
 
         text.append(QString("project(\"%L1\")\n\n").
         arg(QDir(getProjectFolder()).dirName().
         replace(QRegularExpression("[^0-9A-Za-z]"),
         "_")));
 
-        text.append("set(INCLUDE_SWITCH 1)\n");
-        text.append(QString("include(\"%L1\")\n").
-        arg(getProjectMakeFile()));
+        if(!getProjectMakeFile().isEmpty())
+        {
+            text.append("set(INCLUDE_SWITCH 1)\n");
+            text.append(QString("include(\"%L1\")\n").
+            arg(getProjectMakeFile()));
+        }
 
         QFile file(m_makeFile);
 

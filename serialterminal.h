@@ -26,7 +26,7 @@
 #define TERMINAL_MAX_LINE_SIZE (1000 * 1000)
 
 #define TERMINAL_SHIFT_REG 5 // for utf-8
-#define TERMINAL_TAB_WIDTH 4
+#define TERMINAL_TAB_WIDTH 8
 
 namespace Ui
 {
@@ -52,7 +52,7 @@ public:
     virtual QString keyGeometry() const;
 
     void setTabWidth(int tabWidth);
-    int getTabWidth() const;
+    int getTabWidth();
 
     void receive(const QByteArray &bytes);
 

@@ -26,8 +26,7 @@ SerialWindow(title, settings, parent), m_ui(new Ui::SerialTerminal)
 
     m_textCursor = m_ui->rx->textCursor(); m_brushColor = Qt::black;
 
-    m_stateMachine = ASCII; m_shiftReg = QByteArray(); m_tabWidth =
-                                                       TERMINAL_TAB_WIDTH;
+    m_stateMachine = ASCII; m_shiftReg = QByteArray(); getTabWidth();
 
     connect(m_ui->tx, SIGNAL(returnPressed()),
             this, SLOT(returnPressed()));
@@ -80,12 +79,23 @@ QString SerialTerminal::keyGeometry() const
 
 void SerialTerminal::setTabWidth(int tabWidth)
 {
-    m_tabWidth = tabWidth;
+    QSettings settings(settingsFileName(), settingsFormat());
+
+    settings.beginGroup(keyGroup());
+    settings.beginGroup(windowTitle());
+
+    settings.setValue(SERIAL_TERMINAL_KEY_TAB_WIDTH, m_tabWidth = tabWidth);
 }
 
-int SerialTerminal::getTabWidth() const
+int SerialTerminal::getTabWidth()
 {
-    return m_tabWidth;
+    QSettings settings(settingsFileName(), settingsFormat());
+
+    settings.beginGroup(keyGroup());
+    settings.beginGroup(windowTitle());
+
+    return m_tabWidth =
+    settings.value(SERIAL_TERMINAL_KEY_TAB_WIDTH, TERMINAL_TAB_WIDTH).toInt();
 }
 
 void SerialTerminal::receive(const QByteArray &bytes)
