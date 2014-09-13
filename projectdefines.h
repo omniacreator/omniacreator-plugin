@@ -133,6 +133,8 @@
 #define SERIAL_TREE_KEY_OPEN_FILE "openFile"
 #define SERIAL_TREE_KEY_SAVE_FILE "saveFile"
 
+#define SERIAL_TREE_KEY_SAVE_FILE_CSV "saveFileCSV"
+
 // Serial Table ///////////////////////////////////////////////////////////////
 
 #define SERIAL_TABLE "SerialTable"
@@ -145,6 +147,8 @@
 
 #define SERIAL_TABLE_KEY_OPEN_FILE "openFile"
 #define SERIAL_TABLE_KEY_SAVE_FILE "saveFile"
+
+#define SERIAL_TABLE_KEY_SAVE_FILE_CSV "saveFileCSV"
 
 // Serial Interface ///////////////////////////////////////////////////////////
 

@@ -41,6 +41,9 @@ SerialWindow(title, settings, parent), m_ui(new Ui::SerialTable)
     connect(m_ui->actionSave_Table, SIGNAL(triggered()),
             this, SLOT(exportState()));
 
+    connect(m_ui->actionExport_CSV, SIGNAL(triggered()),
+            this, SLOT(exportToCSV()));
+
     connect(m_ui->actionClose_Window, SIGNAL(triggered()),
             this, SLOT(close()));
 
@@ -419,15 +422,15 @@ void SerialTable::importState(const QString &fileName)
                         }
                     }
 
-                    QJsonArray columnArray = object.value("table").toArray();
+                    QJsonArray rowArray = object.value("table").toArray();
 
-                    for(int i = 0, j = columnArray.size(); i < j; i++)
+                    for(int i = 0, j = rowArray.size(); i < j; i++)
                     {
-                        QJsonArray rowArray = columnArray.at(i).toArray();
+                        QJsonArray columnArray = rowArray.at(i).toArray();
 
-                        for(int k = 0, l = rowArray.size(); k < l; k++)
+                        for(int k = 0, l = columnArray.size(); k < l; k++)
                         {
-                            QJsonObject item = rowArray.at(k).toObject();
+                            QJsonObject item = columnArray.at(k).toObject();
 
                             newItem(item.value("row").toDouble(),
                                     item.value("column").toDouble(),
@@ -520,13 +523,13 @@ void SerialTable::exportState(const QString &fileName)
                 object.insert("columnHeaders", columnHeaders);
             }
 
-            QJsonArray columnArray;
+            QJsonArray rowArray;
 
-            foreach(int column, m_columnHeaders.keys())
+            foreach(int row, m_rowHeaders.keys())
             {
-                QJsonArray rowArray;
+                QJsonArray columnArray;
 
-                foreach(int row, m_rowHeaders.keys())
+                foreach(int column, m_columnHeaders.keys())
                 {
                     int r =
                     m_rowHeaders.value(row)->data(Qt::UserRole).toInt();
@@ -544,14 +547,14 @@ void SerialTable::exportState(const QString &fileName)
                         temp.insert("column", column);
                         temp.insert("text", item->text());
 
-                        rowArray.append(temp);
+                        columnArray.append(temp);
                     }
                 }
 
-                columnArray.append(rowArray);
+                rowArray.append(columnArray);
             }
 
-            object.insert("table", columnArray);
+            object.insert("table", rowArray);
 
             QByteArray json = QJsonDocument(object).toJson();
 
@@ -571,6 +574,101 @@ void SerialTable::exportState(const QString &fileName)
         else
         {
             QMessageBox::critical(this, tr("Save Table Error"),
+            file.errorString());
+        }
+    }
+}
+
+void SerialTable::exportToCSV(const QString &fileName)
+{
+    QSettings settings(settingsFileName(), settingsFormat());
+
+    settings.beginGroup(keyGroup());
+    settings.beginGroup(windowTitle());
+
+    QString saveFile = settings.value(SERIAL_TABLE_KEY_SAVE_FILE_CSV,
+                                      QDir::homePath()).toString();
+
+    QString temp = fileName.isEmpty() ? QFileDialog::getSaveFileName(this,
+    tr("Export Table"), saveFile, tr("CSV Files (*.csv)")) : fileName;
+
+    if(!temp.isEmpty())
+    {
+        QByteArray data;
+
+        switch(QMessageBox::question(this, tr("Export Table"),
+        tr("Include Column Header Line?"), QMessageBox::Yes |
+        QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes))
+        {
+            case QMessageBox::Yes:
+            {
+                QByteArray line;
+
+                foreach(int column, m_columnHeaders.keys())
+                {
+                    line.append("\"" + m_columnHeaders.value(column)->text() +
+                                "\",");
+                }
+
+                line.chop(sizeof(','));
+                data.append(line + '\n');
+
+                break;
+            }
+
+            case QMessageBox::No:
+            {
+                break;
+            }
+
+            default: return;
+        }
+
+        QFile file(temp);
+
+        if(file.open(QIODevice::WriteOnly | QIODevice::Text))
+        {
+            QByteArray rData;
+
+            foreach(int row, m_rowHeaders.keys())
+            {
+                QByteArray cData;
+
+                foreach(int column, m_columnHeaders.keys())
+                {
+                    int r =
+                    m_rowHeaders.value(row)->data(Qt::UserRole).toInt();
+
+                    int c =
+                    m_columnHeaders.value(column)->data(Qt::UserRole).toInt();
+
+                    QTableWidgetItem *item = m_ui->tableWidget->item(r, c);
+
+                    cData.append("\"" + (item?item->text():QString()) + "\",");
+                }
+
+                cData.chop(sizeof(','));
+                rData.append(cData + '\n');
+            }
+
+            data.append(rData);
+
+            if(file.write(data) == data.size())
+            {
+                QFileInfo fileInfo(temp);
+
+                settings.setValue(SERIAL_TABLE_KEY_SAVE_FILE_CSV,
+                fileInfo.canonicalFilePath());
+            }
+            else
+            {
+                QMessageBox::critical(this, tr("Export Table Error"),
+                file.errorString());
+            }
+        }
+        else
+        {
+            QMessageBox::critical(this, tr("Export Table Error"),
             file.errorString());
         }
     }

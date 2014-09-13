@@ -48,6 +48,9 @@
        <property name="animated">
         <bool>true</bool>
        </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
        <property name="columnCount">
         <number>2</number>
        </property>
@@ -82,6 +85,7 @@
      <addaction name="separator"/>
      <addaction name="actionOpen_Tree"/>
      <addaction name="actionSave_Tree"/>
+     <addaction name="actionExport_CSV"/>
      <addaction name="separator"/>
      <addaction name="actionClose_Window"/>
     </widget>
@@ -125,6 +129,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionExport_CSV">
+   <property name="text">
+    <string>Export CSV</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+E</string>
    </property>
   </action>
   <action name="actionClose_Window">

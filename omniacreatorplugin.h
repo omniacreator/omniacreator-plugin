@@ -17,6 +17,7 @@
 #define OMNIACREATORPLUGIN_H
 
 #include <QtCore>
+#include <QtGui>
 #include <QtWidgets>
 
 #include "serialmake.h"
@@ -26,80 +27,11 @@
 #include "newprojectdialog.h"
 #include "newfileorprojectdialog.h"
 #include "openfileorprojectdialog.h"
+
 #include "utilitempicker.h"
 #include "utilpathpicker.h"
 
 #include "omniacreator_global.h"
-
-#include <utils/fileutils.h>
-#include <utils/qtcassert.h>
-#include <utils/proxyaction.h>
-
-#include <extensionsystem/iplugin.h>
-#include <extensionsystem/pluginmanager.h>
-
-#include <coreplugin/actionmanager/actioncontainer.h>
-#include <coreplugin/actionmanager/actionmanager.h>
-#include <coreplugin/actionmanager/command.h>
-#include <coreplugin/coreconstants.h>
-#include <coreplugin/icontext.h>
-#include <coreplugin/icore.h>
-#include <coreplugin/messagemanager.h>
-#include <coreplugin/documentmanager.h>
-#include <coreplugin/editormanager/editormanager.h>
-#include <coreplugin/imode.h>
-#include <coreplugin/modemanager.h>
-#include <coreplugin/fancyactionbar.h>
-#include <coreplugin/fancytabwidget.h>
-
-// Device Includes
-#include <projectexplorer/devicesupport/idevice.h>
-#include <projectexplorer/devicesupport/idevicefactory.h>
-#include <projectexplorer/devicesupport/idevicewidget.h>
-#include <projectexplorer/devicesupport/devicemanager.h>
-
-// Toolchain Includes
-#include <projectexplorer/gcctoolchain.h>
-#include <projectexplorer/toolchain.h>
-#include <projectexplorer/toolchainmanager.h>
-
-// Versions Includes
-#include <qtsupport/baseqtversion.h>
-#include <qtsupport/qtversionmanager.h>
-
-// Kit Includes
-#include <projectexplorer/kit.h>
-#include <projectexplorer/kitinformation.h>
-#include <projectexplorer/kitmanager.h>
-
-// Cmake Inlcludes
-#include <cmakeprojectmanager/cmakeproject.h>
-#include <cmakeprojectmanager/cmakeprojectmanager.h>
-#include <cmakeprojectmanager/cmakeprojectconstants.h>
-#include <cmakeprojectmanager/makestep.h>
-
-// Project Includes
-#include <projectexplorer/projectexplorersettings.h>
-#include <projectexplorer/projectexplorer.h>
-#include <projectexplorer/session.h>
-#include <projectexplorer/buildmanager.h>
-#include <projectexplorer/target.h>
-#include <projectexplorer/buildconfiguration.h>
-#include <projectexplorer/buildsteplist.h>
-#include <projectexplorer/buildstep.h>
-#include <projectexplorer/ioutputparser.h>
-
-// Environment Includes
-#include <coreplugin/variablemanager.h>
-
-// Text Editor Cpp Includes
-#include <texteditor/texteditorsettings.h>
-#include <texteditor/generichighlighter/highlightersettings.h>
-#include <texteditor/texteditorconstants.h>
-#include <texteditor/texteditoractionhandler.h>
-#include <cpptools/cppmodelmanagerinterface.h>
-#include <cppeditor/cppeditorconstants.h>
-#include <cpptools/cpptoolsconstants.h>
 
 #define LABEL_INDEX 5
 
@@ -113,6 +45,78 @@
 #else
     #define PATH_CHAR ":"
 #endif
+
+///////////////////////////////////////////////////////////////////////////////
+
+// ExtensionSystem
+#include <extensionsystem/iplugin.h>
+#include <extensionsystem/pluginmanager.h>
+
+// Utils
+#include <utils/proxyaction.h>
+#include <utils/qtcassert.h>
+
+// BinEditor
+#include <bineditor/bineditor.h>
+#include <bineditor/bineditorconstants.h>
+#include <bineditor/markup.h>
+
+// CMakeProjectManager
+#include <cmakeprojectmanager/cmakeproject.h>
+#include <cmakeprojectmanager/cmakeprojectconstants.h>
+#include <cmakeprojectmanager/cmakeprojectmanager.h>
+#include <cmakeprojectmanager/makestep.h>
+
+// CorePlugin
+#include <coreplugin/actionmanager/actioncontainer.h>
+#include <coreplugin/actionmanager/actionmanager.h>
+#include <coreplugin/actionmanager/command.h>
+#include <coreplugin/coreconstants.h>
+#include <coreplugin/documentmanager.h>
+#include <coreplugin/editormanager/editormanager.h>
+#include <coreplugin/fancyactionbar.h>
+#include <coreplugin/fancytabwidget.h>
+#include <coreplugin/icore.h>
+#include <coreplugin/imode.h>
+#include <coreplugin/messagemanager.h>
+
+// CPPEditor
+#include <cppeditor/cppeditorconstants.h>
+
+// CPPTools
+#include <cpptools/cpptoolsconstants.h>
+
+// ProjectExplorer
+#include <projectexplorer/buildmanager.h>
+#include <projectexplorer/buildconfiguration.h>
+#include <projectexplorer/buildsteplist.h>
+#include <projectexplorer/ioutputparser.h>
+#include <projectexplorer/projectexplorersettings.h>
+#include <projectexplorer/projectexplorer.h>
+#include <projectexplorer/session.h>
+#include <projectexplorer/target.h>
+
+// Project - Device
+#include <projectexplorer/devicesupport/idevice.h>
+#include <projectexplorer/devicesupport/idevicefactory.h>
+#include <projectexplorer/devicesupport/idevicewidget.h>
+#include <projectexplorer/devicesupport/devicemanager.h>
+
+// Project - Toolchain
+#include <projectexplorer/gcctoolchain.h>
+#include <projectexplorer/toolchain.h>
+#include <projectexplorer/toolchainmanager.h>
+
+// Project - Versions
+#include <qtsupport/baseqtversion.h>
+#include <qtsupport/qtversionmanager.h>
+
+// Project - Kit
+#include <projectexplorer/kit.h>
+#include <projectexplorer/kitinformation.h>
+#include <projectexplorer/kitmanager.h>
+
+///////////////////////////////////////////////////////////////////////////////
 
 class OmniaCreatorPlugin : public ExtensionSystem::IPlugin
 {
@@ -133,6 +137,8 @@ public:
     virtual ExtensionSystem::IPlugin::ShutdownFlag aboutToShutdown();
 
 private slots:
+
+    void portQuestion();
 
     void newFileOrProject();
     void openFileOrProject();
@@ -190,6 +196,14 @@ private slots:
     void buildClicked();
     void runClicked();
     void reopenPort();
+
+    // Reruns cmake...
+    void modelChanged(QModelIndex parent, int start, int end);
+
+signals:
+
+    // Reruns cmake...
+    void runCmake();
 
 private:
 

@@ -37,6 +37,9 @@ SerialWindow(title, settings, parent), m_ui(new Ui::SerialTree)
     connect(m_ui->actionSave_Tree, SIGNAL(triggered()),
             this, SLOT(exportState()));
 
+    connect(m_ui->actionExport_CSV, SIGNAL(triggered()),
+            this, SLOT(exportToCSV()));
+
     connect(m_ui->actionClose_Window, SIGNAL(triggered()),
             this, SLOT(close()));
 
@@ -302,6 +305,81 @@ void SerialTree::exportState(const QString &fileName)
         else
         {
             QMessageBox::critical(this, tr("Save Tree Error"),
+            file.errorString());
+        }
+    }
+}
+
+void SerialTree::exportToCSV(const QString &fileName)
+{
+    QSettings settings(settingsFileName(), settingsFormat());
+
+    settings.beginGroup(keyGroup());
+    settings.beginGroup(windowTitle());
+
+    QString saveFile = settings.value(SERIAL_TREE_KEY_SAVE_FILE_CSV,
+                                      QDir::homePath()).toString();
+
+    QString temp = fileName.isEmpty() ? QFileDialog::getSaveFileName(this,
+    tr("Export Tree"), saveFile, tr("CSV Files (*.csv)")) : fileName;
+
+    if(!temp.isEmpty())
+    {
+        QByteArray data;
+
+        switch(QMessageBox::question(this, tr("Export Tree"),
+        tr("Include Column Header Line?"), QMessageBox::Yes |
+        QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes))
+        {
+            case QMessageBox::Yes:
+            {
+                data.append("\"key\",\"value\"\n"); break;
+            }
+
+            case QMessageBox::No:
+            {
+                break;
+            }
+
+            default: return;
+        }
+
+        QFile file(temp);
+
+        if(file.open(QIODevice::WriteOnly | QIODevice::Text))
+        {
+            QList< QPair<QString, QString> > list =
+            json2Item(item2Json(m_ui->treeWidget->invisibleRootItem()));
+
+            list.removeFirst();
+
+            QList< QPair<QString, QString> >::const_iterator i =
+            list.constBegin();
+
+            QList< QPair<QString, QString> >::const_iterator j =
+            list.constEnd();
+
+            for(; i != j; i++)
+            {
+                data.append("\"" + i->first + "\",\"" + i->second + "\"\n");
+            }
+
+            if(file.write(data) == data.size())
+            {
+                QFileInfo fileInfo(temp);
+
+                settings.setValue(SERIAL_TREE_KEY_SAVE_FILE_CSV,
+                fileInfo.canonicalFilePath());
+            }
+            else
+            {
+                QMessageBox::critical(this, tr("Export Tree Error"),
+                file.errorString());
+            }
+        }
+        else
+        {
+            QMessageBox::critical(this, tr("Export Tree Error"),
             file.errorString());
         }
     }

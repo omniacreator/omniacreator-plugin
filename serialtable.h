@@ -72,6 +72,8 @@ public slots:
     virtual void importState(const QString &fileName = QString());
     virtual void exportState(const QString &fileName = QString());
 
+    void exportToCSV(const QString &fileName = QString());
+
 private slots:
 
     void findItem();

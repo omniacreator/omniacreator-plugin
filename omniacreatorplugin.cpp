@@ -128,19 +128,13 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
     m_runClicked = false; m_projectModel = new QFileSystemModel(this);
     m_projectModel->setRootPath(m_make->getProjectFolder());
 
-    connect(m_projectModel,
-    SIGNAL(rowsInserted(QModelIndex,int,int)),
-    Core::ActionManager::command(
-    CMakeProjectManager::Constants::RUNCMAKE)->action(), SIGNAL(triggered()));
+    connect(m_projectModel, SIGNAL(rowsInserted(QModelIndex,int,int)),
+            this, SLOT(modelChanged(QModelIndex,int,int)));
 
-    connect(m_projectModel,
-    SIGNAL(rowsMoved(QModelIndex,int,int,QModelIndex,int)),
-    Core::ActionManager::command(
-    CMakeProjectManager::Constants::RUNCMAKE)->action(), SIGNAL(triggered()));
+    connect(m_projectModel, SIGNAL(rowsAboutToBeRemoved(QModelIndex,int,int)),
+            this, SLOT(modelChanged(QModelIndex,int,int)));
 
-    connect(m_projectModel,
-    SIGNAL(rowsRemoved(QModelIndex,int,int)),
-    Core::ActionManager::command(
+    connect(this, SIGNAL(runCmake()), Core::ActionManager::command(
     CMakeProjectManager::Constants::RUNCMAKE)->action(), SIGNAL(triggered()));
 
     // Serial Port Init ///////////////////////////////////////////////////////
@@ -737,6 +731,8 @@ bool OmniaCreatorPlugin::delayedInitialize()
     QSettings settings(Core::ICore::settings()->fileName(),
                        Core::ICore::settings()->format());
 
+    ///////////////////////////////////////////////////////////////////////////
+
     settings.beginGroup(PLUGIN_DIALOG_KEY_GROUP);
 
     if(!settings.value(PLUGIN_DIALOG_KEY_NEW_SOFTWARE, false).toBool())
@@ -768,114 +764,37 @@ bool OmniaCreatorPlugin::delayedInitialize()
 
     ///////////////////////////////////////////////////////////////////////////
 
+    if(!m_make->getProjectFolderWasSet())
+    {
+        if(QMessageBox::question(Core::ICore::mainWindow(), tr("Make"),
+        tr("Would you like to make a new file or project?"),
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes)
+        == QMessageBox::Yes)
+        {
+            newFileOrProject();
+        }
+        else if(QMessageBox::question(Core::ICore::mainWindow(), tr("Open"),
+        tr("Would you like to open a new file or project?"),
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes)
+        == QMessageBox::Yes)
+        {
+            openFileOrProject();
+        }
+        else
+        {
+            QMessageBox::information(Core::ICore::mainWindow(),
+            tr("Project Information"), tr("<b>Make</b> or <b>Open</b> a "
+            "project first to build/run your code"));
+        }
+
+        m_make->setProjectFolderWasSet();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
     if(!m_port->getLastPortWasSet())
     {
-        QList< QPair<QString, QString> > list = m_port->getSerialPortList();
-
-        int size = list.size();
-
-        if(size > 1)
-        {
-            QString name = QApplication::applicationName();
-
-            QMessageBox::StandardButton button =
-            QMessageBox::question(Core::ICore::mainWindow(), tr("Select Port"),
-            tr("%L1 found serial ports attached to your computer. "
-            "Would you like to use one?").arg(name), QMessageBox::Yes |
-            QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes);
-
-            if(button == QMessageBox::Yes)
-            {
-                QList< QPair<QString, QVariant> > data;
-
-                QList< QPair<QString, QString> >::const_iterator i =
-                list.constBegin();
-
-                QList< QPair<QString, QString> >::const_iterator j =
-                list.constEnd();
-
-                for(; i != j; i++)
-                {
-                    data.append(QPair<QString, QVariant>(i->first, i->second));
-                }
-
-                UtilItemPicker ip(tr("Select Port"),
-                tr("Please select a serial port"),
-                data, Core::ICore::mainWindow());
-
-                if(ip.exec() == QDialog::Accepted)
-                {
-                    // Don't ask again...
-
-                    m_port->setLastPortWasSet();
-
-                    m_escape->setPort(m_port->openPort(
-                    ip.getSelectedItem().toString(), false));
-                }
-            }
-            else if(button == QMessageBox::No)
-            {
-                QMessageBox::information(Core::ICore::mainWindow(),
-                tr("Select Port"), tr("Please see the <b>Board Menu</b> "
-                "to select a serial port in the future"), QMessageBox::Ok,
-                QMessageBox::Ok);
-
-                // Don't ask again...
-
-                m_port->setLastPortWasSet();
-            }
-        }
-        else if(size > 0)
-        {
-            QString name = QApplication::applicationName();
-
-            QMessageBox::StandardButton button =
-            QMessageBox::question(Core::ICore::mainWindow(), tr("Select Port"),
-            tr("%L1 found a serial port attached to your computer. "
-            "Would you like to use it?").arg(name), QMessageBox::Yes |
-            QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes);
-
-            if(button == QMessageBox::Yes)
-            {
-                QList< QPair<QString, QVariant> > data;
-
-                QList< QPair<QString, QString> >::const_iterator i =
-                list.constBegin();
-
-                QList< QPair<QString, QString> >::const_iterator j =
-                list.constEnd();
-
-                for(; i != j; i++)
-                {
-                    data.append(QPair<QString, QVariant>(i->first, i->second));
-                }
-
-                UtilItemPicker ip(tr("Select Port"),
-                tr("Please select the serial port"),
-                data, Core::ICore::mainWindow());
-
-                if(ip.exec() == QDialog::Accepted)
-                {
-                    // Don't ask again...
-
-                    m_port->setLastPortWasSet();
-
-                    m_escape->setPort(m_port->openPort(
-                    ip.getSelectedItem().toString(), false));
-                }
-            }
-            else if(button == QMessageBox::No)
-            {
-                QMessageBox::information(Core::ICore::mainWindow(),
-                tr("Select Port"), tr("Please see the <b>Board Menu</b> "
-                "to select a serial port in the future"), QMessageBox::Ok,
-                QMessageBox::Ok);
-
-                // Don't ask again...
-
-                m_port->setLastPortWasSet();
-            }
-        }
+        portQuestion();
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -911,6 +830,116 @@ ExtensionSystem::IPlugin::ShutdownFlag OmniaCreatorPlugin::aboutToShutdown()
     SerialOscilloscope::finiFftw();
 
     return ExtensionSystem::IPlugin::SynchronousShutdown;
+}
+
+void OmniaCreatorPlugin::portQuestion()
+{
+    QList< QPair<QString, QString> > list = m_port->getSerialPortList();
+
+    int size = list.size();
+
+    if(size > 1)
+    {
+        QString name = QApplication::applicationName();
+
+        QMessageBox::StandardButton button =
+        QMessageBox::question(Core::ICore::mainWindow(), tr("Select Port"),
+        tr("%L1 found serial ports attached to your computer. "
+        "Would you like to use one?").arg(name), QMessageBox::Yes |
+        QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes);
+
+        if(button == QMessageBox::Yes)
+        {
+            QList< QPair<QString, QVariant> > data;
+
+            QList< QPair<QString, QString> >::const_iterator i =
+            list.constBegin();
+
+            QList< QPair<QString, QString> >::const_iterator j =
+            list.constEnd();
+
+            for(; i != j; i++)
+            {
+                data.append(QPair<QString, QVariant>(i->first, i->second));
+            }
+
+            UtilItemPicker ip(tr("Select Port"),
+            tr("Please select a serial port"),
+            data, Core::ICore::mainWindow());
+
+            if(ip.exec() == QDialog::Accepted)
+            {
+                // Don't ask again...
+
+                m_port->setLastPortWasSet();
+
+                m_escape->setPort(m_port->openPort(
+                ip.getSelectedItem().toString(), false));
+            }
+        }
+        else if(button == QMessageBox::No)
+        {
+            QMessageBox::information(Core::ICore::mainWindow(),
+            tr("Select Port"), tr("Please see the <b>Board Menu</b> "
+            "to select a serial port in the future"), QMessageBox::Ok,
+            QMessageBox::Ok);
+
+            // Don't ask again...
+
+            m_port->setLastPortWasSet();
+        }
+    }
+    else if(size > 0)
+    {
+        QString name = QApplication::applicationName();
+
+        QMessageBox::StandardButton button =
+        QMessageBox::question(Core::ICore::mainWindow(), tr("Select Port"),
+        tr("%L1 found a serial port attached to your computer. "
+        "Would you like to use it?").arg(name), QMessageBox::Yes |
+        QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes);
+
+        if(button == QMessageBox::Yes)
+        {
+            QList< QPair<QString, QVariant> > data;
+
+            QList< QPair<QString, QString> >::const_iterator i =
+            list.constBegin();
+
+            QList< QPair<QString, QString> >::const_iterator j =
+            list.constEnd();
+
+            for(; i != j; i++)
+            {
+                data.append(QPair<QString, QVariant>(i->first, i->second));
+            }
+
+            UtilItemPicker ip(tr("Select Port"),
+            tr("Please select the serial port"),
+            data, Core::ICore::mainWindow());
+
+            if(ip.exec() == QDialog::Accepted)
+            {
+                // Don't ask again...
+
+                m_port->setLastPortWasSet();
+
+                m_escape->setPort(m_port->openPort(
+                ip.getSelectedItem().toString(), false));
+            }
+        }
+        else if(button == QMessageBox::No)
+        {
+            QMessageBox::information(Core::ICore::mainWindow(),
+            tr("Select Port"), tr("Please see the <b>Board Menu</b> "
+            "to select a serial port in the future"), QMessageBox::Ok,
+            QMessageBox::Ok);
+
+            // Don't ask again...
+
+            m_port->setLastPortWasSet();
+        }
+    }
 }
 
 void OmniaCreatorPlugin::newFileOrProject()
@@ -1645,6 +1674,15 @@ void OmniaCreatorPlugin::boardMenuAboutToShow()
 
     updateSerialPortMenu();
     updateBaudRateMenu();
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    if(!m_port->getLastPortWasSet())
+    {
+        portQuestion();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
 }
 
 void OmniaCreatorPlugin::widgetsMenuAboutToShow()
@@ -2072,6 +2110,22 @@ void OmniaCreatorPlugin::about()
     "<p>Build system powered by "
     "<a href=\"http://www.cmake.org/\">"
     "CMake</a>.</p>"
+    ""
+    "<p>Build tool powered by "
+    "<a href=\"http://martine.github.io/ninja/\">"
+    "Ninja</a>.</p>"
+    ""
+    "<p>Arduino scripts powered by "
+    "<a href=\"https://github.com/queezythegreat/arduino-cmake\">"
+    "Arduino CMake</a>.</p>"
+    ""
+    "<p>Arduino Toolchain powered by "
+    "<a href=\"http://www.arduino.cc/\">"
+    "Arduino</a>.</p>"
+    ""
+    "<p>Propeller Toolchain powered by "
+    "<a href=\"https://code.google.com/p/propside/\">"
+    "SimpleIDE</a>.</p>"
     ""
     "<p>Installer powered by "
     "<a href=\"http://installbuilder.bitrock.com/\">"
@@ -3351,6 +3405,27 @@ void OmniaCreatorPlugin::reopenPort()
     }
 }
 
+void OmniaCreatorPlugin::modelChanged(QModelIndex parent, int start, int end)
+{
+    bool signal = false;
+
+    for(int i = start; i <= end; i++)
+    {
+        QFileInfo info =
+        m_projectModel->fileInfo(parent.child(i, parent.column()));
+
+        if(info.isDir() || (info.suffix() != "autosave"))
+        {
+            signal = true;
+        }
+    }
+
+    if(signal)
+    {
+        emit runCmake();
+    }
+}
+
 void OmniaCreatorPlugin::messageHandler(QtMsgType type, const char *text)
 {
     QStringList ignored;
@@ -3366,6 +3441,14 @@ void OmniaCreatorPlugin::messageHandler(QtMsgType type, const char *text)
     ignored << "No deployment configuration factory found for target id";
                // This might not be harmless...
     ignored << "SOFT ASSERT: \"m_outputParserChain\" in file";
+               // This might not be harmless...
+    ignored << "setGeometry: Attempt to set a size (100x34) violating the "
+               "constraints(0x1 - 0x1) on window "
+               "QWidgetWindow/'Core::Internal::ProgressViewClassWindow'.";
+               // This might not be harmless...
+    ignored << "setGeometry: Attempt to set a size (100x1) violating the "
+               "constraints(0x1 - 0x1) on window "
+               "QWidgetWindow/'Core::Internal::ProgressViewClassWindow'.";
                // This might not be harmless...
 
     foreach(const QString &string, ignored)
