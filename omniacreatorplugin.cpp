@@ -208,6 +208,14 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
     m_codeSpaceUsed->setText(tr("..."));
     m_dataSpaceUsed->setText(tr("..."));
 
+    // TODO: Make this elide the text also...
+    m_projectFolder->setMinimumWidth(2);
+    m_boardType->setMinimumWidth(2);
+
+    // TODO: Make this elide the text also...
+    m_codeSpaceUsed->setMinimumWidth(2);
+    m_dataSpaceUsed->setMinimumWidth(2);
+
     // Begin Registering //////////////////////////////////////////////////////
 
     qInstallMsgHandler(messageHandler);
@@ -774,7 +782,7 @@ bool OmniaCreatorPlugin::delayedInitialize()
             newFileOrProject();
         }
         else if(QMessageBox::question(Core::ICore::mainWindow(), tr("Open"),
-        tr("Would you like to open a new file or project?"),
+        tr("Would you like to open a file or project?"),
         QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes)
         == QMessageBox::Yes)
         {
@@ -3448,6 +3456,14 @@ void OmniaCreatorPlugin::messageHandler(QtMsgType type, const char *text)
                // This might not be harmless...
     ignored << "setGeometry: Attempt to set a size (100x1) violating the "
                "constraints(0x1 - 0x1) on window "
+               "QWidgetWindow/'Core::Internal::ProgressViewClassWindow'.";
+               // This might not be harmless...
+    ignored << "setGeometry: Attempt to set a size (100x34) violating the "
+               "constraints(100x67 - 100x67) on window "
+               "QWidgetWindow/'Core::Internal::ProgressViewClassWindow'.";
+               // This might not be harmless...
+    ignored << "setGeometry: Attempt to set a size (100x1) violating the "
+               "constraints(100x67 - 100x67) on window "
                "QWidgetWindow/'Core::Internal::ProgressViewClassWindow'.";
                // This might not be harmless...
 
