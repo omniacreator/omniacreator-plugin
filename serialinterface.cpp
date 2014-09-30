@@ -3151,7 +3151,7 @@ void SerialInterface::generalHelp()
 void SerialInterface::interfaceHelp()
 {
     if(!QDesktopServices::openUrl(QUrl("http://" PROJECT_DOMAIN_NAME_STR "/"
-    "help/interface/")))
+    "help/widgets/interface/")))
     {
         QMessageBox::critical(this, tr("Open Interface Help Error"),
         tr("Unable to open the URL to the Interface Help page"));

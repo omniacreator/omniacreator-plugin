@@ -5233,6 +5233,10 @@ bool SerialOscilloscope::addBarData(int plottable,
                 key = myPlottable->data()->lastKey() +
                       myPlottable->m_sampleRate;
             }
+            else if(myPlottable->m_deltaMode)
+            {
+                key = -(myPlottable->m_size * myPlottable->m_sampleRate);
+            }
 
             if(myPlottable->m_coordinateSystem == CS_POLAR)
             {
@@ -5362,6 +5366,10 @@ bool SerialOscilloscope::addCurveData(int plottable,
                 index = myPlottable->data()->lastKey() +
                         myPlottable->m_sampleRate;
             }
+            else if(myPlottable->m_deltaMode)
+            {
+                index = -(myPlottable->m_size * myPlottable->m_sampleRate);
+            }
 
             if(myPlottable->m_coordinateSystem == CS_POLAR)
             {
@@ -5487,6 +5495,10 @@ bool SerialOscilloscope::addGraphData(int plottable,
             {
                 key = myPlottable->data()->lastKey() +
                       myPlottable->m_sampleRate;
+            }
+            else if(myPlottable->m_deltaMode)
+            {
+                key = -(myPlottable->m_size * myPlottable->m_sampleRate);
             }
 
             if(myPlottable->m_coordinateSystem == CS_POLAR)
@@ -5661,6 +5673,10 @@ bool SerialOscilloscope::addGraphDataWithErrors(int plottable,
                 key = myPlottable->data()->lastKey() +
                       myPlottable->m_sampleRate;
             }
+            else if(myPlottable->m_deltaMode)
+            {
+                key = -(myPlottable->m_size * myPlottable->m_sampleRate);
+            }
 
             if(myPlottable->m_coordinateSystem == CS_POLAR)
             {
@@ -5851,6 +5867,10 @@ bool SerialOscilloscope::addGraphDataWithErrors(int plottable,
                 key = myPlottable->data()->lastKey() +
                       myPlottable->m_sampleRate;
             }
+            else if(myPlottable->m_deltaMode)
+            {
+                key = -(myPlottable->m_size * myPlottable->m_sampleRate);
+            }
 
             if(myPlottable->m_coordinateSystem == CS_POLAR)
             {
@@ -5986,6 +6006,10 @@ bool SerialOscilloscope::addBoxData(int plottable,
             {
                 index = myPlottable->m_outs.lastKey() +
                         myPlottable->m_sampleRate;
+            }
+            else if(myPlottable->m_deltaMode)
+            {
+                index = -(myPlottable->m_size * myPlottable->m_sampleRate);
             }
 
             value *= myPlottable->m_scaler;
@@ -8043,7 +8067,7 @@ void SerialOscilloscope::generalHelp()
 void SerialOscilloscope::oscilloscopeHelp()
 {
     if(!QDesktopServices::openUrl(QUrl("http://" PROJECT_DOMAIN_NAME_STR "/"
-    "help/oscilloscope/")))
+    "help/widgets/oscilloscope/")))
     {
         QMessageBox::critical(this, tr("Open Oscilloscope Help Error"),
         tr("Unable to open the URL to the Oscilloscope Help page"));

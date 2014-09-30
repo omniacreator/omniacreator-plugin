@@ -618,7 +618,7 @@ void SerialTerminal::generalHelp()
 void SerialTerminal::terminalHelp()
 {
     if(!QDesktopServices::openUrl(QUrl("http://" PROJECT_DOMAIN_NAME_STR "/"
-    "help/terminal/")))
+    "help/widgets/terminal/")))
     {
         QMessageBox::critical(this, tr("Open Terminal Help Error"),
         tr("Unable to open the URL to the Terminal Help page"));

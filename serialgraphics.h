@@ -176,7 +176,7 @@ private:
                     double minValue,
                     double maxValue);
 
-    bool m_resize; QGraphicsScene *m_scene; QGLWidget *m_widget;
+    bool m_resize; QWidget *m_widget; QGraphicsScene *m_scene;
 
     CoordinateSystem m_coordinateSystem; AngleUnits m_angleUnits;
     QPen m_pen; QBrush m_brush; double m_rotation, m_scale;

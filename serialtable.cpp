@@ -687,7 +687,7 @@ void SerialTable::generalHelp()
 void SerialTable::tableHelp()
 {
     if(!QDesktopServices::openUrl(QUrl("http://" PROJECT_DOMAIN_NAME_STR "/"
-    "help/table/")))
+    "help/widgets/table/")))
     {
         QMessageBox::critical(this, tr("Open Table Help Error"),
         tr("Unable to open the URL to the Table Help page"));

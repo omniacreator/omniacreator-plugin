@@ -219,7 +219,6 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
     // Begin Registering //////////////////////////////////////////////////////
 
     qInstallMsgHandler(messageHandler);
-
     addAutoReleasedObject(new MicrocontrollerIDF);
 
     connect(static_cast<ProjectExplorer::DeviceManager *>

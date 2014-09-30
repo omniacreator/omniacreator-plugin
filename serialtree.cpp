@@ -398,7 +398,7 @@ void SerialTree::generalHelp()
 void SerialTree::treeHelp()
 {
     if(!QDesktopServices::openUrl(QUrl("http://" PROJECT_DOMAIN_NAME_STR "/"
-    "help/tree/")))
+    "help/widgets/tree/")))
     {
         QMessageBox::critical(this, tr("Open Tree Help Error"),
         tr("Unable to open the URL to the Tree Help page"));

@@ -23,15 +23,21 @@ SerialWindow(title, settings, parent), m_ui(new Ui::SerialGraphics)
     m_ui->setupUi(this); m_ui->statusBar->hide();
 
     m_resize = true;
-    m_scene = new QGraphicsScene(this);
-    m_widget = new QGLWidget(QGLFormat(QGL::SampleBuffers));
+    m_widget = new QWidget;
+    m_scene = new QGraphicsScene(-1000000000,
+                                 -1000000000,
+                                 +2000000001,
+                                 +2000000001,
+                                 this);
 
+    m_widget->installEventFilter(this);
+    m_scene->installEventFilter(this);
     m_ui->graphicsView->installEventFilter(this);
-    m_ui->graphicsView->setScene(m_scene);
     m_ui->graphicsView->setViewport(m_widget);
+    m_ui->graphicsView->setScene(m_scene);
 
     m_coordinateSystem = CS_CARTESIAN; m_angleUnits = AU_DEGREES;
-    m_pen = QColor(000, 000, 255); m_brush = QColor(200, 200, 255);
+    m_pen = QPen(QColor(000, 000, 255), 0.0); m_brush = QColor(200, 200, 255);
     m_rotation = 0.0; m_scale = 1.0;
 
     m_rasterWidth = 640; m_rasterHeight = 480; m_rasterSaveViewport = false;
@@ -300,7 +306,7 @@ bool SerialGraphics::drawText(double x, double y,
 
         if(m_resize)
         {
-            m_ui->graphicsView->fitInView(m_scene->sceneRect(),
+            m_ui->graphicsView->fitInView(m_scene->itemsBoundingRect(),
                                           Qt::KeepAspectRatio);
         }
     }
@@ -350,7 +356,7 @@ bool SerialGraphics::drawLine(double x1, double y1,
 
         if(m_resize)
         {
-            m_ui->graphicsView->fitInView(m_scene->sceneRect(),
+            m_ui->graphicsView->fitInView(m_scene->itemsBoundingRect(),
                                           Qt::KeepAspectRatio);
         }
     }
@@ -408,7 +414,7 @@ bool SerialGraphics::drawQuadraticLine(double x1, double y1,
 
         if(m_resize)
         {
-            m_ui->graphicsView->fitInView(m_scene->sceneRect(),
+            m_ui->graphicsView->fitInView(m_scene->itemsBoundingRect(),
                                           Qt::KeepAspectRatio);
         }
     }
@@ -474,7 +480,7 @@ bool SerialGraphics::drawCubicLine(double x1, double y1,
 
         if(m_resize)
         {
-            m_ui->graphicsView->fitInView(m_scene->sceneRect(),
+            m_ui->graphicsView->fitInView(m_scene->itemsBoundingRect(),
                                           Qt::KeepAspectRatio);
         }
     }
@@ -537,7 +543,7 @@ bool SerialGraphics::drawArc(double x1, double y1,
 
         if(m_resize)
         {
-            m_ui->graphicsView->fitInView(m_scene->sceneRect(),
+            m_ui->graphicsView->fitInView(m_scene->itemsBoundingRect(),
                                           Qt::KeepAspectRatio);
         }
     }
@@ -600,7 +606,7 @@ bool SerialGraphics::drawChord(double x1, double y1,
 
         if(m_resize)
         {
-            m_ui->graphicsView->fitInView(m_scene->sceneRect(),
+            m_ui->graphicsView->fitInView(m_scene->itemsBoundingRect(),
                                           Qt::KeepAspectRatio);
         }
     }
@@ -661,7 +667,7 @@ bool SerialGraphics::drawTriangle(double x1, double y1,
 
         if(m_resize)
         {
-            m_ui->graphicsView->fitInView(m_scene->sceneRect(),
+            m_ui->graphicsView->fitInView(m_scene->itemsBoundingRect(),
                                           Qt::KeepAspectRatio);
         }
     }
@@ -730,7 +736,7 @@ bool SerialGraphics::drawQuadrilateral(double x1, double y1,
 
         if(m_resize)
         {
-            m_ui->graphicsView->fitInView(m_scene->sceneRect(),
+            m_ui->graphicsView->fitInView(m_scene->itemsBoundingRect(),
                                           Qt::KeepAspectRatio);
         }
     }
@@ -786,7 +792,7 @@ bool SerialGraphics::drawRectangle(double x1, double y1,
 
         if(m_resize)
         {
-            m_ui->graphicsView->fitInView(m_scene->sceneRect(),
+            m_ui->graphicsView->fitInView(m_scene->itemsBoundingRect(),
                                           Qt::KeepAspectRatio);
         }
     }
@@ -849,7 +855,7 @@ bool SerialGraphics::drawEllipse(double x1, double y1,
 
         if(m_resize)
         {
-            m_ui->graphicsView->fitInView(m_scene->sceneRect(),
+            m_ui->graphicsView->fitInView(m_scene->itemsBoundingRect(),
                                           Qt::KeepAspectRatio);
         }
     }
@@ -926,7 +932,8 @@ void SerialGraphics::zoomOut()
 
 void SerialGraphics::zoomFit()
 {
-    m_ui->graphicsView->fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
+    m_ui->graphicsView->fitInView(m_scene->itemsBoundingRect(),
+                                  Qt::KeepAspectRatio);
 
     m_resize = true;
 }
@@ -961,6 +968,8 @@ void SerialGraphics::saveRasterImage()
             {
                 QPixmap pixmap(dialog.getWidth(), dialog.getHeight());
 
+                pixmap.fill(m_ui->graphicsView->backgroundBrush().color());
+
                 QPainter painter;
 
                 if(!painter.begin(&pixmap))
@@ -971,11 +980,18 @@ void SerialGraphics::saveRasterImage()
 
                 if(dialog.getSaveCurrentView())
                 {
-                    m_ui->graphicsView->render(&painter);
+                    m_ui->graphicsView->render(&painter, QRectF(), QRect(),
+                    Qt::IgnoreAspectRatio);
                 }
                 else
                 {
-                    m_scene->render(&painter);
+                    QRectF rect = m_scene->itemsBoundingRect();
+
+                    QRectF newRect(QPointF(), rect.size() * 1.2);
+                    newRect.moveCenter(rect.center());
+
+                    m_scene->render(&painter, QRectF(), newRect,
+                    Qt::IgnoreAspectRatio);
                 }
 
                 if((!painter.end()) || (!pixmap.save(fileName)))
@@ -1058,13 +1074,22 @@ void SerialGraphics::saveVectorImage()
                     tr("Painting initialization failed")); return;
                 }
 
+                // TODO: RENDER IS BUGGED!!!
+
                 if(dialog.getSaveCurrentView())
                 {
-                    m_ui->graphicsView->render(&painter);
+                    m_ui->graphicsView->render(&painter, QRectF(), QRect(),
+                    Qt::IgnoreAspectRatio);
                 }
                 else
                 {
-                    m_scene->render(&painter);
+                    QRectF rect = m_scene->itemsBoundingRect();
+
+                    QRectF newRect(QPointF(), rect.size() * 1.2);
+                    newRect.moveCenter(rect.center());
+
+                    m_scene->render(&painter, QRectF(), newRect,
+                    Qt::IgnoreAspectRatio);
                 }
 
                 if(!painter.end())
@@ -1123,11 +1148,18 @@ void SerialGraphics::saveVectorImage()
 
                     if(dialog.getSaveCurrentView())
                     {
-                        m_ui->graphicsView->render(&painter);
+                        m_ui->graphicsView->render(&painter, QRectF(), QRect(),
+                        Qt::IgnoreAspectRatio);
                     }
                     else
                     {
-                        m_scene->render(&painter);
+                        QRectF rect = m_scene->itemsBoundingRect();
+
+                        QRectF newRect(QPointF(), rect.size() * 1.2);
+                        newRect.moveCenter(rect.center());
+
+                        m_scene->render(&painter, QRectF(), newRect,
+                        Qt::IgnoreAspectRatio);
                     }
 
                     if(!painter.end())
@@ -1458,7 +1490,7 @@ void SerialGraphics::generalHelp()
 void SerialGraphics::graphicsHelp()
 {
     if(!QDesktopServices::openUrl(QUrl("http://" PROJECT_DOMAIN_NAME_STR "/"
-    "help/graphics/")))
+    "help/widgets/graphics/")))
     {
         QMessageBox::critical(this, tr("Open Graphics Help Error"),
         tr("Unable to open the URL to the Graphics Help page"));
@@ -1467,11 +1499,13 @@ void SerialGraphics::graphicsHelp()
 
 bool SerialGraphics::eventFilter(QObject *object, QEvent *event)
 {
-    if(object == m_ui->graphicsView)
+    if((object == m_ui->graphicsView)
+    || (object == m_widget)
+    || (object == m_scene))
     {
         if(event->type() == QEvent::MouseButtonDblClick)
         {
-            m_ui->graphicsView->fitInView(m_scene->sceneRect(),
+            m_ui->graphicsView->fitInView(m_scene->itemsBoundingRect(),
                                           Qt::KeepAspectRatio);
 
             m_resize = true;
@@ -1495,15 +1529,25 @@ bool SerialGraphics::eventFilter(QObject *object, QEvent *event)
             double angleDelta = qPow(1.2, wheelEvent->angleDelta().y()/120.0);
 
             Q_UNUSED(pixelDelta);
-            Q_UNUSED(angleDelta);
-
-            QPointF center = m_ui->graphicsView->mapToScene(wheelEvent->pos());
 
             m_ui->graphicsView->scale(angleDelta, angleDelta);
-            m_ui->graphicsView->centerOn(center);
 
             m_resize = false;
         }
+
+//        if(event->type() == QEvent::GraphicsSceneWheel)
+//        {
+//            QGraphicsSceneWheelEvent *wheelEvent =
+//            static_cast<QGraphicsSceneWheelEvent *>(event);
+
+//            double delta = qPow(1.2, wheelEvent->delta() / 120.0);
+
+//            m_ui->graphicsView->scale(delta, delta);
+
+//            m_resize = false;
+
+//            return true;
+//        }
 
         if(event->type() == QEvent::ToolTip)
         {
@@ -1575,7 +1619,7 @@ void SerialGraphics::resizeEvent(QResizeEvent *event)
 {
     if(m_resize)
     {
-        m_ui->graphicsView->fitInView(m_scene->sceneRect(),
+        m_ui->graphicsView->fitInView(m_scene->itemsBoundingRect(),
                                       Qt::KeepAspectRatio);
     }
 
