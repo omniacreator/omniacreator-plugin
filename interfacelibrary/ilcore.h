@@ -80,10 +80,10 @@ protected:
     m_XBuffer[MAX_CREDITS];
 
     uint8 m_receiveBufferSize,
-    m_receiveBuffer[LAYER_0_HEAD_SIZE + MAX_LAYER_0_DATA_SIZE];
+    m_receiveBuffer[LAYER_0_HEAD_SIZE + MAX_SET_LAYER_0_DATA_SIZE];
 
     uint8 m_sendBufferSize,
-    m_sendBuffer[MAX_LAYER_0_DATA_SIZE];
+    m_sendBuffer[MAX_SET_LAYER_0_DATA_SIZE];
 
     enum
     {
@@ -1168,7 +1168,7 @@ private:
 
                     m_data->m_L0Size = dataByte;
 
-                    if(m_data->m_L0Size > MAX_LAYER_0_DATA_SIZE)
+                    if(m_data->m_L0Size > MAX_SET_LAYER_0_DATA_SIZE)
                     {
                         m_data->m_DCEFatalError = true;
 
@@ -1657,7 +1657,7 @@ private:
             {
                 if((timeMilliseconds() - timeStamp) > WRITE_CREDITS_TIMEOUT)
                 {
-                    m_data->m_writeCredits += 1;
+                    m_data->m_writeCredits += 1; // regenerate credits
                 }
                 else
                 {
@@ -1698,7 +1698,7 @@ private:
     {
         m_data->m_sendBuffer[m_data->m_sendBufferSize++] = data;
 
-        if(m_data->m_sendBufferSize >= MAX_LAYER_0_DATA_SIZE)
+        if(m_data->m_sendBufferSize >= MAX_SET_LAYER_0_DATA_SIZE)
         {
             flushPacket();
         }
@@ -2533,7 +2533,7 @@ public:
     }
 
     // TODO: Real float support...
-    size_t print(double value)
+    size_t printF(float32 value)
     {
         return print(int32(value), DEC);
     }
@@ -2579,7 +2579,7 @@ public:
     }
 
     // TODO: Real float support...
-    size_t println(double value)
+    size_t printlnF(float32 value)
     {
         return println(int32(value), DEC);
     }

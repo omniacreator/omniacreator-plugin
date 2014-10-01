@@ -90,6 +90,26 @@ public:
         return result;
     }
 
+    // The wrong overload could be called with print() - but not with write().
+
+    bool write(char character,
+               bool waitForResponse = false)
+    {
+        char string[] = {character, '\0'};
+
+        return sendPacket(TERMINAL_PRINT,
+        string, waitForResponse);
+    }
+
+    // The wrong overload could be called with print() - but not with write().
+
+    bool write(const char *text,
+               bool waitForResponse = false)
+    {
+        return sendPacket(TERMINAL_PRINT,
+        text, waitForResponse);
+    }
+
     bool print(char character,
                bool waitForResponse = false)
     {
@@ -149,8 +169,8 @@ public:
     }
 
     // TODO: Real float support...
-    bool print(double value,
-               bool waitForResponse = false)
+    bool printF(float32 value,
+                bool waitForResponse = false)
     {
         return print(int32(value), DEC,
         waitForResponse);
@@ -215,8 +235,8 @@ public:
     }
 
     // TODO: Real float support...
-    bool println(double value,
-                 bool waitForResponse = false)
+    bool printlnF(float32 value,
+                  bool waitForResponse = false)
     {
         return println(int32(value), DEC,
         waitForResponse);

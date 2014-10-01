@@ -149,8 +149,8 @@ public:
     }
 
     // TODO: Real float support...
-    bool newItem(uint16 row, uint16 column, double value,
-                 bool waitForResponse = false)
+    bool newItemF(uint16 row, uint16 column, float32 value,
+                  bool waitForResponse = false)
     {
         return newItem(row, column, int32(value), DEC,
         waitForResponse);
@@ -239,8 +239,8 @@ public:
     }
 
     // TODO: Real float support...
-    bool setItemText(uint16 row, uint16 column, double value,
-                     bool waitForResponse = false)
+    bool setItemTextF(uint16 row, uint16 column, float32 value,
+                      bool waitForResponse = false)
     {
         return setItemText(row, column, int32(value), DEC,
         waitForResponse);
@@ -308,8 +308,8 @@ public:
     }
 
     // TODO: Real float support...
-    bool newRow(uint16 row, double value,
-                bool waitForResponse = false)
+    bool newRowF(uint16 row, float32 value,
+                 bool waitForResponse = false)
     {
         return newRow(row, int32(value), DEC,
         waitForResponse);
@@ -378,8 +378,8 @@ public:
     }
 
     // TODO: Real float support...
-    bool setRowName(uint16 row, double value,
-                    bool waitForResponse = false)
+    bool setRowNameF(uint16 row, float value,
+                     bool waitForResponse = false)
     {
         return setRowName(row, int32(value), DEC,
         waitForResponse);
@@ -444,8 +444,8 @@ public:
     }
 
     // TODO: Real float support...
-    bool newColumn(uint16 column, double value,
-                   bool waitForResponse = false)
+    bool newColumnF(uint16 column, float32 value,
+                    bool waitForResponse = false)
     {
         return newColumn(column, int32(value), DEC,
         waitForResponse);
@@ -514,8 +514,8 @@ public:
     }
 
     // TODO: Real float support...
-    bool setColumnName(uint16 column, double value,
-                       bool waitForResponse = false)
+    bool setColumnNameF(uint16 column, float32 value,
+                        bool waitForResponse = false)
     {
         return setColumnName(column, int32(value), DEC,
         waitForResponse);

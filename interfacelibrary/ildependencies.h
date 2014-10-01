@@ -23,11 +23,11 @@
 #define MAX_OUTSTANDING DCE_MAX_QUEUE_DEPTH
 
 #ifndef READ_CREDIT_TIMEOUT_OVERRIDE
-#define READ_CREDIT_TIMEOUT (10L * 1000L) // ten seconds in milliseconds
+#define READ_CREDIT_TIMEOUT (2L * 1000L) // two seconds in milliseconds
 #endif
 
 #ifndef WRITE_CREDITS_TIMEOUT_OVERRIDE
-#define WRITE_CREDITS_TIMEOUT (10L * 1000L) // ten seconds in milliseconds
+#define WRITE_CREDITS_TIMEOUT (2L * 1000L) // two seconds in milliseconds
 #endif
 
 // Start Library Dependencies /////////////////////////////////////////////////
@@ -65,6 +65,10 @@
             (15-LAYER_0_HEAD_SIZE-LAYER_0_TAIL_SIZE-1)
             // includes the credit flow control byte
 
+            // Save RAM
+            #undef FIFO_BUFFER_SIZE
+            #define FIFO_BUFFER_SIZE 16
+
         #else
 
             #define FULL_DUPLEX_MODE
@@ -78,6 +82,10 @@
             #define MAX_SET_LAYER_0_DATA_SIZE \
             (21-LAYER_0_HEAD_SIZE-LAYER_0_TAIL_SIZE-1)
             // includes the credit flow control byte
+
+            // Save RAM
+            #undef FIFO_BUFFER_SIZE
+            #define FIFO_BUFFER_SIZE 64
 
         #endif
     #endif
@@ -110,6 +118,10 @@
         (21-LAYER_0_HEAD_SIZE-LAYER_0_TAIL_SIZE-1)
         // includes the credit flow control byte
 
+        // Save RAM
+        #undef FIFO_BUFFER_SIZE
+        #define FIFO_BUFFER_SIZE 64
+
     #else
 
         #define FULL_DUPLEX_MODE
@@ -123,6 +135,10 @@
         #define MAX_SET_LAYER_0_DATA_SIZE \
         (21-LAYER_0_HEAD_SIZE-LAYER_0_TAIL_SIZE-1)
         // includes the credit flow control byte
+
+        // Save RAM
+        #undef FIFO_BUFFER_SIZE
+        #define FIFO_BUFFER_SIZE 64
 
     #endif
 

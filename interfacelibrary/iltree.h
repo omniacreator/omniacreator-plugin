@@ -149,8 +149,8 @@ public:
     }
 
     // TODO: Real float support...
-    bool newItem(const char *key, double value,
-                 bool waitForResponse = false)
+    bool newItemF(const char *key, float32 value,
+                  bool waitForResponse = false)
     {
         return newItem(key, int32(value), DEC,
         waitForResponse);
@@ -222,8 +222,8 @@ public:
     }
 
     // TODO: Real float support...
-    bool setItemValue(const char *key, double value,
-                      bool waitForResponse = false)
+    bool setItemValueF(const char *key, float32 value,
+                       bool waitForResponse = false)
     {
         return setItemValue(key, int32(value), DEC,
         waitForResponse);
