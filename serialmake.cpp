@@ -416,7 +416,7 @@ void SerialMake::updateProject2()
 {
     updateProject();
 
-    if(!getProjectFolder().isEmpty())
+    if((!getProjectFolder().isEmpty()) && (!getProjectMakeFile().isEmpty()))
     {
         if(!QDir().mkpath(m_makeSrcFolder))
         {
