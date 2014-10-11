@@ -17,11 +17,25 @@
 
 OmniaCreatorPlugin::OmniaCreatorPlugin()
 {
+    // SDK Support ////////////////////////////////////////////////////////////
+
     // Help QtCreator find Ninja...
     // See CMakeProjectManager->CMakeManager
     QString path = qgetenv("PATH");
     path.append(PATH_CHAR + QApplication::applicationDirPath());
+
+    QDirIterator it(QDir::fromNativeSeparators(QDir::cleanPath(
+    QApplication::applicationDirPath() + QLatin1String("/../../../tools"))),
+    QDir::Dirs | QDir::NoDotAndDotDot);
+
+    while(it.hasNext())
+    {
+        path.append(PATH_CHAR + it.next());
+    }
+
     qputenv("PATH", path.toUtf8());
+
+    ///////////////////////////////////////////////////////////////////////////
 
     // Remove warnings from files in application folder tree...
     // See CMakeProjectManager->CMakeParser
@@ -30,7 +44,7 @@ OmniaCreatorPlugin::OmniaCreatorPlugin()
     // See ProjectExplorer->LdParser
     QString wno_path = qgetenv("WNO_PATH");
     wno_path.append(',' + QDir::fromNativeSeparators(QDir::cleanPath(
-    QApplication::applicationDirPath() + QDir::separator() + "../../..")));
+    QApplication::applicationDirPath() + "/../../..")));
     qputenv("WNO_PATH", wno_path.toUtf8());
 
     ///////////////////////////////////////////////////////////////////////////
@@ -63,11 +77,25 @@ OmniaCreatorPlugin::OmniaCreatorPlugin()
 
 OmniaCreatorPlugin::~OmniaCreatorPlugin()
 {
+    // SDK Support ////////////////////////////////////////////////////////////
+
     // Help QtCreator find Ninja...
     // See CMakeProjectManager->CMakeManager
     QString path = qgetenv("PATH");
     path.remove(PATH_CHAR + QApplication::applicationDirPath());
+
+    QDirIterator it(QDir::fromNativeSeparators(QDir::cleanPath(
+    QApplication::applicationDirPath() + QLatin1String("/../../../tools"))),
+    QDir::Dirs | QDir::NoDotAndDotDot);
+
+    while(it.hasNext())
+    {
+        path.remove(PATH_CHAR + it.next());
+    }
+
     qputenv("PATH", path.toUtf8());
+
+    ///////////////////////////////////////////////////////////////////////////
 
     // Remove warnings from files in application folder tree...
     // See CMakeProjectManager->CMakeParser
@@ -76,7 +104,7 @@ OmniaCreatorPlugin::~OmniaCreatorPlugin()
     // See ProjectExplorer->LdParser
     QString wno_path = qgetenv("WNO_PATH");
     wno_path.remove(',' + QDir::fromNativeSeparators(QDir::cleanPath(
-    QApplication::applicationDirPath() + QDir::separator() + "../../..")));
+    QApplication::applicationDirPath() + "/../../..")));
     qputenv("WNO_PATH", wno_path.toUtf8());
 
     ///////////////////////////////////////////////////////////////////////////
