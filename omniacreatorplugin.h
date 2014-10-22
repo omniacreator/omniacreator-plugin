@@ -185,10 +185,14 @@ private slots:
     // End Qt Creator Setup Functions /////////////////////////////////////////
 
     void updateRecentProjects();
-    void updateRunCmake();
+    void updateExamples();
+    void updateCloseProjectAndAllFilesState();
+    void updateSaveAllState();
+    void updateRunCMake();
 
-    void openRecent();
+    void openProject(QAction *action);
     void closeProject();
+    void closeProject2();
     void cmakeChanged();
 
     void cleanClicked();
@@ -197,17 +201,27 @@ private slots:
     void runClicked();
     void reopenPort();
 
-    // Reruns cmake...
+    // Reruns CMake...
     void modelChanged(QModelIndex parent, int start, int end);
 
 signals:
 
-    // Reruns cmake...
-    void runCmake();
+    // Reruns CMake...
+    void runCMake();
 
 private:
 
     Q_DISABLE_COPY(OmniaCreatorPlugin)
+
+    // For File Based Projects
+    QMenu *walkExampleFiles(const QString &rootPath,
+                            const QStringList &nameFilters,
+                            QWidget *parent);
+
+    // For Folder Based Projects
+    QMenu *walkExampleFolders(const QString &rootPath,
+                              const QStringList &nameFilters,
+                              QWidget *parent);
 
     SerialMake *m_make; bool m_runClicked; QFileSystemModel *m_projectModel;
     SerialPort *m_port;
@@ -215,11 +229,15 @@ private:
 
     QStatusBar *m_status;
 
-    QLabel *m_projectFolder;
+    QLabel *m_projectPath;
     QLabel *m_boardType;
 
     QLabel *m_codeSpaceUsed;
     QLabel *m_dataSpaceUsed;
+
+    Core::ActionContainer *m_examplesMenu;
+
+    Core::Command *m_closeProjectAndAllFilesAction;
 
     Core::ActionContainer *m_boardMenu;
     Core::ActionContainer *m_widgetsMenu;

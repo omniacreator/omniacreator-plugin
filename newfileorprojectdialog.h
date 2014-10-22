@@ -35,13 +35,15 @@ public:
 
     enum
     {
-        newFileWasPressed = 2, newProjectWasPressed = 3
+        newFileWasPressed = 2, newProjectWasPressed = 3,
+        newProjectFileWasPressed = 4
     };
 
 public slots:
 
     void newFilePressed();
     void newProjectPressed();
+    void newProjectFilePressed();
 
 private:
 

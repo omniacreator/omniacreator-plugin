@@ -79,9 +79,11 @@ QString SerialTree::keyGeometry() const
 
 bool SerialTree::newItem(const QString &key, const QString &value)
 {
+    QString cleanKey = QDir::fromNativeSeparators(QDir::cleanPath(key));
+
     QPair<QTreeWidgetItem *, QStringList> pair;
 
-    bool ok = itemDoesNotExist(__FUNCTION__, key, &pair);
+    bool ok = itemDoesNotExist(__FUNCTION__, cleanKey, &pair);
 
     if(ok)
     {
@@ -97,7 +99,7 @@ bool SerialTree::newItem(const QString &key, const QString &value)
     }
     else // Silently handle error...
     {
-        return setItemValue(key, value);
+        return setItemValue(cleanKey, value);
     }
 
     return ok;
@@ -105,7 +107,9 @@ bool SerialTree::newItem(const QString &key, const QString &value)
 
 bool SerialTree::setItemValue(const QString &key, const QString &value)
 {
-    QTreeWidgetItem *item = itemExists(__FUNCTION__, key);
+    QString cleanKey = QDir::fromNativeSeparators(QDir::cleanPath(key));
+
+    QTreeWidgetItem *item = itemExists(__FUNCTION__, cleanKey);
 
     if(item)
     {
@@ -117,7 +121,9 @@ bool SerialTree::setItemValue(const QString &key, const QString &value)
 
 QString SerialTree::getItemValue(const QString &key, bool *ok)
 {
-    QTreeWidgetItem *item = itemExists(__FUNCTION__, key);
+    QString cleanKey = QDir::fromNativeSeparators(QDir::cleanPath(key));
+
+    QTreeWidgetItem *item = itemExists(__FUNCTION__, cleanKey);
 
     if((*ok = item))
     {
@@ -129,7 +135,9 @@ QString SerialTree::getItemValue(const QString &key, bool *ok)
 
 bool SerialTree::deleteItem(const QString &key)
 {
-    QTreeWidgetItem *item = itemExists(__FUNCTION__, key);
+    QString cleanKey = QDir::fromNativeSeparators(QDir::cleanPath(key));
+
+    QTreeWidgetItem *item = itemExists(__FUNCTION__, cleanKey);
 
     if(item)
     {
@@ -232,7 +240,9 @@ void SerialTree::importState(const QString &fileName)
 
                     for(; i != j; i++)
                     {
-                        newItem(i->first, i->second);
+                        newItem(
+                        QDir::fromNativeSeparators(QDir::cleanPath(i->first)),
+                        i->second);
                     }
 
                     QFileInfo fileInfo(temp);
@@ -361,7 +371,9 @@ void SerialTree::exportToCSV(const QString &fileName)
 
             for(; i != j; i++)
             {
-                data.append("\"" + i->first + "\",\"" + i->second + "\"\n");
+                data.append("\"" +
+                QDir::fromNativeSeparators(QDir::cleanPath(i->first)) +
+                "\",\"" + i->second + "\"\n");
             }
 
             if(file.write(data) == data.size())

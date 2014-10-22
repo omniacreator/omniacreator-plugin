@@ -29,6 +29,9 @@ QWidget *parent) : QDialog(parent), m_ui(new Ui::OpenFileOrProjectDialog)
 
     connect(m_ui->openProjectButton, SIGNAL(clicked()),
             this, SLOT(openProjectPressed()));
+
+    connect(m_ui->openProjectFileButton, SIGNAL(clicked()),
+            this, SLOT(openProjectFilePressed()));
 }
 
 OpenFileOrProjectDialog::~OpenFileOrProjectDialog()
@@ -44,6 +47,11 @@ void OpenFileOrProjectDialog::openFilePressed()
 void OpenFileOrProjectDialog::openProjectPressed()
 {
     QDialog::done(openProjectWasPressed);
+}
+
+void OpenFileOrProjectDialog::openProjectFilePressed()
+{
+    QDialog::done(openProjectFileWasPressed);
 }
 
 /***************************************************************************//**

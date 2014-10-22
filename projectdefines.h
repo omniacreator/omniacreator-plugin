@@ -42,9 +42,9 @@
 (PROJECT_FULL_NAME_WO_SPACES_STR "/" SERIAL_MAKE)
 
 #define SERIAL_MAKE_KEY_WORKSPACE_FOLDER "workspaceFolder"
-#define SERIAL_MAKE_KEY_PROJECT_FOLDER "projectFolder"
+#define SERIAL_MAKE_KEY_PROJECT_FPATH "projectFPath"
 #define SERIAL_MAKE_KEY_PROJECT_PORT_NAME "projectPortName"
-#define SERIAL_MAKE_KEY_PROJECT_MAKE_FILE "projectMakeFile"
+#define SERIAL_MAKE_KEY_PROJECT_CMAKE_FILE "projectCMakeFile"
 
 // Serial Port ////////////////////////////////////////////////////////////////
 

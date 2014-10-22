@@ -38,7 +38,7 @@ class SerialMake : public QObject
 
 public:
 
-    static QString getCmakePath();
+    static QString getCMakePath();
     static QString getNinjaPath();
 
     explicit SerialMake(QWidget *widget = NULL,
@@ -60,22 +60,22 @@ public:
     bool getWorkspaceFolderWasSet() const;
     void setWorkspaceFolderWasSet();
 
-    void setProjectFolder(const QString &path);
-    QString getProjectFolder() const;
-    bool getProjectFolderWasSet() const;
-    void setProjectFolderWasSet();
-    QString getProjectFolderRelativeTo() const;
+    void setProjectFPath(const QString &fpath); // file or folder path
+    QString getProjectFPath() const;
+    bool getProjectFPathWasSet() const;
+    void setProjectFPathWasSet();
+    QString getProjectFPathRelativeTo() const; // workspace folder
 
     void setProjectPortName(const QString &portName);
     QString getProjectPortName() const;
     bool getProjectPortNameWasSet() const;
     void setProjectPortNameWasSet();
 
-    void setProjectMakeFile(const QString &makeFile);
-    QString getProjectMakeFile() const;
-    bool getProjectMakeFileWasSet() const;
-    void setProjectMakeFileWasSet();
-    QString getProjectMakeFileRelativeTo() const;
+    void setProjectCMakeFile(const QString &cmakeFile); // file path
+    QString getProjectCMakeFile() const;
+    bool getProjectCMakeFileWasSet() const;
+    void setProjectCMakeFileWasSet();
+    QString getProjectCMakeFileRelativeTo() const; // cmake files
 
     QStringList getCMakeFilePaths() const;
     QStringList getSystemCMakeFilePaths() const;
@@ -85,9 +85,9 @@ public:
     QStringList getSystemLibraryPaths() const;
     QStringList getUserLibraryPaths() const;
 
-    QString getMakeSrcFolder() const;
-    QString getMakeBuildFolder() const;
-    QString getMakeFile() const;
+    QString getGenCMakeSrcFolder() const; // generated
+    QString getGenCMakeBuildFolder() const; // generated
+    QString getGenCMakeFile() const; // generated
 
     void updateProject();
     void updateProject2();
@@ -121,9 +121,9 @@ private:
     QPointer<QSettings> m_settings;
     QPointer<SerialPort> m_serialPort;
 
-    QString m_makeSrcFolder;
-    QString m_makeBuildFolder;
-    QString m_makeFile;
+    QString m_genCMakeSrcFolder; // generated
+    QString m_genCMakeBuildFolder; // generated
+    QString m_genCMakeFile; // generated
 };
 
 #endif // SERIALMAKE_H

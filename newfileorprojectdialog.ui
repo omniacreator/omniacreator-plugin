@@ -44,6 +44,23 @@
     </widget>
    </item>
    <item row="2" column="0">
+    <widget class="Line" name="line">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QCommandLinkButton" name="newProjectFileButton">
+     <property name="text">
+      <string>Other - New Project File Based Project</string>
+     </property>
+     <property name="description">
+      <string>Create a new project file based project and open it\n(not recommended for new projects)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="standardButtons">
       <set>QDialogButtonBox::Cancel</set>

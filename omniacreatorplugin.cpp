@@ -24,11 +24,12 @@ OmniaCreatorPlugin::OmniaCreatorPlugin()
     QString path = qgetenv("PATH");
     path.append(PATH_CHAR + QApplication::applicationDirPath());
 
+    // Help CMake find SDKs
     QDirIterator it(QDir::fromNativeSeparators(QDir::cleanPath(
     QApplication::applicationDirPath() + QLatin1String("/../../../tools"))),
     QDir::Dirs | QDir::NoDotAndDotDot);
 
-    while(it.hasNext())
+    while(it.hasNext()) // Tool Folders...
     {
         path.append(PATH_CHAR + it.next());
     }
@@ -84,11 +85,12 @@ OmniaCreatorPlugin::~OmniaCreatorPlugin()
     QString path = qgetenv("PATH");
     path.remove(PATH_CHAR + QApplication::applicationDirPath());
 
+    // Help CMake find SDKs
     QDirIterator it(QDir::fromNativeSeparators(QDir::cleanPath(
     QApplication::applicationDirPath() + QLatin1String("/../../../tools"))),
     QDir::Dirs | QDir::NoDotAndDotDot);
 
-    while(it.hasNext())
+    while(it.hasNext()) // Tool Folders...
     {
         path.remove(PATH_CHAR + it.next());
     }
@@ -146,15 +148,31 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
                             Core::ICore::settings(), this);
 
     qputenv("OC_WORKSPACE_FOLDER", m_make->getWorkspaceFolder().toUtf8());
-    qputenv("OC_PROJECT_FOLDER", m_make->getProjectFolder().toUtf8());
+    qputenv("OC_PROJECT_FPATH", m_make->getProjectFPath().toUtf8());
     qputenv("OC_SERIAL_PORT", m_make->getProjectPortName().toUtf8());
-    qputenv("OC_MAKE_FILE", m_make->getProjectMakeFile().toUtf8());
+    qputenv("OC_CMAKE_FILE", m_make->getProjectCMakeFile().toUtf8());
 
     connect(m_make, SIGNAL(workspaceOrProjectSettingsChanged()),
             this, SLOT(cmakeChanged()));
 
-    m_runClicked = false; m_projectModel = new QFileSystemModel(this);
-    m_projectModel->setRootPath(m_make->getProjectFolder());
+    m_runClicked = false;
+
+    m_projectModel = new QFileSystemModel(this);
+
+    ///////////////////////////////////////////////////////////////////////
+
+    QString rootPath = m_make->getProjectFPath();
+
+    if(rootPath.isEmpty()
+    || (!QFileInfo(rootPath).isDir()))
+    {
+        // Root path to disable the file system model.
+        rootPath = QApplication::applicationDirPath();
+    }
+
+    m_projectModel->setRootPath(rootPath);
+
+    ///////////////////////////////////////////////////////////////////////
 
     connect(m_projectModel, SIGNAL(rowsInserted(QModelIndex,int,int)),
             this, SLOT(modelChanged(QModelIndex,int,int)));
@@ -162,7 +180,7 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
     connect(m_projectModel, SIGNAL(rowsAboutToBeRemoved(QModelIndex,int,int)),
             this, SLOT(modelChanged(QModelIndex,int,int)));
 
-    connect(this, SIGNAL(runCmake()), Core::ActionManager::command(
+    connect(this, SIGNAL(runCMake()), Core::ActionManager::command(
     CMakeProjectManager::Constants::RUNCMAKE)->action(), SIGNAL(triggered()));
 
     // Serial Port Init ///////////////////////////////////////////////////////
@@ -203,21 +221,21 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
 
     Core::ICore::statusBar()->setSizeGripEnabled(false);
 
-    m_status->addWidget(new QLabel(tr("Project Folder:"), m_status));
-    m_status->addWidget(m_projectFolder = new QLabel(m_status));
-    m_projectFolder->setText(m_make->getProjectFolder());
+    m_status->addWidget(new QLabel(tr("Project Path:"), m_status));
+    m_status->addWidget(m_projectPath = new QLabel(m_status));
+    m_projectPath->setText(m_make->getProjectFPath());
 
     m_status->addWidget(new QLabel("|"));
 
     m_status->addWidget(new QLabel(tr("Board Type:"), m_status));
     m_status->addWidget(m_boardType = new QLabel(m_status));
-    m_boardType->setText(m_make->getProjectMakeFileRelativeTo().
+    m_boardType->setText(m_make->getProjectCMakeFileRelativeTo().
                          remove(".cmake",
                          Qt::CaseInsensitive));
 
-    if(m_projectFolder->text().isEmpty())
+    if(m_projectPath->text().isEmpty())
     {
-        m_projectFolder->setText(tr("None"));
+        m_projectPath->setText(tr("None"));
     }
 
     if(m_boardType->text().isEmpty())
@@ -237,7 +255,7 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
     m_dataSpaceUsed->setText(tr("..."));
 
     // TODO: Make this elide the text also...
-    m_projectFolder->setMinimumWidth(2);
+    m_projectPath->setMinimumWidth(2);
     m_boardType->setMinimumWidth(2);
 
     // TODO: Make this elide the text also...
@@ -312,7 +330,7 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
         connect(Core::ActionManager::command(
         ProjectExplorer::Constants::CLEARSESSION)->action(),
         SIGNAL(triggered()), this,
-        SLOT(closeProject()));
+        SLOT(closeProject2()));
     }
 
     // Clean Actions //
@@ -422,6 +440,72 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
         ProjectExplorer::Constants::RUNWITHOUTDEPLOY)->action(),
         SIGNAL(triggered()), this,
         SLOT(runClicked()));
+    }
+
+    // New Stuff //
+    {
+        Core::ActionContainer *fileMenu =
+        Core::ActionManager::actionContainer(Core::Constants::M_FILE);
+
+        Core::Command *clearSession = Core::ActionManager::command(
+        ProjectExplorer::Constants::CLEARSESSION);
+
+        ///////////////////////////////////////////////////////////////////////
+
+        m_examplesMenu = Core::ActionManager::createMenu(
+        EXAMPLES_MENU_ID);
+
+        m_examplesMenu->setOnAllDisabledBehavior(
+        Core::ActionContainer::Show);
+
+        m_examplesMenu->menu()->setTitle(
+        tr("Examples"));
+
+        fileMenu->addMenu(m_examplesMenu,
+        Core::Constants::G_FILE_PROJECT);
+
+        fileMenu->menu()->removeAction(
+        m_examplesMenu->menu()->menuAction());
+
+        fileMenu->menu()->insertMenu(
+        Core::ActionManager::actionContainer(
+        Core::Constants::M_FILE_RECENTFILES)->menu()->menuAction(),
+        m_examplesMenu->menu());
+
+        connect(m_examplesMenu->menu(), SIGNAL(aboutToShow()),
+                this, SLOT(updateExamples()));
+
+        connect(m_examplesMenu->menu(), SIGNAL(triggered(QAction*)),
+                this, SLOT(openProject(QAction*)));
+
+        ///////////////////////////////////////////////////////////////////////
+
+        m_closeProjectAndAllFilesAction = Core::ActionManager::registerAction(
+        new QAction(tr("Close Project and All Files"), fileMenu->menu()),
+        CLOSE_PROJECT_AND_ALL_FILES_ACTION_ID,
+        Core::Context(Core::Constants::C_GLOBAL));
+
+        fileMenu->addAction(m_closeProjectAndAllFilesAction,
+        Core::Constants::G_FILE_PROJECT);
+
+        connect(m_closeProjectAndAllFilesAction->action(), SIGNAL(triggered()),
+                clearSession->action(), SIGNAL(triggered()));
+
+        ///////////////////////////////////////////////////////////////////////
+
+        connect(ProjectExplorer::ProjectExplorerPlugin::instance(),
+                SIGNAL(updateRunActions()),
+                this, SLOT(updateCloseProjectAndAllFilesState()));
+
+        updateCloseProjectAndAllFilesState();
+
+        ///////////////////////////////////////////////////////////////////////
+
+        connect(Core::EditorManager::instance(),
+                SIGNAL(currentDocumentStateChanged()),
+                this, SLOT(updateSaveAllState()));
+
+        updateSaveAllState();
     }
 
     // Board Menu //
@@ -759,6 +843,9 @@ void OmniaCreatorPlugin::extensionsInitialized()
     {
         m_escape->setPort(m_port->openPort(port, true));
     }
+
+    // Force UI Update...
+    boardMenuAboutToShow();
 }
 
 bool OmniaCreatorPlugin::delayedInitialize()
@@ -799,7 +886,7 @@ bool OmniaCreatorPlugin::delayedInitialize()
 
     ///////////////////////////////////////////////////////////////////////////
 
-    if(!m_make->getProjectFolderWasSet())
+    if(!m_make->getProjectFPathWasSet())
     {
         if(QMessageBox::question(Core::ICore::mainWindow(), tr("Make"),
         tr("Would you like to make a new file or project?"),
@@ -822,7 +909,7 @@ bool OmniaCreatorPlugin::delayedInitialize()
             "project first to build/run your code"));
         }
 
-        m_make->setProjectFolderWasSet();
+        m_make->setProjectFPathWasSet();
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -987,8 +1074,11 @@ void OmniaCreatorPlugin::newFileOrProject()
     NewFileOrProjectDialog dialog1(tr("New..."),
     Core::ICore::mainWindow());
 
-    switch(dialog1.exec())
+    int result = dialog1.exec();
+
+    switch(result)
     {
+        case NewFileOrProjectDialog::newProjectFileWasPressed:
         case NewFileOrProjectDialog::newFileWasPressed:
         {
             QString openPath = settings.value(PLUGIN_DIALOG_KEY_NEW_FILE,
@@ -1291,6 +1381,11 @@ void OmniaCreatorPlugin::newFileOrProject()
                 }
 
                 Core::EditorManager::openEditor(fullPath);
+
+                if(result == NewFileOrProjectDialog::newProjectFileWasPressed)
+                {
+                    m_make->setProjectFPath(fullPath);
+                }
 
                 QFileInfo fileInfo(fullPath);
 
@@ -1612,12 +1707,12 @@ void OmniaCreatorPlugin::newFileOrProject()
                     }
                 }
 
-                m_make->setProjectFolder(fullPath);
+                m_make->setProjectFPath(fullPath);
 
                 QFileInfo fileInfo(fullPath);
 
                 settings.setValue(PLUGIN_DIALOG_KEY_NEW_PROJECT,
-                fileInfo.canonicalFilePath());
+                fileInfo.canonicalPath());
             }
 
             break;
@@ -1637,27 +1732,65 @@ void OmniaCreatorPlugin::openFileOrProject()
     OpenFileOrProjectDialog dialog1(tr("Open..."),
     Core::ICore::mainWindow());
 
-    switch(dialog1.exec())
+    int result = dialog1.exec();
+
+    switch(result)
     {
+        case OpenFileOrProjectDialog::openProjectFileWasPressed:
         case OpenFileOrProjectDialog::openFileWasPressed:
         {
             QString openPath = settings.value(PLUGIN_DIALOG_KEY_OPEN_FILE,
                                               QDir::homePath()).toString();
 
-            QStringList temp =
-            QFileDialog::getOpenFileNames(Core::ICore::mainWindow(),
-            tr("Open File"), openPath, tr("All Files (*)"));
-
-            foreach(const QString &string, temp)
+            if(result == OpenFileOrProjectDialog::openProjectFileWasPressed)
             {
-                if(!string.isEmpty())
-                {
-                    Core::EditorManager::openEditor(string);
+                QString temp =
+                QFileDialog::getOpenFileName(Core::ICore::mainWindow(),
+                tr("Open File"), openPath, tr("All Files (*)"));
 
-                    QFileInfo fileInfo(string);
+                if(!temp.isEmpty())
+                {
+                    Core::EditorManager::openEditor(temp);
+
+                    m_make->setProjectFPath(temp);
+
+                    QFileInfo fileInfo(temp);
 
                     settings.setValue(PLUGIN_DIALOG_KEY_OPEN_FILE,
-                    fileInfo.canonicalPath());
+                    fileInfo.canonicalFilePath());
+                }
+            }
+            else
+            {
+                QStringList temp =
+                QFileDialog::getOpenFileNames(Core::ICore::mainWindow(),
+                tr("Open File"), openPath, tr("All Files (*)"));
+
+                if(!temp.isEmpty())
+                {
+                    QString temp0 = temp.takeFirst();
+
+                    Core::EditorManager::openEditor(temp0);
+
+                    if(!temp.isEmpty())
+                    {
+                        foreach(const QString &temp1, temp)
+                        {
+                            Core::EditorManager::openEditor(temp1);
+                        }
+
+                        QFileInfo fileInfo(temp0);
+
+                        settings.setValue(PLUGIN_DIALOG_KEY_OPEN_FILE,
+                        fileInfo.canonicalPath());
+                    }
+                    else
+                    {
+                        QFileInfo fileInfo(temp0);
+
+                        settings.setValue(PLUGIN_DIALOG_KEY_OPEN_FILE,
+                        fileInfo.canonicalFilePath());
+                    }
                 }
             }
 
@@ -1684,7 +1817,7 @@ void OmniaCreatorPlugin::openFileOrProject()
                     Core::EditorManager::openEditor(QDir(temp).filePath(fp));
                 }
 
-                m_make->setProjectFolder(temp);
+                m_make->setProjectFPath(temp);
 
                 QFileInfo fileInfo(temp);
 
@@ -1701,14 +1834,18 @@ void OmniaCreatorPlugin::openFileOrProject()
 
 void OmniaCreatorPlugin::boardMenuAboutToShow()
 {
-    bool portOpen = m_port->getPort(); bool demoPort = m_port->isDemoPort();
+    bool portOpen = m_port->getPort();
+    bool demoPort = m_port->isDemoPort();
 
     m_changeSerialPortBoardName->action()->setEnabled(portOpen && (!demoPort));
     m_changeSerialPortBoardType->action()->setEnabled(!demoPort);
     m_resetSerialPort->action()->setEnabled(portOpen && (!demoPort));
 
-    updateSerialPortMenu();
-    updateBaudRateMenu();
+    if(!m_runClicked)
+    {
+        updateSerialPortMenu();
+        updateBaudRateMenu();
+    }
 
     ///////////////////////////////////////////////////////////////////////////
 
@@ -1789,7 +1926,7 @@ void OmniaCreatorPlugin::boardMenuTriggered(QAction *action)
 
 void OmniaCreatorPlugin::widgetsMenuTriggered(QAction *action)
 {
-    if(action && (action->parent() == m_widgetsMenu->menu()))
+    if(action)
     {
         SerialWindow *window = qvariant_cast<SerialWindow *>(action->data());
 
@@ -1803,12 +1940,7 @@ void OmniaCreatorPlugin::widgetsMenuTriggered(QAction *action)
 
 void OmniaCreatorPlugin::changeSerialPortBoardName()
 {
-    QString name = m_port->getPortName();
-
-    if(!name.isEmpty())
-    {
-        m_port->setPrettyNameWithDialog(name);
-    }
+    m_port->setPrettyNameWithDialog(m_port->getPortName());
 }
 
 void OmniaCreatorPlugin::changeSerialPortBoardType()
@@ -1917,7 +2049,7 @@ void OmniaCreatorPlugin::updateSerialPortMenu()
 
 void OmniaCreatorPlugin::serialPortSelected(QAction *action)
 {
-    if(action && (action->parent() == m_serialPortMenu->menu()))
+    if(action)
     {
         QString string = action->data().toString();
 
@@ -2012,7 +2144,7 @@ void OmniaCreatorPlugin::updateBaudRateMenu()
 
 void OmniaCreatorPlugin::baudRateSelected(QAction *action)
 {
-    if(action && (action->parent() == m_baudRateMenu->menu()))
+    if(action)
     {
         QString string = action->data().toString();
 
@@ -2329,7 +2461,7 @@ void OmniaCreatorPlugin::cmakeManagerSetup()
     Core::ICore::settings()->beginGroup("CMakeSettings");
 
     Core::ICore::settings()->setValue("cmakeExecutable",
-    SerialMake::getCmakePath());
+    SerialMake::getCMakePath());
 
     Core::ICore::settings()->setValue("ninjaExecutable",
     SerialMake::getNinjaPath());
@@ -2344,7 +2476,7 @@ void OmniaCreatorPlugin::cmakeManagerSetup()
     if(make)
     {
         static_cast<CMakeProjectManager::Internal::CMakeManager *>
-        (make)->setCMakeExecutable(SerialMake::getCmakePath());
+        (make)->setCMakeExecutable(SerialMake::getCMakePath());
 
         static_cast<CMakeProjectManager::Internal::CMakeManager *>
         (make)->setNinjaExecutable(SerialMake::getNinjaPath());
@@ -2389,7 +2521,7 @@ void OmniaCreatorPlugin::projectManagerSetup()
 
     Core::DocumentManager::setProjectsDirectory(m_make->getWorkspaceFolder());
     Core::DocumentManager::setUseProjectsDirectory(true);
-    Core::DocumentManager::setBuildDirectory(m_make->getMakeBuildFolder());
+    Core::DocumentManager::setBuildDirectory(m_make->getGenCMakeBuildFolder());
 
     // Hide stuff...
 
@@ -2473,6 +2605,10 @@ void OmniaCreatorPlugin::projectManagerSetup()
     Core::ActionManager::command(
     Core::Constants::OPEN_WITH)->action());
 
+    connect(Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_RECENTPROJECTS)->menu(),
+    SIGNAL(triggered(QAction*)), this, SLOT(openProject(QAction*)));
+
     connect(ProjectExplorer::ProjectExplorerPlugin::instance(),
     SIGNAL(recentProjectsChanged()), this, SLOT(updateRecentProjects()));
     updateRecentProjects();
@@ -2546,8 +2682,8 @@ void OmniaCreatorPlugin::projectManagerSetup()
     QIcon(CMAKE_PATH));
 
     connect(ProjectExplorer::ProjectExplorerPlugin::instance(),
-    SIGNAL(updateRunActions()), this, SLOT(updateRunCmake()));
-    updateRunCmake();
+    SIGNAL(updateRunActions()), this, SLOT(updateRunCMake()));
+    updateRunCMake();
 
     ///////////////////////////////////////////////////////////////////////////
 
@@ -2901,20 +3037,154 @@ void OmniaCreatorPlugin::updateRecentProjects()
 
                 if(repeated.contains(action->text()))
                 {
-                    delete action; continue;
+                    delete action;
+                    continue;
                 }
 
-                repeated.append(action->text());
-
                 action->disconnect();
-
-                connect(action, SIGNAL(triggered()), this, SLOT(openRecent()));
+                repeated.append(action->text());
             }
         }
     }
 }
 
-void OmniaCreatorPlugin::updateRunCmake()
+void OmniaCreatorPlugin::updateExamples()
+{
+    m_examplesMenu->menu()->clear();
+    m_examplesMenu->menu()->addSeparator();
+
+    // Arduino Examples
+    {
+        QMenu *menu = walkExampleFiles(
+        QDir::fromNativeSeparators(QDir::cleanPath(
+        QApplication::applicationDirPath() +
+        "/../../../tools/arduino/examples")),
+        QStringList() << "*.ino" << "*.pde",
+        m_examplesMenu->menu());
+
+        if(menu)
+        {
+            menu->setTitle("Arduino");
+            m_examplesMenu->menu()->addMenu(menu);
+        }
+    }
+
+    // Propeller Examples
+    {
+        QMenu *menu = walkExampleFiles(
+        QDir::fromNativeSeparators(QDir::cleanPath(
+        QApplication::applicationDirPath() +
+        "/../../../tools/propeller/Workspace/Learn/Examples")),
+        QStringList() << "*.side",
+        m_examplesMenu->menu());
+
+        if(menu)
+        {
+            menu->setTitle("Propeller");
+            m_examplesMenu->menu()->addMenu(menu);
+        }
+    }
+}
+
+QMenu *OmniaCreatorPlugin::walkExampleFiles(const QString &rootPath,
+                                            const QStringList &nameFilters,
+                                            QWidget *parent)
+{
+    QMenu *menu = new QMenu(QDir(rootPath).dirName(), parent);
+
+    QDirIterator it(rootPath, nameFilters,
+    QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot);
+
+    while(it.hasNext())
+    {
+        QString path = it.next();
+
+        if(QFileInfo(path).isDir())
+        {
+            QMenu *subMenu = walkExampleFiles(path, nameFilters, menu);
+
+            if(subMenu)
+            {
+                menu->addMenu(subMenu);
+            }
+        }
+        else
+        {
+            QAction *action =
+            new QAction(QFileInfo(path).completeBaseName(), menu);
+
+            action->setData(path);
+            menu->addAction(action);
+        }
+    }
+
+    if(menu->actions().isEmpty())
+    {
+        delete menu;
+
+        return NULL;
+    }
+
+    return menu;
+}
+
+QMenu *OmniaCreatorPlugin::walkExampleFolders(const QString &rootPath,
+                                              const QStringList &nameFilters,
+                                              QWidget *parent)
+{
+    QMenu *menu = new QMenu(QDir(rootPath).dirName(), parent);
+
+    QDirIterator it(rootPath, nameFilters,
+    QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot);
+
+    while(it.hasNext())
+    {
+        QString path = it.next();
+
+        if(QFileInfo(path).isDir())
+        {
+            QMenu *subMenu = walkExampleFolders(path, nameFilters, menu);
+
+            if(subMenu)
+            {
+                menu->addMenu(subMenu);
+            }
+        }
+        else
+        {
+            QAction *action =
+            new QAction(QFileInfo(path).completeBaseName(), menu);
+
+            action->setData(path);
+            menu->addAction(action);
+        }
+    }
+
+    if(menu->actions().isEmpty())
+    {
+        delete menu;
+
+        return NULL;
+    }
+
+    return menu;
+}
+
+void OmniaCreatorPlugin::updateCloseProjectAndAllFilesState()
+{
+    m_closeProjectAndAllFilesAction->action()->setEnabled(
+    Core::ActionManager::command(
+    ProjectExplorer::Constants::CLEARSESSION)->action()->isEnabled());
+}
+
+void OmniaCreatorPlugin::updateSaveAllState()
+{
+    Core::ActionManager::command(
+    Core::Constants::SAVEALL)->action()->setEnabled(
+    !Core::DocumentManager::modifiedDocuments().isEmpty());
+}
+
+void OmniaCreatorPlugin::updateRunCMake()
 {
     Core::ActionManager::command(
     CMakeProjectManager::Constants::RUNCMAKE)->action()->setEnabled(
@@ -2922,30 +3192,55 @@ void OmniaCreatorPlugin::updateRunCmake()
     ProjectExplorer::Constants::RUN)->action()->isEnabled());
 }
 
-void OmniaCreatorPlugin::openRecent()
+void OmniaCreatorPlugin::openProject(QAction *action)
 {
-    QAction *action = qobject_cast<QAction *>(sender());
-
-    if(action)
+    if(action
+    && (!action->isSeparator())
+    && (action->text() != Core::Constants::TR_CLEAR_MENU))
     {
-        QString temp = action->text();
+        QString temp = action->data().toString();
 
-        foreach(const QString &fp,
-        QDir(temp).entryList(QStringList() <<
-        '*' + QFileInfo(temp).completeBaseName() + '*',
-        QDir::Files | QDir::NoDotAndDotDot | QDir::CaseSensitive,
-        QDir::Name | QDir::Reversed | QDir::LocaleAware))
+        if(temp.isEmpty())
         {
-            Core::EditorManager::openEditor(QDir(temp).filePath(fp));
+            temp = action->text();
         }
 
-        m_make->setProjectFolder(temp);
+        temp = QDir::fromNativeSeparators(QDir::cleanPath(temp));
+
+        if(!temp.isEmpty())
+        {
+            if(QFileInfo(temp).isDir())
+            {
+                foreach(const QString &fp,
+                QDir(temp).entryList(QStringList() <<
+                '*' + QFileInfo(temp).completeBaseName() + '*',
+                QDir::Files | QDir::NoDotAndDotDot | QDir::CaseSensitive,
+                QDir::Name | QDir::Reversed | QDir::LocaleAware))
+                {
+                    Core::EditorManager::openEditor(QDir(temp).filePath(fp));
+                }
+            }
+            else
+            {
+                Core::EditorManager::openEditor(temp);
+            }
+
+            m_make->setProjectFPath(temp);
+        }
     }
 }
 
 void OmniaCreatorPlugin::closeProject()
 {
-    m_make->setProjectFolder(QString());
+    m_make->setProjectFPath(QString());
+}
+
+void OmniaCreatorPlugin::closeProject2()
+{
+    if(Core::EditorManager::closeAllEditors())
+    {
+        closeProject();
+    }
 }
 
 void OmniaCreatorPlugin::cmakeChanged()
@@ -2963,7 +3258,7 @@ void OmniaCreatorPlugin::cmakeChanged()
 
         if(project)
         {
-            if(project->projectFilePath() == m_make->getMakeFile())
+            if(project->projectFilePath() == m_make->getGenCMakeFile())
             {
                 return;
             }
@@ -2975,23 +3270,37 @@ void OmniaCreatorPlugin::cmakeChanged()
         ///////////////////////////////////////////////////////////////////////
 
         qputenv("OC_WORKSPACE_FOLDER", m_make->getWorkspaceFolder().toUtf8());
-        qputenv("OC_PROJECT_FOLDER", m_make->getProjectFolder().toUtf8());
+        qputenv("OC_PROJECT_FPATH", m_make->getProjectFPath().toUtf8());
         qputenv("OC_SERIAL_PORT", m_make->getProjectPortName().toUtf8());
-        qputenv("OC_MAKE_FILE", m_make->getProjectMakeFile().toUtf8());
+        qputenv("OC_CMAKE_FILE", m_make->getProjectCMakeFile().toUtf8());
 
         Core::DocumentManager::setProjectsDirectory(
         m_make->getWorkspaceFolder());
 
         Core::DocumentManager::setBuildDirectory(
-        m_make->getMakeBuildFolder());
+        m_make->getGenCMakeBuildFolder());
 
-        m_projectModel->setRootPath(m_make->getProjectFolder());
+        ///////////////////////////////////////////////////////////////////////
 
-        if(QFileInfo(m_make->getMakeFile()).exists())
+        QString rootPath = m_make->getProjectFPath();
+
+        if(rootPath.isEmpty()
+        || (!QFileInfo(rootPath).isDir()))
+        {
+            // Root path to disable the file system model.
+            rootPath = QApplication::applicationDirPath();
+        }
+
+        m_projectModel->setRootPath(rootPath);
+
+        ///////////////////////////////////////////////////////////////////////
+
+        if(QFileInfo(m_make->getGenCMakeFile()).exists())
         {
             ProjectExplorer::Project *openProject =
             ProjectExplorer::ProjectExplorerPlugin::
-            instance()->openProject(m_make->getMakeFile(), NULL);
+            instance()->openProject(m_make->getGenCMakeFile(),
+            NULL);
 
             if(openProject)
             {
@@ -3002,14 +3311,14 @@ void OmniaCreatorPlugin::cmakeChanged()
 
         ///////////////////////////////////////////////////////////////////////
 
-        m_projectFolder->setText(m_make->getProjectFolder());
-        m_boardType->setText(m_make->getProjectMakeFileRelativeTo().
+        m_projectPath->setText(m_make->getProjectFPath());
+        m_boardType->setText(m_make->getProjectCMakeFileRelativeTo().
                              remove(".cmake",
                              Qt::CaseInsensitive));
 
-        if(m_projectFolder->text().isEmpty())
+        if(m_projectPath->text().isEmpty())
         {
-            m_projectFolder->setText(tr("None"));
+            m_projectPath->setText(tr("None"));
         }
 
         if(m_boardType->text().isEmpty())
@@ -3024,9 +3333,9 @@ void OmniaCreatorPlugin::cmakeChanged()
 
 void OmniaCreatorPlugin::cleanClicked()
 {
-    if(m_make->getProjectMakeFile().isEmpty())
+    if(m_make->getProjectCMakeFile().isEmpty())
     {
-        QMessageBox::warning(Core::ICore::mainWindow(), tr("Build Halted"),
+        QMessageBox::warning(Core::ICore::mainWindow(), tr("Clean Halted"),
         tr("Please select a <b>Board Type</b> from the "
            "<b>Board Menu</b> first")); return;
     }
@@ -3043,7 +3352,7 @@ void OmniaCreatorPlugin::cleanClicked()
         if(!project)
         {
             QMessageBox::critical(Core::ICore::mainWindow(),
-            tr("Build Failed"), tr("Build project not set"));
+            tr("Clean Failed"), tr("Clean project not set"));
 
             return;
         }
@@ -3055,7 +3364,7 @@ void OmniaCreatorPlugin::cleanClicked()
     if(!target)
     {
         QMessageBox::critical(Core::ICore::mainWindow(),
-        tr("Build Failed"), tr("Build target not set"));
+        tr("Clean Failed"), tr("Clean target not set"));
 
         return;
     }
@@ -3066,7 +3375,7 @@ void OmniaCreatorPlugin::cleanClicked()
     if(!configuration)
     {
         QMessageBox::critical(Core::ICore::mainWindow(),
-        tr("Build Failed"), tr("Build configuration not set"));
+        tr("Clean Failed"), tr("Clean configuration not set"));
 
         return;
     }
@@ -3077,7 +3386,7 @@ void OmniaCreatorPlugin::cleanClicked()
     if(!list)
     {
         QMessageBox::critical(Core::ICore::mainWindow(),
-        tr("Build Failed"), tr("Build list not set"));
+        tr("Clean Failed"), tr("Clean list not set"));
 
         return;
     }
@@ -3088,7 +3397,7 @@ void OmniaCreatorPlugin::cleanClicked()
     if(!step)
     {
         QMessageBox::critical(Core::ICore::mainWindow(),
-        tr("Build Failed"), tr("Build step not set"));
+        tr("Clean Failed"), tr("Clean step not set"));
 
         return;
     }
@@ -3102,21 +3411,22 @@ void OmniaCreatorPlugin::cleanClicked()
     else
     {
         QMessageBox::critical(Core::ICore::mainWindow(),
-        tr("Build Failed"), tr("Build target missing!"));
+        tr("Clean Failed"), tr("Clean target missing!"));
 
         return;
     }
 
     ProjectExplorer::ProjectExplorerPlugin::instance()->cleanProject();
+    // Output parsers can only be append after the build starts...
     step->appendOutputParser(new CodeUsedParser(m_codeSpaceUsed));
     step->appendOutputParser(new DataUsedParser(m_dataSpaceUsed));
 }
 
 void OmniaCreatorPlugin::rebuildClicked()
 {
-    if(m_make->getProjectMakeFile().isEmpty())
+    if(m_make->getProjectCMakeFile().isEmpty())
     {
-        QMessageBox::warning(Core::ICore::mainWindow(), tr("Build Halted"),
+        QMessageBox::warning(Core::ICore::mainWindow(), tr("Rebuild Halted"),
         tr("Please select a <b>Board Type</b> from the "
            "<b>Board Menu</b> first")); return;
     }
@@ -3133,7 +3443,7 @@ void OmniaCreatorPlugin::rebuildClicked()
         if(!project)
         {
             QMessageBox::critical(Core::ICore::mainWindow(),
-            tr("Build Failed"), tr("Build project not set"));
+            tr("Rebuild Failed"), tr("Rebuild project not set"));
 
             return;
         }
@@ -3145,7 +3455,7 @@ void OmniaCreatorPlugin::rebuildClicked()
     if(!target)
     {
         QMessageBox::critical(Core::ICore::mainWindow(),
-        tr("Build Failed"), tr("Build target not set"));
+        tr("Rebuild Failed"), tr("Rebuild target not set"));
 
         return;
     }
@@ -3156,7 +3466,7 @@ void OmniaCreatorPlugin::rebuildClicked()
     if(!configuration)
     {
         QMessageBox::critical(Core::ICore::mainWindow(),
-        tr("Build Failed"), tr("Build configuration not set"));
+        tr("Rebuild Failed"), tr("Rebuild configuration not set"));
 
         return;
     }
@@ -3167,7 +3477,7 @@ void OmniaCreatorPlugin::rebuildClicked()
     if(!list)
     {
         QMessageBox::critical(Core::ICore::mainWindow(),
-        tr("Build Failed"), tr("Build list not set"));
+        tr("Rebuild Failed"), tr("Rebuild list not set"));
 
         return;
     }
@@ -3178,7 +3488,7 @@ void OmniaCreatorPlugin::rebuildClicked()
     if(!step)
     {
         QMessageBox::critical(Core::ICore::mainWindow(),
-        tr("Build Failed"), tr("Build step not set"));
+        tr("Rebuild Failed"), tr("Rebuild step not set"));
 
         return;
     }
@@ -3192,19 +3502,20 @@ void OmniaCreatorPlugin::rebuildClicked()
     else
     {
         QMessageBox::critical(Core::ICore::mainWindow(),
-        tr("Build Failed"), tr("Build target missing!"));
+        tr("Rebuild Failed"), tr("Rebuild target missing!"));
 
         return;
     }
 
     ProjectExplorer::ProjectExplorerPlugin::instance()->rebuildProject();
+    // Output parsers can only be append after the build starts...
     step->appendOutputParser(new CodeUsedParser(m_codeSpaceUsed));
     step->appendOutputParser(new DataUsedParser(m_dataSpaceUsed));
 }
 
 void OmniaCreatorPlugin::buildClicked()
 {
-    if(m_make->getProjectMakeFile().isEmpty())
+    if(m_make->getProjectCMakeFile().isEmpty())
     {
         QMessageBox::warning(Core::ICore::mainWindow(), tr("Build Halted"),
         tr("Please select a <b>Board Type</b> from the "
@@ -3288,15 +3599,16 @@ void OmniaCreatorPlugin::buildClicked()
     }
 
     ProjectExplorer::ProjectExplorerPlugin::instance()->buildProject(project);
+    // Output parsers can only be append after the build starts...
     step->appendOutputParser(new CodeUsedParser(m_codeSpaceUsed));
     step->appendOutputParser(new DataUsedParser(m_dataSpaceUsed));
 }
 
 void OmniaCreatorPlugin::runClicked()
 {
-    if(m_make->getProjectMakeFile().isEmpty())
+    if(m_make->getProjectCMakeFile().isEmpty())
     {
-        QMessageBox::warning(Core::ICore::mainWindow(), tr("Build Halted"),
+        QMessageBox::warning(Core::ICore::mainWindow(), tr("Run Halted"),
         tr("Please select a <b>Board Type</b> from the "
            "<b>Board Menu</b> first")); return;
     }
@@ -3395,7 +3707,7 @@ void OmniaCreatorPlugin::runClicked()
 
     ///////////////////////////////////////////////////////////////////////////
 
-    m_runClicked = true;
+    m_runClicked = true; m_boardMenu->menu()->setDisabled(true);
 
     ProjectExplorer::BuildManager *manager =
     qobject_cast<ProjectExplorer::BuildManager *>
@@ -3412,6 +3724,7 @@ void OmniaCreatorPlugin::runClicked()
     }
 
     ProjectExplorer::ProjectExplorerPlugin::instance()->buildProject(project);
+    // Output parsers can only be append after the build starts...
     step->appendOutputParser(new CodeUsedParser(m_codeSpaceUsed));
     step->appendOutputParser(new DataUsedParser(m_dataSpaceUsed));
 }
@@ -3420,7 +3733,7 @@ void OmniaCreatorPlugin::reopenPort()
 {
     ///////////////////////////////////////////////////////////////////////////
 
-    m_runClicked = false;
+    m_runClicked = false; m_boardMenu->menu()->setDisabled(false);
 
     ProjectExplorer::BuildManager *manager =
     qobject_cast<ProjectExplorer::BuildManager *>
@@ -3438,6 +3751,9 @@ void OmniaCreatorPlugin::reopenPort()
     {
         m_escape->setPort(m_port->openPort(port, true));
     }
+
+    // Force UI Update...
+    boardMenuAboutToShow();
 }
 
 void OmniaCreatorPlugin::modelChanged(QModelIndex parent, int start, int end)
@@ -3457,7 +3773,7 @@ void OmniaCreatorPlugin::modelChanged(QModelIndex parent, int start, int end)
 
     if(signal)
     {
-        emit runCmake();
+        emit runCMake();
     }
 }
 

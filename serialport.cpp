@@ -716,7 +716,8 @@ void SerialPort::setMakeFile(const QString &portName,
     settings.beginGroup(SERIAL_PORT_KEY_PORT_LIST);
     settings.beginGroup(portName);
 
-    settings.setValue(SERIAL_PORT_KEY_MAKE_FILE, makeFile);
+    settings.setValue(SERIAL_PORT_KEY_MAKE_FILE,
+    QDir::fromNativeSeparators(QDir::cleanPath(makeFile)));
 
     if(portName == getPortName())
     {
@@ -738,7 +739,8 @@ QString SerialPort::getMakeFile(const QString &portName) const
     settings.beginGroup(SERIAL_PORT_KEY_PORT_LIST);
     settings.beginGroup(portName);
 
-    QString result = settings.value(SERIAL_PORT_KEY_MAKE_FILE).toString();
+    QString result = QDir::fromNativeSeparators(QDir::cleanPath(
+    settings.value(SERIAL_PORT_KEY_MAKE_FILE).toString()));
 
     if(!settings.contains(SERIAL_PORT_KEY_MAKE_FILE))
     {

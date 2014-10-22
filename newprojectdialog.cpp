@@ -126,7 +126,7 @@ void NewProjectDialog::textChanged(const QString &text)
     }
     else
     {
-        bool ok = QFileInfo(text).isAbsolute() && (!QFileInfo(text).isFile());
+        bool ok = QFileInfo(text).isAbsolute() && QFileInfo(text).isDir();
 
         m_ui->box->button(QDialogButtonBox::Ok)->setDefault(ok);
         m_ui->box->button(QDialogButtonBox::Ok)->setEnabled(ok);
@@ -141,7 +141,7 @@ void NewProjectDialog::userInterfaceChanged()
         {
             if(QFileInfo(getDefaultDir()).isAbsolute())
             {
-                if(!QFileInfo(getDefaultDir()).isFile())
+                if(QFileInfo(getDefaultDir()).isDir())
                 {
                     if(getCreateMainFiles())
                     {
@@ -153,9 +153,9 @@ void NewProjectDialog::userInterfaceChanged()
                             "About to create files: \"%L1.c\" & \"%L1.h\"\n"
                             "In directory \"%L3\"\n"
                             ).arg(getName()).arg(getDefaultDir()).
-                            arg(QDir::fromNativeSeparators(getDefaultDir() +
-                            QDir::separator() +
-                            getName())));
+                            arg(QDir::fromNativeSeparators(QDir::cleanPath(
+                            getDefaultDir() + QDir::separator() +
+                            getName()))));
                         }
                         else if(getCreateCppMainFile())
                         {
@@ -165,9 +165,9 @@ void NewProjectDialog::userInterfaceChanged()
                             "About to create files: \"%L1.cpp\" & \"%L1.h\"\n"
                             "In directory \"%L3\"\n"
                             ).arg(getName()).arg(getDefaultDir()).
-                            arg(QDir::fromNativeSeparators(getDefaultDir() +
-                            QDir::separator() +
-                            getName())));
+                            arg(QDir::fromNativeSeparators(QDir::cleanPath(
+                            getDefaultDir() + QDir::separator() +
+                            getName()))));
                         }
                         else if(getCreateArduinoMainFile())
                         {
@@ -177,9 +177,9 @@ void NewProjectDialog::userInterfaceChanged()
                             "About to create file: \"%L1.ino\"\n"
                             "In directory \"%L3\"\n"
                             ).arg(getName()).arg(getDefaultDir()).
-                            arg(QDir::fromNativeSeparators(getDefaultDir() +
-                            QDir::separator() +
-                            getName())));
+                            arg(QDir::fromNativeSeparators(QDir::cleanPath(
+                            getDefaultDir() + QDir::separator() +
+                            getName()))));
                         }
                         else
                         {
