@@ -213,19 +213,15 @@ private:
 
     Q_DISABLE_COPY(OmniaCreatorPlugin)
 
-    // For File Based Projects
-    QMenu *walkExampleFiles(const QString &rootPath,
-                            const QStringList &nameFilters,
-                            QWidget *parent);
+    QList<QAction *> entryList(const QString &topPath,
+                               const QStringList &nameFilters);
 
-    // For Folder Based Projects
-    QMenu *walkExampleFolders(const QString &rootPath,
-                              const QStringList &nameFilters,
-                              QWidget *parent);
-
-    SerialMake *m_make; bool m_runClicked; QFileSystemModel *m_projectModel;
+    SerialMake *m_make;
     SerialPort *m_port;
     SerialEscape *m_escape;
+
+    bool m_runClicked;
+    QFileSystemModel *m_projectModel;
 
     QStatusBar *m_status;
 

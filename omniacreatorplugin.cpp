@@ -156,7 +156,6 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
             this, SLOT(cmakeChanged()));
 
     m_runClicked = false;
-
     m_projectModel = new QFileSystemModel(this);
 
     ///////////////////////////////////////////////////////////////////////
@@ -3055,119 +3054,130 @@ void OmniaCreatorPlugin::updateExamples()
 
     // Arduino Examples
     {
-        QMenu *menu = walkExampleFiles(
+        QMenu *menu = new QMenu("Arduino", m_examplesMenu->menu());
+
+        menu->addActions(entryList(
         QDir::fromNativeSeparators(QDir::cleanPath(
         QApplication::applicationDirPath() +
         "/../../../tools/arduino/examples")),
-        QStringList() << "*.ino" << "*.pde",
-        m_examplesMenu->menu());
+        QStringList() << "*.ino" << "*.pde"));
 
-        if(menu)
+        menu->addSeparator();
         {
-            menu->setTitle("Arduino");
-            m_examplesMenu->menu()->addMenu(menu);
+            QString topPath = QDir::fromNativeSeparators(QDir::cleanPath(
+            QApplication::applicationDirPath() +
+            "/../../../tools/arduino/libraries"));
+
+            foreach(const QString &itemName,
+            QDir(topPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot,
+            QDir::Name | QDir::DirsFirst | QDir::LocaleAware))
+            {
+                QString path = QDir::fromNativeSeparators(QDir::cleanPath(
+                topPath + QDir::separator() + itemName));
+
+                QList<QAction *> actionList = entryList(
+                QDir::fromNativeSeparators(QDir::cleanPath(
+                path + "/examples")),
+                QStringList() << "*.ino" << "*.pde");
+
+                if(actionList.size())
+                {
+                    QMenu *menu2 = new QMenu(QDir(path).dirName(), menu);
+
+                    menu2->addActions(actionList);
+                    menu->addMenu(menu2);
+                }
+            }
         }
+
+        menu->setVisible(!menu->isEmpty());
+        m_examplesMenu->menu()->addMenu(menu);
     }
 
     // Propeller Examples
     {
-        QMenu *menu = walkExampleFiles(
+        QMenu *menu = new QMenu("Propeller", m_examplesMenu->menu());
+
+        menu->addActions(entryList(
         QDir::fromNativeSeparators(QDir::cleanPath(
         QApplication::applicationDirPath() +
         "/../../../tools/propeller/Workspace/Learn/Examples")),
-        QStringList() << "*.side",
-        m_examplesMenu->menu());
+        QStringList() << "*.side"));
 
-        if(menu)
+        menu->addSeparator();
         {
-            menu->setTitle("Propeller");
-            m_examplesMenu->menu()->addMenu(menu);
+            QString topPath = QDir::fromNativeSeparators(QDir::cleanPath(
+            QApplication::applicationDirPath() +
+            "/../../../tools/propeller/Workspace/Learn/Simple Libraries"));
+
+            foreach(const QString &itemName,
+            QDir(topPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot,
+            QDir::Name | QDir::DirsFirst | QDir::LocaleAware))
+            {
+                QString path = QDir::fromNativeSeparators(QDir::cleanPath(
+                topPath + QDir::separator() + itemName));
+
+                QList<QAction *> actionList = entryList(
+                QDir::fromNativeSeparators(QDir::cleanPath(
+                path + "/example")),
+                QStringList() << "*.side");
+
+                if(actionList.size())
+                {
+                    QMenu *menu2 = new QMenu(QDir(path).dirName(), menu);
+
+                    menu2->addActions(actionList);
+                    menu->addMenu(menu2);
+                }
+            }
         }
+
+        menu->setVisible(!menu->isEmpty());
+        m_examplesMenu->menu()->addMenu(menu);
     }
 }
 
-QMenu *OmniaCreatorPlugin::walkExampleFiles(const QString &rootPath,
-                                            const QStringList &nameFilters,
-                                            QWidget *parent)
+QList<QAction *> OmniaCreatorPlugin::entryList(const QString &topPath,
+                                               const QStringList &nameFilters)
 {
-    QMenu *menu = new QMenu(QDir(rootPath).dirName(), parent);
+    QList<QAction *> actionList;
 
-    QDirIterator it(rootPath, nameFilters,
-    QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot);
-
-    while(it.hasNext())
+    foreach(const QString &itemName,
+    QDir(topPath).entryList(nameFilters,
+    QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot,
+    QDir::Name | QDir::DirsFirst | QDir::LocaleAware))
     {
-        QString path = it.next();
+        QString path = QDir::fromNativeSeparators(QDir::cleanPath(
+        topPath + QDir::separator() + itemName));
 
         if(QFileInfo(path).isDir())
         {
-            QMenu *subMenu = walkExampleFiles(path, nameFilters, menu);
+            QList<QAction *> actionList2 = entryList(path, nameFilters);
 
-            if(subMenu)
+            if(actionList2.size() > 1)
             {
-                menu->addMenu(subMenu);
+                QMenu *menu =
+                new QMenu(QDir(path).dirName(), NULL);
+
+                menu->addActions(actionList2);
+                actionList.append(menu->menuAction());
+            }
+            else if(actionList2.size() > 0)
+            {
+                actionList.append(actionList2.first());
             }
         }
         else
         {
             QAction *action =
-            new QAction(QFileInfo(path).completeBaseName(), menu);
+            new QAction(QFileInfo(path).completeBaseName(), NULL);
 
             action->setData(path);
-            menu->addAction(action);
+            actionList.append(action);
         }
     }
 
-    if(menu->actions().isEmpty())
-    {
-        delete menu;
-
-        return NULL;
-    }
-
-    return menu;
-}
-
-QMenu *OmniaCreatorPlugin::walkExampleFolders(const QString &rootPath,
-                                              const QStringList &nameFilters,
-                                              QWidget *parent)
-{
-    QMenu *menu = new QMenu(QDir(rootPath).dirName(), parent);
-
-    QDirIterator it(rootPath, nameFilters,
-    QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot);
-
-    while(it.hasNext())
-    {
-        QString path = it.next();
-
-        if(QFileInfo(path).isDir())
-        {
-            QMenu *subMenu = walkExampleFolders(path, nameFilters, menu);
-
-            if(subMenu)
-            {
-                menu->addMenu(subMenu);
-            }
-        }
-        else
-        {
-            QAction *action =
-            new QAction(QFileInfo(path).completeBaseName(), menu);
-
-            action->setData(path);
-            menu->addAction(action);
-        }
-    }
-
-    if(menu->actions().isEmpty())
-    {
-        delete menu;
-
-        return NULL;
-    }
-
-    return menu;
+    return actionList;
 }
 
 void OmniaCreatorPlugin::updateCloseProjectAndAllFilesState()
