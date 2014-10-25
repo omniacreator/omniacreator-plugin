@@ -31,7 +31,7 @@ QWidget *parent) : QDialog(parent), m_ui(new Ui::NewFileOrProjectDialog)
             this, SLOT(newProjectPressed()));
 
     connect(m_ui->newProjectFileButton, SIGNAL(clicked()),
-            this, SLOT(nfewProjectFilePressed()));
+            this, SLOT(newProjectFilePressed()));
 }
 
 NewFileOrProjectDialog::~NewFileOrProjectDialog()

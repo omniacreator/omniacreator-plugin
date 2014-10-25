@@ -368,6 +368,16 @@ QStringList SerialMake::getSystemLibraryPaths() const
     QApplication::applicationDirPath() +
     "/../share/qtcreator/libraries")));
 
+    // Arduino Support
+    list.append(QDir::fromNativeSeparators(QDir::cleanPath(
+    QApplication::applicationDirPath() +
+    "/../../../tools/arduino/libraries")));
+
+    // Propeller Support
+    list.append(QDir::fromNativeSeparators(QDir::cleanPath(
+    QApplication::applicationDirPath() +
+    "/../../../tools/propeller/Workspace/Learn/Simple Libraries")));
+
     return list;
 }
 
@@ -378,6 +388,16 @@ QStringList SerialMake::getUserLibraryPaths() const
     list.append(QDir::fromNativeSeparators(QDir::cleanPath(
     getWorkspaceFolder() +
     "/libraries")));
+
+    // Arduino Support
+    list.append(QDir::fromNativeSeparators(QDir::cleanPath(
+    QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) +
+    "/Arduino/libraries")));
+
+    // Propeller Support
+    list.append(QDir::fromNativeSeparators(QDir::cleanPath(
+    QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) +
+    "/SimpleIDE/Learn/Simple Libraries")));
 
     return list;
 }
@@ -426,7 +446,7 @@ void SerialMake::updateProject2()
 {
     updateProject();
 
-    if((!getProjectFPath().isEmpty()) && (!getProjectCMakeFile().isEmpty()))
+    if(!getProjectFPath().isEmpty())
     {
         if(!QDir().mkpath(m_genCMakeSrcFolder))
         {
@@ -474,8 +494,16 @@ void SerialMake::updateProject2()
         arg(getProjectPortName()));
 
         text.append("set(INCLUDE_SWITCH \"0\")\n");
-        text.append(QString("include(\"%L1\")\n\n").
-        arg(getProjectCMakeFile()));
+
+        if(!getProjectCMakeFile().isEmpty())
+        {
+            text.append(QString("include(\"%L1\")\n\n").
+            arg(getProjectCMakeFile()));
+        }
+        else
+        {
+            text.append(QString("return()\n\n"));
+        }
 
         text.append(QString("project(\"%L1\")\n\n").
         arg((QFileInfo(getProjectFPath()).isDir() ?
@@ -485,8 +513,16 @@ void SerialMake::updateProject2()
         "_")));
 
         text.append("set(INCLUDE_SWITCH \"1\")\n");
-        text.append(QString("include(\"%L1\")\n").
-        arg(getProjectCMakeFile()));
+
+        if(!getProjectCMakeFile().isEmpty())
+        {
+            text.append(QString("include(\"%L1\")\n\n").
+            arg(getProjectCMakeFile()));
+        }
+        else
+        {
+            text.append(QString("return()\n\n"));
+        }
 
         QFile file(m_genCMakeFile);
 

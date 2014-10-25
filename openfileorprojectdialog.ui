@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>300</width>
-    <height>160</height>
+    <width>340</width>
+    <height>220</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>300</width>
-    <height>160</height>
+    <width>340</width>
+    <height>220</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -56,7 +56,7 @@
       <string>Other - Open Project File Based Project</string>
      </property>
      <property name="description">
-      <string>Open a project file based project\n(not recommended for new projects)</string>
+      <string>Open a project file based project</string>
      </property>
     </widget>
    </item>

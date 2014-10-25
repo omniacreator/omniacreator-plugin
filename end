@@ -1,0 +1,335 @@
+[1mdiff --git a/omniacreatorplugin.cpp b/omniacreatorplugin.cpp[m
+[1mindex ce19db4..2e39f79 100644[m
+[1m--- a/omniacreatorplugin.cpp[m
+[1m+++ b/omniacreatorplugin.cpp[m
+[36m@@ -3056,85 +3056,257 @@[m [mvoid OmniaCreatorPlugin::updateExamples()[m
+     {[m
+         QMenu *menu = new QMenu("Arduino", m_examplesMenu->menu());[m
+ [m
+[31m-        menu->addActions(entryList([m
+[31m-        QDir::fromNativeSeparators(QDir::cleanPath([m
+[31m-        QApplication::applicationDirPath() +[m
+[31m-        "/../../../tools/arduino/examples")),[m
+[31m-        QStringList() << "*.ino" << "*.pde"));[m
+[31m-[m
+[31m-        menu->addSeparator();[m
+         {[m
+[31m-            QString topPath = QDir::fromNativeSeparators(QDir::cleanPath([m
+[31m-            QApplication::applicationDirPath() +[m
+[31m-            "/../../../tools/arduino/libraries"));[m
+[31m-[m
+[31m-            foreach(const QString &itemName,[m
+[31m-            QDir(topPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot,[m
+[31m-            QDir::Name | QDir::DirsFirst | QDir::LocaleAware))[m
+[32m+[m[32m//            QList<QAction *> actionList = entryList([m
+[32m+[m[32m//            QDir::fromNativeSeparators(QDir::cleanPath([m
+[32m+[m[32m//            QStandardPaths::writableLocation([m
+[32m+[m[32m//            QStandardPaths::DocumentsLocation) +[m
+[32m+[m[32m//            "/Arduino/libraries")),[m
+[32m+[m[32m//            QStringList() << "*.ino" << "*.pde");[m
+[32m+[m
+[32m+[m[32m//            if(!actionList.isEmpty())[m
+             {[m
+[31m-                QString path = QDir::fromNativeSeparators(QDir::cleanPath([m
+[31m-                topPath + QDir::separator() + itemName));[m
+[31m-[m
+[31m-                QList<QAction *> actionList = entryList([m
+[31m-                QDir::fromNativeSeparators(QDir::cleanPath([m
+[31m-                path + "/examples")),[m
+[31m-                QStringList() << "*.ino" << "*.pde");[m
+[31m-[m
+[31m-                if(actionList.size())[m
+[31m-                {[m
+[31m-                    QMenu *menu2 = new QMenu(QDir(path).dirName(), menu);[m
+[32m+[m[32m                //QAction *label = new QAction("User Examples", NULL);[m
+[32m+[m[32m//                label->setDisabled(true);[m
+ [m
+[31m-                    menu2->addActions(actionList);[m
+[31m-                    menu->addMenu(menu2);[m
+[31m-                }[m
+[32m+[m[32m                menu->addAction("User Examples");[m
+[32m+[m[32m                //menu->addSeparator();[m
+[32m+[m[32m                //menu->addActions(actionList);[m
+             }[m
+         }[m
+ [m
+[31m-        menu->setVisible(!menu->isEmpty());[m
+[31m-        m_examplesMenu->menu()->addMenu(menu);[m
+[31m-    }[m
+[31m-[m
+[31m-    // Propeller Examples[m
+[31m-    {[m
+[31m-        QMenu *menu = new QMenu("Propeller", m_examplesMenu->menu());[m
+[31m-[m
+[31m-        menu->addActions(entryList([m
+[31m-        QDir::fromNativeSeparators(QDir::cleanPath([m
+[31m-        QApplication::applicationDirPath() +[m
+[31m-        "/../../../tools/propeller/Workspace/Learn/Examples")),[m
+[31m-        QStringList() << "*.side"));[m
+[31m-[m
+         menu->addSeparator();[m
+[32m+[m
+         {[m
+[31m-            QString topPath = QDir::fromNativeSeparators(QDir::cleanPath([m
+[31m-            QApplication::applicationDirPath() +[m
+[31m-            "/../../../tools/propeller/Workspace/Learn/Simple Libraries"));[m
+[32m+[m[32m//            QList<QAction *> actionList = entryList([m
+[32m+[m[32m//            QDir::fromNativeSeparators(QDir::cleanPath([m
+[32m+[m[32m//            QApplication::applicationDirPath() +[m
+[32m+[m[32m//            "/../../../tools/arduino/examples")),[m
+[32m+[m[32m//            QStringList() << "*.ino" << "*.pde");[m
+ [m
+[31m-            foreach(const QString &itemName,[m
+[31m-            QDir(topPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot,[m
+[31m-            QDir::Name | QDir::DirsFirst | QDir::LocaleAware))[m
+[32m+[m[32m//            if(!actionList.isEmpty())[m
+             {[m
+[31m-                QString path = QDir::fromNativeSeparators(QDir::cleanPath([m
+[31m-                topPath + QDir::separator() + itemName));[m
+[31m-[m
+[31m-                QList<QAction *> actionList = entryList([m
+[31m-                QDir::fromNativeSeparators(QDir::cleanPath([m
+[31m-                path + "/example")),[m
+[31m-                QStringList() << "*.side");[m
+[32m+[m[32m//                QAction *label = new QAction("System Examples", menu);[m
+[32m+[m[32m//                label->setDisabled(true);[m
+ [m
+[31m-                if(actionList.size())[m
+[31m-                {[m
+[31m-                    QMenu *menu2 = new QMenu(QDir(path).dirName(), menu);[m
+[31m-[m
+[31m-                    menu2->addActions(actionList);[m
+[31m-                    menu->addMenu(menu2);[m
+[31m-                }[m
+[32m+[m[32m//                menu->addAction(label);[m
+[32m+[m[32m                //menu->addSeparator();[m
+[32m+[m[32m                //menu->addActions(actionList);[m
+             }[m
+         }[m
+ [m
+[32m+[m[32m//        menu->addSeparator();[m
+[32m+[m
+[32m+[m[32m//        {[m
+[32m+[m[32m//            QList<QAction *> actionList;[m
+[32m+[m
+[32m+[m[32m//            QString topPath = QDir::fromNativeSeparators(QDir::cleanPath([m
+[32m+[m[32m//            QApplication::applicationDirPath() +[m
+[32m+[m[32m//            "/../../../tools/arduino/libraries"));[m
+[32m+[m
+[32m+[m[32m//            foreach(const QString &itemName,[m
+[32m+[m[32m//            QDir(topPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot,[m
+[32m+[m[32m//            QDir::Name | QDir::DirsFirst | QDir::LocaleAware))[m
+[32m+[m[32m//            {[m
+[32m+[m[32m//                QString path = QDir::fromNativeSeparators(QDir::cleanPath([m
+[32m+[m[32m//                topPath + QDir::separator() + itemName));[m
+[32m+[m
+[32m+[m[32m//                QList<QAction *> actionList2 = entryList([m
+[32m+[m[32m//                QDir::fromNativeSeparators(QDir::cleanPath([m
+[32m+[m[32m//                path + "/examples")),[m
+[32m+[m[32m//                QStringList() << "*.ino" << "*.pde");[m
+[32m+[m
+[32m+[m[32m//                if(!actionList2.isEmpty())[m
+[32m+[m[32m//                {[m
+[32m+[m[32m//                    QMenu *menu2 = new QMenu(QDir(path).dirName(), menu);[m
+[32m+[m
+[32m+[m[32m//                    menu2->addActions(actionList2);[m
+[32m+[m[32m//                    actionList.append(menu2->menuAction());[m
+[32m+[m[32m//                }[m
+[32m+[m[32m//            }[m
+[32m+[m
+[32m+[m[32m//            if(!actionList.isEmpty())[m
+[32m+[m[32m//            {[m
+[32m+[m[32m//                QAction *label = new QAction("User Library Examples", menu);[m
+[32m+[m[32m//                label->setDisabled(true);[m
+[32m+[m
+[32m+[m[32m//                menu->addAction(label);[m
+[32m+[m[32m//                menu->addActions(actionList);[m
+[32m+[m[32m//            }[m
+[32m+[m[32m//        }[m
+[32m+[m
+[32m+[m[32m//        menu->addSeparator();[m
+[32m+[m
+[32m+[m[32m//        {[m
+[32m+[m[32m//            QList<QAction *> actionList;[m
+[32m+[m
+[32m+[m[32m//            QString topPath = QDir::fromNativeSeparators(QDir::cleanPath([m
+[32m+[m[32m//            QStandardPaths::writableLocation([m
+[32m+[m[32m//            QStandardPaths::DocumentsLocation) +[m
+[32m+[m[32m//            "/Arduino/libraries"));[m
+[32m+[m
+[32m+[m[32m//            foreach(const QString &itemName,[m
+[32m+[m[32m//            QDir(topPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot,[m
+[32m+[m[32m//            QDir::Name | QDir::DirsFirst | QDir::LocaleAware))[m
+[32m+[m[32m//            {[m
+[32m+[m[32m//                QString path = QDir::fromNativeSeparators(QDir::cleanPath([m
+[32m+[m[32m//                topPath + QDir::separator() + itemName));[m
+[32m+[m
+[32m+[m[32m//                QList<QAction *> actionList2 = entryList([m
+[32m+[m[32m//                QDir::fromNativeSeparators(QDir::cleanPath([m
+[32m+[m[32m//                path + "/examples")),[m
+[32m+[m[32m//                QStringList() << "*.ino" << "*.pde");[m
+[32m+[m
+[32m+[m[32m//                if(actionList2.size())[m
+[32m+[m[32m//                {[m
+[32m+[m[32m//                    QMenu *menu2 = new QMenu(QDir(path).dirName());[m
+[32m+[m
+[32m+[m[32m//                    menu2->addActions(actionList2);[m
+[32m+[m[32m//                    actionList.append(menu2->menuAction());[m
+[32m+[m[32m//                }[m
+[32m+[m[32m//            }[m
+[32m+[m
+[32m+[m[32m//            if(!actionList.isEmpty())[m
+[32m+[m[32m//            {[m
+[32m+[m[32m//                QAction *label = new QAction("System Library Examples", menu);[m
+[32m+[m[32m//                label->setDisabled(true);[m
+[32m+[m
+[32m+[m[32m//                menu->addAction(label);[m
+[32m+[m[32m//                menu->addActions(actionList);[m
+[32m+[m[32m//            }[m
+[32m+[m[32m//        }[m
+[32m+[m
+         menu->setVisible(!menu->isEmpty());[m
+         m_examplesMenu->menu()->addMenu(menu);[m
+     }[m
+[32m+[m
+[32m+[m[32m//    // Propeller Examples[m
+[32m+[m[32m//    {[m
+[32m+[m[32m//        QMenu *menu = new QMenu("Propeller", m_examplesMenu->menu());[m
+[32m+[m
+[32m+[m[32m//        {[m
+[32m+[m[32m//            QList<QAction *> actionList = entryList([m
+[32m+[m[32m//            QDir::fromNativeSeparators(QDir::cleanPath([m
+[32m+[m[32m//            QStandardPaths::writableLocation([m
+[32m+[m[32m//            QStandardPaths::DocumentsLocation) +[m
+[32m+[m[32m//            "/SimpleIDE/Learn/Examples")),[m
+[32m+[m[32m//            QStringList() << "*.side");[m
+[32m+[m
+[32m+[m[32m//            if(!actionList.isEmpty())[m
+[32m+[m[32m//            {[m
+[32m+[m[32m//                QAction *label = new QAction("User Examples", menu);[m
+[32m+[m[32m//                label->setDisabled(true);[m
+[32m+[m
+[32m+[m[32m//                //menu->addAction(label);[m
+[32m+[m[32m//                //menu->addSeparator();[m
+[32m+[m[32m//                //menu->addActions(actionList);[m
+[32m+[m[32m//            }[m
+[32m+[m[32m//        }[m
+[32m+[m
+[32m+[m[32m//        menu->addSeparator();[m
+[32m+[m
+[32m+[m[32m//        {[m
+[32m+[m[32m//            QList<QAction *> actionList = entryList([m
+[32m+[m[32m//            QDir::fromNativeSeparators(QDir::cleanPath([m
+[32m+[m[32m//            QApplication::applicationDirPath() +[m
+[32m+[m[32m//            "/../../../tools/propeller/Workspace/Learn/Examples")),[m
+[32m+[m[32m//            QStringList() << "*.side");[m
+[32m+[m
+[32m+[m[32m//            if(!actionList.isEmpty())[m
+[32m+[m[32m//            {[m
+[32m+[m[32m//                QAction *label = new QAction("System Examples", menu);[m
+[32m+[m[32m//                label->setDisabled(true);[m
+[32m+[m
+[32m+[m[32m//                //menu->addAction(label);[m
+[32m+[m[32m//                //menu->addSeparator();[m
+[32m+[m[32m//                //menu->addActions(actionList);[m
+[32m+[m[32m//            }[m
+[32m+[m[32m//        }[m
+[32m+[m
+[32m+[m[32m//        menu->addSeparator();[m
+[32m+[m
+[32m+[m[32m//        {[m
+[32m+[m[32m//            QList<QAction *> actionList;[m
+[32m+[m
+[32m+[m[32m//            QString topPath = QDir::fromNativeSeparators(QDir::cleanPath([m
+[32m+[m[32m//            QStandardPaths::writableLocation([m
+[32m+[m[32m//            QStandardPaths::DocumentsLocation) +[m
+[32m+[m[32m//            "/SimpleIDE/Learn/Simple Libraries"));[m
+[32m+[m
+[32m+[m[32m//            foreach(const QString &itemName,[m
+[32m+[m[32m//            QDir(topPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot,[m
+[32m+[m[32m//            QDir::Name | QDir::DirsFirst | QDir::LocaleAware))[m
+[32m+[m[32m//            {[m
+[32m+[m[32m//                QString path = QDir::fromNativeSeparators(QDir::cleanPath([m
+[32m+[m[32m//                topPath + QDir::separator() + itemName));[m
+[32m+[m
+[32m+[m[32m//                QList<QAction *> actionList2 = entryList([m
+[32m+[m[32m//                QDir::fromNativeSeparators(QDir::cleanPath([m
+[32m+[m[32m//                path + "/examples")),[m
+[32m+[m[32m//                QStringList() << "*.side");[m
+[32m+[m
+[32m+[m[32m//                if(actionList2.size())[m
+[32m+[m[32m//                {[m
+[32m+[m[32m//                    QMenu *menu2 = new QMenu(QDir(path).dirName());[m
+[32m+[m
+[32m+[m[32m//                    menu2->addActions(actionList2);[m
+[32m+[m[32m//                    actionList.append(menu2->menuAction());[m
+[32m+[m[32m//                }[m
+[32m+[m[32m//            }[m
+[32m+[m
+[32m+[m[32m//            if(!actionList.isEmpty())[m
+[32m+[m[32m//            {[m
+[32m+[m[32m//                QAction *label = new QAction("User Library Examples", menu);[m
+[32m+[m[32m//                label->setDisabled(true);[m
+[32m+[m
+[32m+[m[32m//                menu->addAction(label);[m
+[32m+[m[32m//                menu->addActions(actionList);[m
+[32m+[m[32m//            }[m
+[32m+[m[32m//        }[m
+[32m+[m
+[32m+[m[32m//        menu->addSeparator();[m
+[32m+[m
+[32m+[m[32m//        {[m
+[32m+[m[32m//            QList<QAction *> actionList;[m
+[32m+[m
+[32m+[m[32m//            QString topPath = QDir::fromNativeSeparators(QDir::cleanPath([m
+[32m+[m[32m//            QApplication::applicationDirPath() +[m
+[32m+[m[32m//            "/../../../tools/propeller/Workspace/Learn/Simple Libraries"));[m
+[32m+[m
+[32m+[m[32m//            foreach(const QString &itemName,[m
+[32m+[m[32m//            QDir(topPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot,[m
+[32m+[m[32m//            QDir::Name | QDir::DirsFirst | QDir::LocaleAware))[m
+[32m+[m[32m//            {[m
+[32m+[m[32m//                QString path = QDir::fromNativeSeparators(QDir::cleanPath([m
+[32m+[m[32m//                topPath + QDir::separator() + itemName));[m
+[32m+[m
+[32m+[m[32m//                QList<QAction *> actionList2 = entryList([m
+[32m+[m[32m//                QDir::fromNativeSeparators(QDir::cleanPath([m
+[32m+[m[32m//                path + "/examples")),[m
+[32m+[m[32m//                QStringList() << "*.side");[m
+[32m+[m
+[32m+[m[32m//                if(actionList2.size())[m
+[32m+[m[32m//                {[m
+[32m+[m[32m//                    QMenu *menu2 = new QMenu(QDir(path).dirName());[m
+[32m+[m
+[32m+[m[32m//                    menu2->addActions(actionList2);[m
+[32m+[m[32m//                    actionList.append(menu2->menuAction());[m
+[32m+[m[32m//                }[m
+[32m+[m[32m//            }[m
+[32m+[m
+[32m+[m[32m//            if(!actionList.isEmpty())[m
+[32m+[m[32m//            {[m
+[32m+[m[32m//                QAction *label = new QAction("System Library Examples", menu);[m
+[32m+[m[32m//                label->setDisabled(true);[m
+[32m+[m
+[32m+[m[32m//                menu->addAction(label);[m
+[32m+[m[32m//                menu->addActions(actionList);[m
+[32m+[m[32m//            }[m
+[32m+[m[32m//        }[m
+[32m+[m
+[32m+[m[32m//        menu->setVisible(!menu->isEmpty());[m
+[32m+[m[32m//        m_examplesMenu->menu()->addMenu(menu);[m
+[32m+[m[32m//    }[m
+ }[m
+ [m
+ QList<QAction *> OmniaCreatorPlugin::entryList(const QString &topPath,[m
+[36m@@ -3162,7 +3334,9 @@[m [mQList<QAction *> OmniaCreatorPlugin::entryList(const QString &topPath,[m
+                 menu->addActions(actionList2);[m
+                 actionList.append(menu->menuAction());[m
+             }[m
+[31m-            else if(actionList2.size() > 0)[m
+[32m+[m[32m            else if((actionList2.size() > 0)[m
+[32m+[m[32m            && (QDir(path).dirName()[m
+[32m+[m[32m            == actionList2.first()->text()))[m
+             {[m
+                 actionList.append(actionList2.first());[m
+             }[m

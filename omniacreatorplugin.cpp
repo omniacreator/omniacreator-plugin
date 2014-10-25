@@ -1081,8 +1081,8 @@ void OmniaCreatorPlugin::newFileOrProject()
         case NewFileOrProjectDialog::newFileWasPressed:
         {
             QString openPath = settings.value(PLUGIN_DIALOG_KEY_NEW_FILE,
-            QDir::fromNativeSeparators(QDir::homePath() +
-            QDir::separator() + tr("Untitled.cpp"))).toString();
+            QDir::fromNativeSeparators(QDir::cleanPath(QDir::homePath() +
+            QDir::separator() + tr("Untitled.cpp")))).toString();
 
             NewFileDialog dialog2(tr("New File"),
             QFileInfo(openPath).fileName(), QFileInfo(openPath).path(),
@@ -1090,9 +1090,9 @@ void OmniaCreatorPlugin::newFileOrProject()
 
             if(dialog2.exec() == QDialog::Accepted)
             {
-                QString fullPath =
-                QDir::fromNativeSeparators(dialog2.getDefaultDir() +
-                QDir::separator() + dialog2.getName());
+                QString fullPath = QDir::fromNativeSeparators(QDir::cleanPath(
+                dialog2.getDefaultDir() +
+                QDir::separator() + dialog2.getName()));
 
                 if(!QDir(dialog2.getDefaultDir()).exists())
                 {
@@ -1398,8 +1398,8 @@ void OmniaCreatorPlugin::newFileOrProject()
         case NewFileOrProjectDialog::newProjectWasPressed:
         {
             QString openPath = settings.value(PLUGIN_DIALOG_KEY_NEW_PROJECT,
-            QDir::fromNativeSeparators(QDir::homePath() +
-            QDir::separator() + tr("Untitled"))).toString();
+            QDir::fromNativeSeparators(QDir::cleanPath(QDir::homePath() +
+            QDir::separator() + tr("Untitled")))).toString();
 
             NewProjectDialog dialog2(tr("New Project"),
             QFileInfo(openPath).fileName(), QFileInfo(openPath).path(),
@@ -1407,9 +1407,9 @@ void OmniaCreatorPlugin::newFileOrProject()
 
             if(dialog2.exec() == QDialog::Accepted)
             {
-                QString fullPath =
-                QDir::fromNativeSeparators(dialog2.getDefaultDir() +
-                QDir::separator() + dialog2.getName());
+                QString fullPath = QDir::fromNativeSeparators(QDir::cleanPath(
+                dialog2.getDefaultDir() +
+                QDir::separator() + dialog2.getName()));
 
                 if(!QDir(fullPath).exists())
                 {
@@ -1430,8 +1430,8 @@ void OmniaCreatorPlugin::newFileOrProject()
                         // Make H File
                         {
                             QFile file(QDir::fromNativeSeparators(
-                            fullPath + QDir::separator() +
-                            dialog2.getName() + ".h"));
+                            QDir::cleanPath(fullPath + QDir::separator() +
+                            dialog2.getName() + ".h")));
 
                             if(file.open(QIODevice::WriteOnly))
                             {
@@ -1486,8 +1486,8 @@ void OmniaCreatorPlugin::newFileOrProject()
                         // Make C File
                         {
                             QFile file(QDir::fromNativeSeparators(
-                            fullPath + QDir::separator() +
-                            dialog2.getName() + ".c"));
+                            QDir::cleanPath(fullPath + QDir::separator() +
+                            dialog2.getName() + ".c")));
 
                             if(file.open(QIODevice::WriteOnly))
                             {
@@ -1540,8 +1540,8 @@ void OmniaCreatorPlugin::newFileOrProject()
                         // Make H File
                         {
                             QFile file(QDir::fromNativeSeparators(
-                            fullPath + QDir::separator() +
-                            dialog2.getName() + ".h"));
+                            QDir::cleanPath(fullPath + QDir::separator() +
+                            dialog2.getName() + ".h")));
 
                             if(file.open(QIODevice::WriteOnly))
                             {
@@ -1596,8 +1596,8 @@ void OmniaCreatorPlugin::newFileOrProject()
                         // Make CPP File
                         {
                             QFile file(QDir::fromNativeSeparators(
-                            fullPath + QDir::separator() +
-                            dialog2.getName() + ".cpp"));
+                            QDir::cleanPath(fullPath + QDir::separator() +
+                            dialog2.getName() + ".cpp")));
 
                             if(file.open(QIODevice::WriteOnly))
                             {
@@ -1648,8 +1648,8 @@ void OmniaCreatorPlugin::newFileOrProject()
                     else if(dialog2.getCreateArduinoMainFile())
                     {
                         QFile file(QDir::fromNativeSeparators(
-                        fullPath + QDir::separator() +
-                        dialog2.getName() + ".ino"));
+                        QDir::cleanPath(fullPath + QDir::separator() +
+                        dialog2.getName() + ".ino")));
 
                         if(file.open(QIODevice::WriteOnly))
                         {
@@ -3032,15 +3032,21 @@ void OmniaCreatorPlugin::updateRecentProjects()
 
             if(file.open(QIODevice::ReadOnly))
             {
-                action->setText(re.match(file.readAll()).captured("path"));
+                action->setText(QDir::toNativeSeparators(QDir::cleanPath(
+                re.match(file.readAll()).captured("path"))));
+                action->setData(QDir::fromNativeSeparators(QDir::cleanPath(
+                action->text())));
+
+                action->disconnect(
+                ProjectExplorer::ProjectExplorerPlugin::instance());
 
                 if(repeated.contains(action->text()))
                 {
                     delete action;
+
                     continue;
                 }
 
-                action->disconnect();
                 repeated.append(action->text());
             }
         }
@@ -3054,16 +3060,52 @@ void OmniaCreatorPlugin::updateExamples()
 
     // Arduino Examples
     {
-        QMenu *menu = new QMenu("Arduino", m_examplesMenu->menu());
+        QMenu *menu = new QMenu(tr("Arduino"), m_examplesMenu->menu());
 
-        menu->addActions(entryList(
-        QDir::fromNativeSeparators(QDir::cleanPath(
-        QApplication::applicationDirPath() +
-        "/../../../tools/arduino/examples")),
-        QStringList() << "*.ino" << "*.pde"));
+        {
+            QList<QAction *> actionList = entryList(
+            QDir::fromNativeSeparators(QDir::cleanPath(
+            QApplication::applicationDirPath() +
+            "/../../../tools/arduino/examples")),
+            QStringList() << "*.ino" << "*.pde");
+
+            if(!actionList.isEmpty())
+            {
+                QAction *label=new QAction(tr("System Examples"), menu);
+                label->setDisabled(true);
+
+                menu->addAction(label);
+                menu->addSeparator();
+                menu->addActions(actionList);
+            }
+        }
 
         menu->addSeparator();
+
         {
+            QList<QAction *> actionList = entryList(
+            QDir::fromNativeSeparators(QDir::cleanPath(
+            QStandardPaths::writableLocation(
+            QStandardPaths::DocumentsLocation) +
+            "/Arduino/examples")),
+            QStringList() << "*.ino" << "*.pde");
+
+            if(!actionList.isEmpty())
+            {
+                QAction *label=new QAction(tr("User Examples"), menu);
+                label->setDisabled(true);
+
+                menu->addAction(label);
+                menu->addSeparator();
+                menu->addActions(actionList);
+            }
+        }
+
+        menu->addSeparator();
+
+        {
+            QList<QAction *> actionList;
+
             QString topPath = QDir::fromNativeSeparators(QDir::cleanPath(
             QApplication::applicationDirPath() +
             "/../../../tools/arduino/libraries"));
@@ -3075,37 +3117,131 @@ void OmniaCreatorPlugin::updateExamples()
                 QString path = QDir::fromNativeSeparators(QDir::cleanPath(
                 topPath + QDir::separator() + itemName));
 
-                QList<QAction *> actionList = entryList(
+                QList<QAction *> actionList2 = entryList(
                 QDir::fromNativeSeparators(QDir::cleanPath(
                 path + "/examples")),
                 QStringList() << "*.ino" << "*.pde");
 
-                if(actionList.size())
+                if(!actionList2.isEmpty())
                 {
                     QMenu *menu2 = new QMenu(QDir(path).dirName(), menu);
 
-                    menu2->addActions(actionList);
-                    menu->addMenu(menu2);
+                    menu2->addActions(actionList2);
+                    actionList.append(menu2->menuAction());
                 }
+            }
+
+            if(!actionList.isEmpty())
+            {
+                QAction *label=new QAction(tr("System Library Examples"), menu);
+                label->setDisabled(true);
+
+                menu->addAction(label);
+                menu->addSeparator();
+                menu->addActions(actionList);
             }
         }
 
-        menu->setVisible(!menu->isEmpty());
-        m_examplesMenu->menu()->addMenu(menu);
+        menu->addSeparator();
+
+        {
+            QList<QAction *> actionList;
+
+            QString topPath = QDir::fromNativeSeparators(QDir::cleanPath(
+            QStandardPaths::writableLocation(
+            QStandardPaths::DocumentsLocation) +
+            "/Arduino/libraries"));
+
+            foreach(const QString &itemName,
+            QDir(topPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot,
+            QDir::Name | QDir::DirsFirst | QDir::LocaleAware))
+            {
+                QString path = QDir::fromNativeSeparators(QDir::cleanPath(
+                topPath + QDir::separator() + itemName));
+
+                QList<QAction *> actionList2 = entryList(
+                QDir::fromNativeSeparators(QDir::cleanPath(
+                path + "/examples")),
+                QStringList() << "*.ino" << "*.pde");
+
+                if(actionList2.size())
+                {
+                    QMenu *menu2 = new QMenu(QDir(path).dirName());
+
+                    menu2->addActions(actionList2);
+                    actionList.append(menu2->menuAction());
+                }
+            }
+
+            if(!actionList.isEmpty())
+            {
+                QAction *label=new QAction(tr("User Library Examples"), menu);
+                label->setDisabled(true);
+
+                menu->addAction(label);
+                menu->addSeparator();
+                menu->addActions(actionList);
+            }
+        }
+
+        if(menu->isEmpty())
+        {
+            delete menu;
+        }
+        else
+        {
+            m_examplesMenu->menu()->addMenu(menu);
+        }
     }
 
     // Propeller Examples
     {
-        QMenu *menu = new QMenu("Propeller", m_examplesMenu->menu());
+        QMenu *menu = new QMenu(tr("Propeller"), m_examplesMenu->menu());
 
-        menu->addActions(entryList(
-        QDir::fromNativeSeparators(QDir::cleanPath(
-        QApplication::applicationDirPath() +
-        "/../../../tools/propeller/Workspace/Learn/Examples")),
-        QStringList() << "*.side"));
+        {
+            QList<QAction *> actionList = entryList(
+            QDir::fromNativeSeparators(QDir::cleanPath(
+            QApplication::applicationDirPath() +
+            "/../../../tools/propeller/Workspace/Learn/Examples")),
+            QStringList() << "*.side");
+
+            if(!actionList.isEmpty())
+            {
+                QAction *label=new QAction(tr("System Examples"), menu);
+                label->setDisabled(true);
+
+                menu->addAction(label);
+                menu->addSeparator();
+                menu->addActions(actionList);
+            }
+        }
 
         menu->addSeparator();
+
         {
+            QList<QAction *> actionList = entryList(
+            QDir::fromNativeSeparators(QDir::cleanPath(
+            QStandardPaths::writableLocation(
+            QStandardPaths::DocumentsLocation) +
+            "/SimpleIDE/Learn/Examples")),
+            QStringList() << "*.side");
+
+            if(!actionList.isEmpty())
+            {
+                QAction *label=new QAction(tr("User Examples"), menu);
+                label->setDisabled(true);
+
+                menu->addAction(label);
+                menu->addSeparator();
+                menu->addActions(actionList);
+            }
+        }
+
+        menu->addSeparator();
+
+        {
+            QList<QAction *> actionList;
+
             QString topPath = QDir::fromNativeSeparators(QDir::cleanPath(
             QApplication::applicationDirPath() +
             "/../../../tools/propeller/Workspace/Learn/Simple Libraries"));
@@ -3117,23 +3253,81 @@ void OmniaCreatorPlugin::updateExamples()
                 QString path = QDir::fromNativeSeparators(QDir::cleanPath(
                 topPath + QDir::separator() + itemName));
 
-                QList<QAction *> actionList = entryList(
+                QList<QAction *> actionList2 = entryList(
                 QDir::fromNativeSeparators(QDir::cleanPath(
-                path + "/example")),
+                path + "/examples")),
                 QStringList() << "*.side");
 
-                if(actionList.size())
+                if(!actionList2.isEmpty())
                 {
                     QMenu *menu2 = new QMenu(QDir(path).dirName(), menu);
 
-                    menu2->addActions(actionList);
-                    menu->addMenu(menu2);
+                    menu2->addActions(actionList2);
+                    actionList.append(menu2->menuAction());
                 }
+            }
+
+            if(!actionList.isEmpty())
+            {
+                QAction *label=new QAction(tr("System Library Examples"), menu);
+                label->setDisabled(true);
+
+                menu->addAction(label);
+                menu->addSeparator();
+                menu->addActions(actionList);
             }
         }
 
-        menu->setVisible(!menu->isEmpty());
-        m_examplesMenu->menu()->addMenu(menu);
+        menu->addSeparator();
+
+        {
+            QList<QAction *> actionList;
+
+            QString topPath = QDir::fromNativeSeparators(QDir::cleanPath(
+            QStandardPaths::writableLocation(
+            QStandardPaths::DocumentsLocation) +
+            "/SimpleIDE/Learn/Simple Libraries"));
+
+            foreach(const QString &itemName,
+            QDir(topPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot,
+            QDir::Name | QDir::DirsFirst | QDir::LocaleAware))
+            {
+                QString path = QDir::fromNativeSeparators(QDir::cleanPath(
+                topPath + QDir::separator() + itemName));
+
+                QList<QAction *> actionList2 = entryList(
+                QDir::fromNativeSeparators(QDir::cleanPath(
+                path + "/examples")),
+                QStringList() << "*.side");
+
+                if(actionList2.size())
+                {
+                    QMenu *menu2 = new QMenu(QDir(path).dirName());
+
+                    menu2->addActions(actionList2);
+                    actionList.append(menu2->menuAction());
+                }
+            }
+
+            if(!actionList.isEmpty())
+            {
+                QAction *label=new QAction(tr("User Library Examples"), menu);
+                label->setDisabled(true);
+
+                menu->addAction(label);
+                menu->addSeparator();
+                menu->addActions(actionList);
+            }
+        }
+
+        if(menu->isEmpty())
+        {
+            delete menu;
+        }
+        else
+        {
+            m_examplesMenu->menu()->addMenu(menu);
+        }
     }
 }
 
@@ -3162,7 +3356,9 @@ QList<QAction *> OmniaCreatorPlugin::entryList(const QString &topPath,
                 menu->addActions(actionList2);
                 actionList.append(menu->menuAction());
             }
-            else if(actionList2.size() > 0)
+            else if((actionList2.size() > 0)
+            && (QDir(path).dirName()
+            == actionList2.first()->text()))
             {
                 actionList.append(actionList2.first());
             }
@@ -3208,14 +3404,8 @@ void OmniaCreatorPlugin::openProject(QAction *action)
     && (!action->isSeparator())
     && (action->text() != Core::Constants::TR_CLEAR_MENU))
     {
-        QString temp = action->data().toString();
-
-        if(temp.isEmpty())
-        {
-            temp = action->text();
-        }
-
-        temp = QDir::fromNativeSeparators(QDir::cleanPath(temp));
+        QString temp =
+        QDir::fromNativeSeparators(QDir::cleanPath(action->data().toString()));
 
         if(!temp.isEmpty())
         {
