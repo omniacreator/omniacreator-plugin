@@ -167,6 +167,17 @@ void SerialMake::setProjectFPath(const QString &fpath) // file or folder path
     QString mFPath =
     QDir::fromNativeSeparators(QDir::cleanPath(fpath));
 
+    // Begin Arduino Support //////////////////////////////////////////////////
+
+    if(QFileInfo(mFPath).isFile()
+    && ((QFileInfo(mFPath).suffix() == "ino")
+    || (QFileInfo(mFPath).suffix() == "pde")))
+    {
+        mFPath = QFileInfo(mFPath).path();
+    }
+
+    // End Arduino Support ////////////////////////////////////////////////////
+
     if(mFPath != getProjectFPath())
     {
         settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
@@ -330,6 +341,7 @@ QString SerialMake::getProjectCMakeFileRelativeTo() const // cmake files
 
 QStringList SerialMake::getCMakeFilePaths() const
 {
+    // Do not change the order here - it matters!
     return getSystemCMakeFilePaths() + getUserCMakeFilePaths();
 }
 
@@ -357,7 +369,8 @@ QStringList SerialMake::getUserCMakeFilePaths() const
 
 QStringList SerialMake::getLibraryPaths() const
 {
-    return getSystemLibraryPaths() + getUserLibraryPaths();
+    // Do not change the order here - it matters!
+    return getUserLibraryPaths() + getSystemLibraryPaths();
 }
 
 QStringList SerialMake::getSystemLibraryPaths() const
@@ -367,16 +380,6 @@ QStringList SerialMake::getSystemLibraryPaths() const
     list.append(QDir::fromNativeSeparators(QDir::cleanPath(
     QApplication::applicationDirPath() +
     "/../share/qtcreator/libraries")));
-
-    // Arduino Support
-    list.append(QDir::fromNativeSeparators(QDir::cleanPath(
-    QApplication::applicationDirPath() +
-    "/../../../tools/arduino/libraries")));
-
-    // Propeller Support
-    list.append(QDir::fromNativeSeparators(QDir::cleanPath(
-    QApplication::applicationDirPath() +
-    "/../../../tools/propeller/Workspace/Learn/Simple Libraries")));
 
     return list;
 }
@@ -388,16 +391,6 @@ QStringList SerialMake::getUserLibraryPaths() const
     list.append(QDir::fromNativeSeparators(QDir::cleanPath(
     getWorkspaceFolder() +
     "/libraries")));
-
-    // Arduino Support
-    list.append(QDir::fromNativeSeparators(QDir::cleanPath(
-    QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) +
-    "/Arduino/libraries")));
-
-    // Propeller Support
-    list.append(QDir::fromNativeSeparators(QDir::cleanPath(
-    QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) +
-    "/SimpleIDE/Learn/Simple Libraries")));
 
     return list;
 }
@@ -464,8 +457,7 @@ void SerialMake::updateProject2()
             return;
         }
 
-        QString text = "cmake_minimum_required(VERSION \"2.8\")\n\n";
-
+        QString text = "cmake_minimum_required(VERSION \"2.8\")\n";
         text.append("cmake_policy(VERSION \"2.8\")\n\n");
 
         text.append(QString("set(CMAKE_MAKE_PROGRAM \"%L1\")\n\n").
@@ -480,6 +472,16 @@ void SerialMake::updateProject2()
         arg(QDir::fromNativeSeparators(QDir::cleanPath(
         QApplication::applicationDirPath() +
         "/../../../tools"))));
+
+        text.append(QString("set(USER_HOME_FOLDER \"%L1\")\n").
+        arg(QDir::fromNativeSeparators(QDir::cleanPath(
+        QStandardPaths::writableLocation(
+        QStandardPaths::HomeLocation)))));
+
+        text.append(QString("set(USER_DOCS_FOLDER \"%L1\")\n\n").
+        arg(QDir::fromNativeSeparators(QDir::cleanPath(
+        QStandardPaths::writableLocation(
+        QStandardPaths::DocumentsLocation)))));
 
         text.append(QString("set(CMAKE_FILE_PATHS %L1)\n").
         arg('\"' + getCMakeFilePaths().join("\" \"") + '\"'));
@@ -502,7 +504,8 @@ void SerialMake::updateProject2()
         }
         else
         {
-            text.append(QString("return()\n\n"));
+            text.append(QString("return() # include(\"%L1\")\n\n").
+            arg(getProjectCMakeFile()));
         }
 
         text.append(QString("project(\"%L1\")\n\n").
@@ -516,12 +519,13 @@ void SerialMake::updateProject2()
 
         if(!getProjectCMakeFile().isEmpty())
         {
-            text.append(QString("include(\"%L1\")\n\n").
+            text.append(QString("include(\"%L1\")\n").
             arg(getProjectCMakeFile()));
         }
         else
         {
-            text.append(QString("return()\n\n"));
+            text.append(QString("return() # include(\"%L1\")\n").
+            arg(getProjectCMakeFile()));
         }
 
         QFile file(m_genCMakeFile);

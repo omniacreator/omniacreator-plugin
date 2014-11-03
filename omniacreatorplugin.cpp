@@ -151,6 +151,8 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
     qputenv("OC_PROJECT_FPATH", m_make->getProjectFPath().toUtf8());
     qputenv("OC_SERIAL_PORT", m_make->getProjectPortName().toUtf8());
     qputenv("OC_CMAKE_FILE", m_make->getProjectCMakeFile().toUtf8());
+    qputenv("OC_SRC_FOLDER", m_make->getGenCMakeSrcFolder().toUtf8());
+    qputenv("OC_BUILD_FOLDER", m_make->getGenCMakeBuildFolder().toUtf8());
 
     connect(m_make, SIGNAL(workspaceOrProjectSettingsChanged()),
             this, SLOT(cmakeChanged()));
@@ -3473,6 +3475,8 @@ void OmniaCreatorPlugin::cmakeChanged()
         qputenv("OC_PROJECT_FPATH", m_make->getProjectFPath().toUtf8());
         qputenv("OC_SERIAL_PORT", m_make->getProjectPortName().toUtf8());
         qputenv("OC_CMAKE_FILE", m_make->getProjectCMakeFile().toUtf8());
+        qputenv("OC_SRC_FOLDER", m_make->getGenCMakeSrcFolder().toUtf8());
+        qputenv("OC_BUILD_FOLDER", m_make->getGenCMakeBuildFolder().toUtf8());
 
         Core::DocumentManager::setProjectsDirectory(
         m_make->getWorkspaceFolder());
@@ -3506,6 +3510,10 @@ void OmniaCreatorPlugin::cmakeChanged()
             {
                 ProjectExplorer::ProjectExplorerPlugin::
                 instance()->setCurrentNode(openProject->rootProjectNode());
+            }
+            else
+            {
+                QTimer::singleShot(0, this, SLOT(closeProject()));
             }
         }
 
