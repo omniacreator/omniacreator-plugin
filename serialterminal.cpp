@@ -417,7 +417,7 @@ void SerialTerminal::receive(const QByteArray &bytes)
                         }
                     }
                 }
-                else
+                else if((bytes.at(i) & 0xFF) != 0xFF)
                 {
                     QByteArray buff = QByteArray().append(bytes.at(i));
 
