@@ -1451,8 +1451,6 @@ void OmniaCreatorPlugin::newFileOrProject()
                                 "#ifndef %L4\n"
                                 "#define %L4\n"
                                 "\n"
-                                "#include <InterfaceLibrary.h>\n"
-                                "\n"
                                 "int main();\n"
                                 "\n"
                                 "#endif // %L4\n"
