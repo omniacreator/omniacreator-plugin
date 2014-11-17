@@ -26,6 +26,7 @@
 #define TERMINAL_MAX_LINE_SIZE (1000 * 1000)
 
 #define TERMINAL_SHIFT_REG 5 // for utf-8
+
 #define TERMINAL_TAB_WIDTH 8
 
 namespace Ui
@@ -83,7 +84,16 @@ private:
 
     QTextCursor m_textCursor; QBrush m_brushColor;
 
-    enum { ASCII, UTF8 } m_stateMachine; QByteArray m_shiftReg; int m_tabWidth;
+    enum
+    {
+        ASCII,
+        UTF8,
+        EXIT_0,
+        EXIT_1
+    }
+    m_stateMachine;
+
+    QByteArray m_shiftReg; int m_tabWidth;
 
     Ui::SerialTerminal *m_ui;
 };

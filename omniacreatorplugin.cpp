@@ -2451,6 +2451,15 @@ void OmniaCreatorPlugin::kitManagerSetup()
     {
         ExtensionSystem::PluginManager::removeObject(object);
     }
+
+    foreach(Core::IDocumentFactory *ifactory,
+    ExtensionSystem::PluginManager::getObjects<Core::IDocumentFactory>())
+    {
+        if(!qobject_cast<Core::IEditorFactory *>(ifactory))
+        {
+            ExtensionSystem::PluginManager::removeObject(ifactory);
+        }
+    }
 }
 
 void OmniaCreatorPlugin::cmakeManagerSetup()

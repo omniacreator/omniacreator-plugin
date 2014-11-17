@@ -114,6 +114,16 @@ void SerialTerminal::receive(const QByteArray &bytes)
             m_stateMachine = ASCII;
         }
 
+        if((m_stateMachine == EXIT_0) && ((bytes.at(i) & 0xFF) != 0x00))
+        {
+            emit errorMessage(QString(metaObject()->className()) +
+            "::" + __FUNCTION__ + "[" + windowTitle() + "] -> " +
+            tr("Received invalid exit sequence 0x%L1").
+            arg(QString(m_shiftReg.toHex())));
+
+            m_stateMachine = ASCII;
+        }
+
         switch(m_stateMachine)
         {
             case ASCII:
@@ -417,7 +427,13 @@ void SerialTerminal::receive(const QByteArray &bytes)
                         }
                     }
                 }
-                else if((bytes.at(i) & 0xFF) != 0xFF)
+                else if((bytes.at(i) & 0xFF) == 0xFF)
+                {
+                    m_stateMachine = EXIT_0;
+
+                    m_shiftReg.clear();
+                }
+                else
                 {
                     QByteArray buff = QByteArray().append(bytes.at(i));
 
@@ -441,6 +457,28 @@ void SerialTerminal::receive(const QByteArray &bytes)
                     buffer.append(m_shiftReg + bytes.at(i)); column += 1;
 
                     m_stateMachine = ASCII;
+                }
+
+                break;
+            }
+
+            case EXIT_0:
+            {
+                m_stateMachine = EXIT_1;
+
+                break;
+            }
+
+            case EXIT_1:
+            {
+                if(bytes.at(i))
+                {
+                    QByteArray buff = QByteArray().append(bytes.at(i));
+
+                    emit errorMessage(QString(metaObject()->className()) +
+                    "::" + __FUNCTION__ + "[" + windowTitle() + "] -> " +
+                    tr("Received exit failure status 0x%L1").
+                    arg(QString(buff.toHex())));
                 }
 
                 break;

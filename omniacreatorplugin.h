@@ -74,9 +74,11 @@
 #include <coreplugin/coreconstants.h>
 #include <coreplugin/documentmanager.h>
 #include <coreplugin/editormanager/editormanager.h>
+#include <coreplugin/editormanager/ieditorfactory.h>
 #include <coreplugin/fancyactionbar.h>
 #include <coreplugin/fancytabwidget.h>
 #include <coreplugin/icore.h>
+#include <coreplugin/idocumentfactory.h>
 #include <coreplugin/imode.h>
 #include <coreplugin/messagemanager.h>
 
