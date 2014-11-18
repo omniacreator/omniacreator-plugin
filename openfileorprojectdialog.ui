@@ -29,7 +29,7 @@
       <string>Open File</string>
      </property>
      <property name="description">
-      <string>Open a file</string>
+      <string>Open any file (text or binary)</string>
      </property>
     </widget>
    </item>
@@ -39,7 +39,7 @@
       <string>Open Project</string>
      </property>
      <property name="description">
-      <string>Open a project folder</string>
+      <string>For .ino, .pde, and all folder based projects</string>
      </property>
     </widget>
    </item>
@@ -56,7 +56,7 @@
       <string>Other - Open Project File Based Project</string>
      </property>
      <property name="description">
-      <string>Open a project file based project</string>
+      <string>For .side, .spin and all file based projects</string>
      </property>
     </widget>
    </item>

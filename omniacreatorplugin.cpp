@@ -22,7 +22,7 @@ OmniaCreatorPlugin::OmniaCreatorPlugin()
     // Help QtCreator find Ninja...
     // See CMakeProjectManager->CMakeManager
     QString path = qgetenv("PATH");
-    path.append(PATH_CHAR + QApplication::applicationDirPath());
+    path.prepend(QApplication::applicationDirPath() + PATH_CHAR);
 
     // Help CMake find SDKs
     QDirIterator it(QDir::fromNativeSeparators(QDir::cleanPath(
@@ -31,7 +31,7 @@ OmniaCreatorPlugin::OmniaCreatorPlugin()
 
     while(it.hasNext()) // Tool Folders...
     {
-        path.append(PATH_CHAR + it.next());
+        path.prepend(it.next() + PATH_CHAR);
     }
 
     qputenv("PATH", path.toUtf8());
@@ -44,8 +44,8 @@ OmniaCreatorPlugin::OmniaCreatorPlugin()
     // See ProjectExplorer->GnuMakeParser
     // See ProjectExplorer->LdParser
     QString wno_path = qgetenv("WNO_PATH");
-    wno_path.append(',' + QDir::fromNativeSeparators(QDir::cleanPath(
-    QApplication::applicationDirPath() + "/../../..")));
+    wno_path.prepend(QDir::fromNativeSeparators(QDir::cleanPath(
+    QApplication::applicationDirPath() + "/../../..")) + ',');
     qputenv("WNO_PATH", wno_path.toUtf8());
 
     ///////////////////////////////////////////////////////////////////////////
@@ -83,7 +83,7 @@ OmniaCreatorPlugin::~OmniaCreatorPlugin()
     // Help QtCreator find Ninja...
     // See CMakeProjectManager->CMakeManager
     QString path = qgetenv("PATH");
-    path.remove(PATH_CHAR + QApplication::applicationDirPath());
+    path.remove(QApplication::applicationDirPath() + PATH_CHAR);
 
     // Help CMake find SDKs
     QDirIterator it(QDir::fromNativeSeparators(QDir::cleanPath(
@@ -92,7 +92,7 @@ OmniaCreatorPlugin::~OmniaCreatorPlugin()
 
     while(it.hasNext()) // Tool Folders...
     {
-        path.remove(PATH_CHAR + it.next());
+        path.remove(it.next() + PATH_CHAR);
     }
 
     qputenv("PATH", path.toUtf8());
@@ -105,8 +105,8 @@ OmniaCreatorPlugin::~OmniaCreatorPlugin()
     // See ProjectExplorer->GnuMakeParser
     // See ProjectExplorer->LdParser
     QString wno_path = qgetenv("WNO_PATH");
-    wno_path.remove(',' + QDir::fromNativeSeparators(QDir::cleanPath(
-    QApplication::applicationDirPath() + "/../../..")));
+    wno_path.remove(QDir::fromNativeSeparators(QDir::cleanPath(
+    QApplication::applicationDirPath() + "/../../..")) + ',');
     qputenv("WNO_PATH", wno_path.toUtf8());
 
     ///////////////////////////////////////////////////////////////////////////
@@ -3052,7 +3052,6 @@ void OmniaCreatorPlugin::updateRecentProjects()
                 if(repeated.contains(action->text()))
                 {
                     delete action;
-
                     continue;
                 }
 
