@@ -1868,6 +1868,8 @@ private:
     }
 };
 
+class ILCore;
+
 class ILWindow : public ILNode
 {
 
@@ -1880,6 +1882,18 @@ public:
         m_maximized = bool();
         m_fullscreen = bool();
     }
+
+    virtual bool initUndocked(ILCore *parent, const char *name,
+                              bool waitForResponse = false) = 0;
+
+    virtual bool initDocked(ILCore *parent, const char *name,
+                            bool waitForResponse = false) = 0;
+
+//    virtual bool initDocked(ILWindow *parent, const char *name,
+//                            bool waitForResponse = false) = 0;
+
+    virtual bool init(ILCore *parent, const char *name,
+                      bool waitForResponse = false) = 0;
 
     bool setTitle(const char *title,
                   bool waitForResponse = false)
@@ -2090,8 +2104,6 @@ private:
 
     ILWindow(const ILWindow &);
     ILWindow &operator=(const ILWindow &);
-
-    friend class ILCore;
 
     bool m_visibility;
     bool m_minimized;

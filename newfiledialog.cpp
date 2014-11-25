@@ -94,7 +94,7 @@ void NewFileDialog::textChanged(const QString &text)
     }
     else
     {
-        bool ok = QFileInfo(text).isAbsolute() && QFileInfo(text).isDir();
+        bool ok = QFileInfo(text).isAbsolute() && (!QFileInfo(text).isFile());
 
         m_ui->box->button(QDialogButtonBox::Ok)->setDefault(ok);
         m_ui->box->button(QDialogButtonBox::Ok)->setEnabled(ok);
@@ -109,7 +109,7 @@ void NewFileDialog::userInterfaceChanged()
         {
             if(QFileInfo(getDefaultDir()).isAbsolute())
             {
-                if(QFileInfo(getDefaultDir()).isDir())
+                if(!QFileInfo(getDefaultDir()).isFile())
                 {
                     m_ui->label->setText(tr(
                     "\nAbout to create file: \"%L1\"\n"

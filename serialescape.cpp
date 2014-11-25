@@ -2910,7 +2910,7 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-        case TERMINAL_NEW_WINDOW:
+        case TERMINAL_NEW_UNDOCKED_WINDOW:
         {
             quint8 window; streamIn(reader, window);
             QByteArray name; streamIn(reader, name);
@@ -3006,7 +3006,7 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-        case OSCILLOSCOPE_NEW_WINDOW:
+        case OSCILLOSCOPE_NEW_UNDOCKED_WINDOW:
         {
             quint8 window; streamIn(reader, window);
             QByteArray name; streamIn(reader, name);
@@ -10145,7 +10145,7 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-        case TABLE_NEW_WINDOW:
+        case TABLE_NEW_UNDOCKED_WINDOW:
         {
             quint8 window; streamIn(reader, window);
             QByteArray name; streamIn(reader, name);
@@ -10546,7 +10546,7 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-        case TREE_NEW_WINDOW:
+        case TREE_NEW_UNDOCKED_WINDOW:
         {
             quint8 window; streamIn(reader, window);
             QByteArray name; streamIn(reader, name);
@@ -10713,7 +10713,7 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-        case GRAPHICS_NEW_WINDOW:
+        case GRAPHICS_NEW_UNDOCKED_WINDOW:
         {
             quint8 window; streamIn(reader, window);
             QByteArray name; streamIn(reader, name);
@@ -12223,7 +12223,7 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-        case INTERFACE_NEW_WINDOW:
+        case INTERFACE_NEW_UNDOCKED_WINDOW:
         {
             quint8 window; streamIn(reader, window);
             QByteArray name; streamIn(reader, name);

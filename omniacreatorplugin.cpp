@@ -127,7 +127,6 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
     QApplication::setOrganizationDomain(PROJECT_DOMAIN_NAME_STR);
     QApplication::setApplicationName(PROJECT_FULL_NAME_STR);
     QApplication::setApplicationVersion(PROJECT_VERSION_STR);
-
     QApplication::setWindowIcon(QIcon(ICON_PATH));
 
     // Splash Screen //////////////////////////////////////////////////////////
@@ -650,6 +649,34 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
         connect(m_widgetsMenu->menu(), SIGNAL(triggered(QAction*)),
                 this, SLOT(widgetsMenuTriggered(QAction*)));
     }
+
+    // Show All Widgets //
+    {
+        m_showAllWidgets = Core::ActionManager::registerAction(
+        new QAction(tr("Show All Widgets"), this),
+        SHOW_ALL_WIDGETS_ACTION_ID,
+        Core::Context(Core::Constants::C_GLOBAL));
+
+        m_widgetsMenu->addAction(m_showAllWidgets);
+
+        connect(m_showAllWidgets->action(), SIGNAL(triggered()),
+                this, SLOT(showAllWidgets()));
+    }
+
+    // Hide All Widgets //
+    {
+        m_hideAllWidgets = Core::ActionManager::registerAction(
+        new QAction(tr("Hide All Widgets"), this),
+        HIDE_ALL_WIDGETS_ACTION_ID,
+        Core::Context(Core::Constants::C_GLOBAL));
+
+        m_widgetsMenu->addAction(m_hideAllWidgets);
+
+        connect(m_hideAllWidgets->action(), SIGNAL(triggered()),
+                this, SLOT(hideAllWidgets()));
+    }
+
+    m_widgetsMenu->menu()->addSeparator();
 
     // Export Widget Menu //
     {
@@ -1899,6 +1926,11 @@ void OmniaCreatorPlugin::widgetsMenuAboutToShow()
 
     m_widgetsMenu->menu()->addSeparator();
 
+    m_widgetsMenu->menu()->addAction(m_showAllWidgets->action());
+    m_widgetsMenu->menu()->addAction(m_hideAllWidgets->action());
+
+    m_widgetsMenu->menu()->addSeparator();
+
     m_widgetsMenu->menu()->addMenu(m_exportWidgetMenu->menu());
     m_widgetsMenu->menu()->addAction(m_importWidget->action());
 
@@ -2148,6 +2180,26 @@ void OmniaCreatorPlugin::baudRateSelected(QAction *action)
         QString string = action->data().toString();
 
         m_port->setOverrideBaudRate(m_port->getPortName(), string);
+    }
+}
+
+void OmniaCreatorPlugin::showAllWidgets()
+{
+    m_escape->serialTerminal()->show();
+
+    foreach(SerialWindow *window, m_escape->serialWindows())
+    {
+        window->show();
+    }
+}
+
+void OmniaCreatorPlugin::hideAllWidgets()
+{
+    m_escape->serialTerminal()->hide();
+
+    foreach(SerialWindow *window, m_escape->serialWindows())
+    {
+        window->hide();
     }
 }
 
@@ -3572,6 +3624,43 @@ void OmniaCreatorPlugin::cleanClicked()
         }
     }
 
+    // Start Warning //////////////////////////////////////////////////////////
+
+    Core::IDocument *document = Core::EditorManager::currentDocument();
+
+    if(document)
+    {
+        Core::InfoBar *bar = Core::EditorManager::currentDocument()->infoBar();
+
+        if(bar)
+        {
+            bool ok = false;
+
+            foreach(const QString &filePath,
+            project->files(ProjectExplorer::Project::AllFiles))
+            {
+                if(Utils::FileName(QFileInfo(filePath))
+                == Utils::FileName(QFileInfo(document->filePath())))
+                {
+                    ok = true; break;
+                }
+            }
+
+            if(!ok)
+            {
+                if(bar->canInfoBeAdded(WARN_CLEAN_ID))
+                {
+                    bar->addInfo(Core::InfoBarEntry(WARN_CLEAN_ID,
+                    tr("<b>Clean Warning:</b> The current file is not part "
+                    "of your project! Please check your <b>Project Path</b> "
+                    "in the status bar!")));
+                }
+            }
+        }
+    }
+
+    // End Warning ////////////////////////////////////////////////////////////
+
     ProjectExplorer::Target *target =
     project->activeTarget();
 
@@ -3663,6 +3752,43 @@ void OmniaCreatorPlugin::rebuildClicked()
         }
     }
 
+    // Start Warning //////////////////////////////////////////////////////////
+
+    Core::IDocument *document = Core::EditorManager::currentDocument();
+
+    if(document)
+    {
+        Core::InfoBar *bar = Core::EditorManager::currentDocument()->infoBar();
+
+        if(bar)
+        {
+            bool ok = false;
+
+            foreach(const QString &filePath,
+            project->files(ProjectExplorer::Project::AllFiles))
+            {
+                if(Utils::FileName(QFileInfo(filePath))
+                == Utils::FileName(QFileInfo(document->filePath())))
+                {
+                    ok = true; break;
+                }
+            }
+
+            if(!ok)
+            {
+                if(bar->canInfoBeAdded(WARN_REBUILD_ID))
+                {
+                    bar->addInfo(Core::InfoBarEntry(WARN_REBUILD_ID,
+                    tr("<b>Rebuild Warning:</b> The current file is not part "
+                    "of your project! Please check your <b>Project Path</b> "
+                    "in the status bar!")));
+                }
+            }
+        }
+    }
+
+    // End Warning ////////////////////////////////////////////////////////////
+
     ProjectExplorer::Target *target =
     project->activeTarget();
 
@@ -3753,6 +3879,43 @@ void OmniaCreatorPlugin::buildClicked()
             return;
         }
     }
+
+    // Start Warning //////////////////////////////////////////////////////////
+
+    Core::IDocument *document = Core::EditorManager::currentDocument();
+
+    if(document)
+    {
+        Core::InfoBar *bar = Core::EditorManager::currentDocument()->infoBar();
+
+        if(bar)
+        {
+            bool ok = false;
+
+            foreach(const QString &filePath,
+            project->files(ProjectExplorer::Project::AllFiles))
+            {
+                if(Utils::FileName(QFileInfo(filePath))
+                == Utils::FileName(QFileInfo(document->filePath())))
+                {
+                    ok = true; break;
+                }
+            }
+
+            if(!ok)
+            {
+                if(bar->canInfoBeAdded(WARN_BUILD_ID))
+                {
+                    bar->addInfo(Core::InfoBarEntry(WARN_BUILD_ID,
+                    tr("<b>Build Warning:</b> The current file is not part "
+                    "of your project! Please check your <b>Project Path</b> "
+                    "in the status bar!")));
+                }
+            }
+        }
+    }
+
+    // End Warning ////////////////////////////////////////////////////////////
 
     ProjectExplorer::Target *target =
     project->activeTarget();
@@ -3860,6 +4023,43 @@ void OmniaCreatorPlugin::runClicked()
             return;
         }
     }
+
+    // Start Warning //////////////////////////////////////////////////////////
+
+    Core::IDocument *document = Core::EditorManager::currentDocument();
+
+    if(document)
+    {
+        Core::InfoBar *bar = Core::EditorManager::currentDocument()->infoBar();
+
+        if(bar)
+        {
+            bool ok = false;
+
+            foreach(const QString &filePath,
+            project->files(ProjectExplorer::Project::AllFiles))
+            {
+                if(Utils::FileName(QFileInfo(filePath))
+                == Utils::FileName(QFileInfo(document->filePath())))
+                {
+                    ok = true; break;
+                }
+            }
+
+            if(!ok)
+            {
+                if(bar->canInfoBeAdded(WARN_RUN_ID))
+                {
+                    bar->addInfo(Core::InfoBarEntry(WARN_RUN_ID,
+                    tr("<b>Run Warning:</b> The current file is not part "
+                    "of your project! Please check your <b>Project Path</b> "
+                    "in the status bar!")));
+                }
+            }
+        }
+    }
+
+    // End Warning ////////////////////////////////////////////////////////////
 
     ProjectExplorer::Target *target =
     project->activeTarget();

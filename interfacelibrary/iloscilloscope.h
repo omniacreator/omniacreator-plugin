@@ -97,8 +97,8 @@ public:
         return NT_WINDOW_OSCILLOSCOPE;
     }
 
-    bool init(ILCore *parent, const char *name,
-              bool waitForResponse = false)
+    bool initUndocked(ILCore *parent, const char *name,
+                      bool waitForResponse = false)
     {
         bool result = (!m_enabled) && parent && parent->enabled() && name;
 
@@ -106,7 +106,7 @@ public:
         {
             construct(parent);
 
-            if(!(result = sendPacket(OSCILLOSCOPE_NEW_WINDOW,
+            if(!(result = sendPacket(OSCILLOSCOPE_NEW_UNDOCKED_WINDOW,
             name, waitForResponse)))
             {
                 deconstruct();
@@ -114,6 +114,12 @@ public:
         }
 
         return result;
+    }
+
+    bool initDocked(ILCore *parent, const char *name,
+                    bool waitForResponse = false)
+    {
+        return init(parent, name, waitForResponse);
     }
 
 //    bool initDocked(ILWindow *parent, const char *name,
@@ -135,8 +141,8 @@ public:
 //        return result;
 //    }
 
-    bool initDocked(ILCore *parent, const char *name,
-                    bool waitForResponse = false)
+    bool init(ILCore *parent, const char *name,
+              bool waitForResponse = false)
     {
         bool result = (!m_enabled) && parent && parent->enabled() && name;
 

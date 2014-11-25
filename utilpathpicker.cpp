@@ -75,7 +75,7 @@ void UtilPathPicker::pick()
 
 void UtilPathPicker::textChanged(const QString &text)
 {
-    bool ok = QFileInfo(text).isAbsolute() && QFileInfo(text).isDir();
+    bool ok = QFileInfo(text).isAbsolute() && (!QFileInfo(text).isFile());
 
     m_ui->box->button(QDialogButtonBox::Ok)->setDefault(ok);
     m_ui->box->button(QDialogButtonBox::Ok)->setEnabled(ok);

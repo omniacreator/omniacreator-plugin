@@ -126,7 +126,7 @@ void NewProjectDialog::textChanged(const QString &text)
     }
     else
     {
-        bool ok = QFileInfo(text).isAbsolute() && QFileInfo(text).isDir();
+        bool ok = QFileInfo(text).isAbsolute() && (!QFileInfo(text).isFile());
 
         m_ui->box->button(QDialogButtonBox::Ok)->setDefault(ok);
         m_ui->box->button(QDialogButtonBox::Ok)->setEnabled(ok);
@@ -141,7 +141,7 @@ void NewProjectDialog::userInterfaceChanged()
         {
             if(QFileInfo(getDefaultDir()).isAbsolute())
             {
-                if(QFileInfo(getDefaultDir()).isDir())
+                if(!QFileInfo(getDefaultDir()).isFile())
                 {
                     if(getCreateMainFiles())
                     {

@@ -78,8 +78,10 @@
 #include <coreplugin/fancyactionbar.h>
 #include <coreplugin/fancytabwidget.h>
 #include <coreplugin/icore.h>
+#include <coreplugin/id.h>
 #include <coreplugin/idocumentfactory.h>
 #include <coreplugin/imode.h>
+#include <coreplugin/infobar.h>
 #include <coreplugin/messagemanager.h>
 
 // CPPEditor
@@ -159,6 +161,9 @@ private slots:
 
     void updateBaudRateMenu();
     void baudRateSelected(QAction *action);
+
+    void showAllWidgets();
+    void hideAllWidgets();
 
     void updateExportWidgetMenu();
     void updateRemoveWidgetMenu();
@@ -248,6 +253,9 @@ private:
 
     Core::ActionContainer *m_baudRateMenu;
     QLabel *m_baudRateMenuSelection;
+
+    Core::Command *m_showAllWidgets;
+    Core::Command *m_hideAllWidgets;
 
     Core::ActionContainer *m_exportWidgetMenu;
     Core::Command *m_importWidget;
