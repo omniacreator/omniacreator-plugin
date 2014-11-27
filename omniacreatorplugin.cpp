@@ -3653,7 +3653,8 @@ void OmniaCreatorPlugin::cleanClicked()
                     bar->addInfo(Core::InfoBarEntry(WARN_CLEAN_ID,
                     tr("<b>Clean Warning:</b> The current file is not part "
                     "of your project! Please check your <b>Project Path</b> "
-                    "in the status bar!")));
+                    "in the status bar!"),
+                    Core::InfoBarEntry::GlobalSuppressionEnabled));
                 }
             }
         }
@@ -3781,7 +3782,8 @@ void OmniaCreatorPlugin::rebuildClicked()
                     bar->addInfo(Core::InfoBarEntry(WARN_REBUILD_ID,
                     tr("<b>Rebuild Warning:</b> The current file is not part "
                     "of your project! Please check your <b>Project Path</b> "
-                    "in the status bar!")));
+                    "in the status bar!"),
+                    Core::InfoBarEntry::GlobalSuppressionEnabled));
                 }
             }
         }
@@ -3909,7 +3911,8 @@ void OmniaCreatorPlugin::buildClicked()
                     bar->addInfo(Core::InfoBarEntry(WARN_BUILD_ID,
                     tr("<b>Build Warning:</b> The current file is not part "
                     "of your project! Please check your <b>Project Path</b> "
-                    "in the status bar!")));
+                    "in the status bar!"),
+                    Core::InfoBarEntry::GlobalSuppressionEnabled));
                 }
             }
         }
@@ -4053,7 +4056,8 @@ void OmniaCreatorPlugin::runClicked()
                     bar->addInfo(Core::InfoBarEntry(WARN_RUN_ID,
                     tr("<b>Run Warning:</b> The current file is not part "
                     "of your project! Please check your <b>Project Path</b> "
-                    "in the status bar!")));
+                    "in the status bar!"),
+                    Core::InfoBarEntry::GlobalSuppressionEnabled));
                 }
             }
         }
