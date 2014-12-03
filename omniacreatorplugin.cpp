@@ -4227,6 +4227,10 @@ void OmniaCreatorPlugin::messageHandler(QtMsgType type, const char *text)
                "constraints(100x67 - 100x67) on window "
                "QWidgetWindow/'Core::Internal::ProgressViewClassWindow'.";
                // This might not be harmless...
+    ignored << "setGeometry: Attempt to set a size (100x1) violating the "
+               "constraints(100x34 - 100x34) on window "
+               "QWidgetWindow/'Core::Internal::ProgressViewClassWindow'.";
+               // This might not be harmless...
 
     foreach(const QString &string, ignored)
     {

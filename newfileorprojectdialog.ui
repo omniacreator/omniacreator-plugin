@@ -34,29 +34,29 @@
     </widget>
    </item>
    <item row="1" column="0">
-    <widget class="QCommandLinkButton" name="newProjectButton">
-     <property name="text">
-      <string>New Project</string>
-     </property>
-     <property name="description">
-      <string>For .ino, .pde, and all folder based projects</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0">
     <widget class="Line" name="line">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
     </widget>
    </item>
+   <item row="2" column="0">
+    <widget class="QCommandLinkButton" name="newProjectButton">
+     <property name="text">
+      <string>New Project in Folder</string>
+     </property>
+     <property name="description">
+      <string>For .ino, .pde, and all folder based projects</string>
+     </property>
+    </widget>
+   </item>
    <item row="3" column="0">
     <widget class="QCommandLinkButton" name="newProjectFileButton">
      <property name="text">
-      <string>Other - New Project File Based Project</string>
+      <string>New File Based Project</string>
      </property>
      <property name="description">
-      <string>For .side, .spin and all file based projects</string>
+      <string>For .side, .spin, and all file based projects</string>
      </property>
     </widget>
    </item>
