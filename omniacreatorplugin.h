@@ -27,11 +27,11 @@
 #include "newprojectdialog.h"
 #include "newfileorprojectdialog.h"
 #include "openfileorprojectdialog.h"
-
 #include "utilitempicker.h"
 #include "utilpathpicker.h"
-
 #include "omniacreator_global.h"
+#include "parallax/openspinparser.h"
+#include "parallax/proploadparser.h"
 
 #define LABEL_INDEX 5
 

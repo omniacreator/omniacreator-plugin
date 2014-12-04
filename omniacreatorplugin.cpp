@@ -3724,6 +3724,8 @@ void OmniaCreatorPlugin::cleanClicked()
     // Output parsers can only be append after the build starts...
     step->appendOutputParser(new CodeUsedParser(m_codeSpaceUsed));
     step->appendOutputParser(new DataUsedParser(m_dataSpaceUsed));
+    step->appendOutputParser(new OpenSpinParser);
+    step->appendOutputParser(new PropLoadParser);
 }
 
 void OmniaCreatorPlugin::rebuildClicked()
@@ -3853,6 +3855,8 @@ void OmniaCreatorPlugin::rebuildClicked()
     // Output parsers can only be append after the build starts...
     step->appendOutputParser(new CodeUsedParser(m_codeSpaceUsed));
     step->appendOutputParser(new DataUsedParser(m_dataSpaceUsed));
+    step->appendOutputParser(new OpenSpinParser);
+    step->appendOutputParser(new PropLoadParser);
 }
 
 void OmniaCreatorPlugin::buildClicked()
@@ -3982,6 +3986,8 @@ void OmniaCreatorPlugin::buildClicked()
     // Output parsers can only be append after the build starts...
     step->appendOutputParser(new CodeUsedParser(m_codeSpaceUsed));
     step->appendOutputParser(new DataUsedParser(m_dataSpaceUsed));
+    step->appendOutputParser(new OpenSpinParser);
+    step->appendOutputParser(new PropLoadParser);
 }
 
 void OmniaCreatorPlugin::runClicked()
@@ -4145,6 +4151,8 @@ void OmniaCreatorPlugin::runClicked()
     // Output parsers can only be append after the build starts...
     step->appendOutputParser(new CodeUsedParser(m_codeSpaceUsed));
     step->appendOutputParser(new DataUsedParser(m_dataSpaceUsed));
+    step->appendOutputParser(new OpenSpinParser);
+    step->appendOutputParser(new PropLoadParser);
 }
 
 void OmniaCreatorPlugin::reopenPort()

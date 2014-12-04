@@ -16,7 +16,7 @@
 PROJECT_FULL_NAME = "Omnia Creator"
 PROJECT_FULL_NAME_WO_SPACES = "$$replace(PROJECT_FULL_NAME, "[ _]", "")"
 PROJECT_SHORT_NAME = "$$lower($$PROJECT_FULL_NAME_WO_SPACES)"
-PROJECT_VERSION = "0.2"
+PROJECT_VERSION = "0.2.1"
 PROJECT_VENDOR = "$$PROJECT_FULL_NAME"
 PROJECT_COPYRIGHT = "2014 Kwabena W. Agyeman"
 PROJECT_CATEGORY = "Microcontrollers"
@@ -75,7 +75,9 @@ HEADERS += omniacreatorplugin.h \
            utilrasterdialog.h \
            utilvectordialog.h \
            utilvectordialogwowh.h \
-           demoport.h
+           demoport.h \
+           parallax/openspinparser.h \
+           parallax/proploadparser.h
 
 SOURCES += omniacreatorplugin.cpp \
            serialmake.cpp \
@@ -99,7 +101,9 @@ SOURCES += omniacreatorplugin.cpp \
            utilrasterdialog.cpp \
            utilvectordialog.cpp \
            utilvectordialogwowh.cpp \
-           demoport.cpp
+           demoport.cpp \
+           parallax/openspinparser.cpp \
+           parallax/proploadparser.cpp
 
 FORMS += serialgraphics.ui \
          serialinterface.ui \
