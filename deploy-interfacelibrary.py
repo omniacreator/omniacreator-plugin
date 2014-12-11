@@ -15,7 +15,7 @@
 # @n v1.0 - Original release - 5/8/2014
 ################################################################################
 
-import argparse, os, sys, shutil, subprocess
+import argparse, glob, os, sys, shutil, subprocess
 
 INSTALL_FOLDER = "share/qtcreator/libraries/InterfaceLibrary"
 SRC_FOLDER = "interfacelibrary"
@@ -63,6 +63,28 @@ if __name__ == "__main__":
     shutil.rmtree(os.path.join(install_folder, "html"), True)
     shutil.move(os.path.join(src_folder, "html"),
                 os.path.join(install_folder, "html"))
+
+    # Deploy Spin Library #
+
+    for file in glob.glob(os.path.join(src_folder, "*.spin")):
+        install_file = os.path.join(install_folder,
+        os.path.relpath(file, src_folder))
+
+        if not os.path.exists(os.path.dirname(install_file)):
+            os.makedirs(os.path.dirname(install_file))
+
+        shutil.copy2(file, install_file)
+
+    # Deploy Spin Examples #
+
+    for file in glob.glob(os.path.join(src_folder, "examples/*.spin")):
+        install_file = os.path.join(install_folder,
+        os.path.relpath(file, src_folder))
+
+        if not os.path.exists(os.path.dirname(install_file)):
+            os.makedirs(os.path.dirname(install_file))
+
+        shutil.copy2(file, install_file)
 
 ################################################################################
 # @file

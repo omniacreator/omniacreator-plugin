@@ -2185,7 +2185,7 @@ void OmniaCreatorPlugin::baudRateSelected(QAction *action)
 
 void OmniaCreatorPlugin::showAllWidgets()
 {
-    m_escape->serialTerminal()->show();
+    // m_escape->serialTerminal()->show();
 
     foreach(SerialWindow *window, m_escape->serialWindows())
     {
@@ -2195,7 +2195,7 @@ void OmniaCreatorPlugin::showAllWidgets()
 
 void OmniaCreatorPlugin::hideAllWidgets()
 {
-    m_escape->serialTerminal()->hide();
+    // m_escape->serialTerminal()->hide();
 
     foreach(SerialWindow *window, m_escape->serialWindows())
     {
@@ -3082,6 +3082,7 @@ void OmniaCreatorPlugin::updateRecentProjects()
 {
     QRegularExpression re("set\\(PROJECT_.*?\"(?<path>.*?)\"\\)");
     QStringList repeated;
+    bool ok = false;
 
     foreach(QAction *action, Core::ActionManager::actionContainer(
     ProjectExplorer::Constants::M_RECENTPROJECTS)->menu()->actions())
@@ -3095,6 +3096,7 @@ void OmniaCreatorPlugin::updateRecentProjects()
             {
                 action->setText(QDir::toNativeSeparators(QDir::cleanPath(
                 re.match(file.readAll()).captured("path"))));
+
                 action->setData(QDir::fromNativeSeparators(QDir::cleanPath(
                 action->text())));
 
@@ -3108,9 +3110,17 @@ void OmniaCreatorPlugin::updateRecentProjects()
                 }
 
                 repeated.append(action->text());
+                ok = true;
+            }
+            else
+            {
+                delete action;
             }
         }
     }
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_RECENTPROJECTS)->menu()->setEnabled(ok);
 }
 
 void OmniaCreatorPlugin::updateExamples()
