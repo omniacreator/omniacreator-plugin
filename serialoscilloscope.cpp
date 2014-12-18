@@ -1935,378 +1935,426 @@ QString SerialOscilloscope::getFFTYAxisLabel() const
 
 bool SerialOscilloscope::newBar(int plottable, const QString &name)
 {
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
     bool ok = plottableDoesNotExist(__FUNCTION__, plottable);
 
-    if(ok)
+    if(!ok)
     {
-        MyBars *myPlottable =
-        new MyBars(m_plot->xAxis, m_plot->yAxis);
+        // Silently handle error...
 
+        QCPAbstractPlottable *tempPlottable = m_plottables.value(plottable);
+
+        if(qobject_cast<MyBars *>(tempPlottable))
         {
-            int temp = (plottable % m_pensSize);
-
-            if(temp < 0)
-            {
-                temp += m_pensSize;
-            }
-
-            myPlottable->setPen(m_pens[temp]);
+            ok = setBarName(plottable, name); updatePlots(); return ok;
         }
-
+        else // Replace object instead of error...
         {
-            int temp = (plottable % m_spensSize);
-
-            if(temp < 0)
-            {
-                temp += m_spensSize;
-            }
-
-            myPlottable->setSelectedPen(m_spens[temp]);
+            deletePlot(plottable);
         }
-
-        {
-            int temp = (plottable % m_brushesSize);
-
-            if(temp < 0)
-            {
-                temp += m_brushesSize;
-            }
-
-            myPlottable->setBrush(m_brushes[temp]);
-        }
-
-        {
-            int temp = (plottable % m_sbrushesSize);
-
-            if(temp < 0)
-            {
-                temp += m_sbrushesSize;
-            }
-
-            myPlottable->setSelectedBrush(m_sbrushes[temp]);
-        }
-
-        QMap<int, QCPAbstractPlottable *>::iterator
-        i = m_plottables.insert(plottable, myPlottable),
-        j = m_plottables.begin(); int index = std::distance(j, i);
-
-        m_plot->insertPlottable(index, myPlottable);
-
-        m_plot->legend->insertRow(index); m_plot->legend->addElement(index, 0,
-        new QCPPlottableLegendItem(m_plot->legend, myPlottable));
-
-        ///////////////////////////////////////////////////////////////////////
-
-        QBrush brush = myPlottable->brush();
-        QBrush sbrush = myPlottable->selectedBrush();
-
-        brush.setStyle(Qt::SolidPattern);
-        sbrush.setStyle(Qt::SolidPattern);
-
-        myPlottable->setBrush(brush);
-        myPlottable->setSelectedBrush(sbrush);
-
-        ///////////////////////////////////////////////////////////////////////
-
-        ok = setBarName(plottable, name);
-
-        updatePlots();
     }
-    else // Silently handle error...
+
+    MyBars *myPlottable =
+    new MyBars(m_plot->xAxis, m_plot->yAxis);
+
     {
-        return setBarName(plottable, name); updatePlots();
+        int temp = (plottable % m_pensSize);
+
+        if(temp < 0)
+        {
+            temp += m_pensSize;
+        }
+
+        myPlottable->setPen(m_pens[temp]);
     }
+
+    {
+        int temp = (plottable % m_spensSize);
+
+        if(temp < 0)
+        {
+            temp += m_spensSize;
+        }
+
+        myPlottable->setSelectedPen(m_spens[temp]);
+    }
+
+    {
+        int temp = (plottable % m_brushesSize);
+
+        if(temp < 0)
+        {
+            temp += m_brushesSize;
+        }
+
+        myPlottable->setBrush(m_brushes[temp]);
+    }
+
+    {
+        int temp = (plottable % m_sbrushesSize);
+
+        if(temp < 0)
+        {
+            temp += m_sbrushesSize;
+        }
+
+        myPlottable->setSelectedBrush(m_sbrushes[temp]);
+    }
+
+    QMap<int, QCPAbstractPlottable *>::iterator
+    i = m_plottables.insert(plottable, myPlottable),
+    j = m_plottables.begin(); int index = std::distance(j, i);
+
+    m_plot->insertPlottable(index, myPlottable);
+
+    m_plot->legend->insertRow(index); m_plot->legend->addElement(index, 0,
+    new QCPPlottableLegendItem(m_plot->legend, myPlottable));
+
+    ///////////////////////////////////////////////////////////////////////
+
+    QBrush brush = myPlottable->brush();
+    QBrush sbrush = myPlottable->selectedBrush();
+
+    brush.setStyle(Qt::SolidPattern);
+    sbrush.setStyle(Qt::SolidPattern);
+
+    myPlottable->setBrush(brush);
+    myPlottable->setSelectedBrush(sbrush);
+
+    ///////////////////////////////////////////////////////////////////////
+
+    ok = setBarName(plottable, name);
+
+    updatePlots();
 
     return ok;
 }
 
 bool SerialOscilloscope::newCurve(int plottable, const QString &name)
 {
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
     bool ok = plottableDoesNotExist(__FUNCTION__, plottable);
 
-    if(ok)
+    if(!ok)
     {
-        MyCurve *myPlottable =
-        new MyCurve(m_plot->xAxis, m_plot->yAxis);
+        // Silently handle error...
 
+        QCPAbstractPlottable *tempPlottable = m_plottables.value(plottable);
+
+        if(qobject_cast<MyCurve *>(tempPlottable))
         {
-            int temp = (plottable % m_pensSize);
-
-            if(temp < 0)
-            {
-                temp += m_pensSize;
-            }
-
-            myPlottable->setPen(m_pens[temp]);
+            ok = setCurveName(plottable, name); updatePlots(); return ok;
         }
-
+        else // Replace object instead of error...
         {
-            int temp = (plottable % m_spensSize);
-
-            if(temp < 0)
-            {
-                temp += m_spensSize;
-            }
-
-            myPlottable->setSelectedPen(m_spens[temp]);
+            deletePlot(plottable);
         }
-
-        {
-            int temp = (plottable % m_brushesSize);
-
-            if(temp < 0)
-            {
-                temp += m_brushesSize;
-            }
-
-            myPlottable->setBrush(m_brushes[temp]);
-        }
-
-        {
-            int temp = (plottable % m_sbrushesSize);
-
-            if(temp < 0)
-            {
-                temp += m_sbrushesSize;
-            }
-
-            myPlottable->setSelectedBrush(m_sbrushes[temp]);
-        }
-
-        QMap<int, QCPAbstractPlottable *>::iterator
-        i = m_plottables.insert(plottable, myPlottable),
-        j = m_plottables.begin(); int index = std::distance(j, i);
-
-        m_plot->insertPlottable(index, myPlottable);
-
-        m_plot->legend->insertRow(index); m_plot->legend->addElement(index, 0,
-        new QCPPlottableLegendItem(m_plot->legend, myPlottable));
-
-        ///////////////////////////////////////////////////////////////////////
-
-        myPlottable->m_FFTWPlot =
-        new QCPCurve(m_math->xAxis, m_math->yAxis);
-
-        myPlottable->m_FFTWPlot->setPen(myPlottable->pen());
-        myPlottable->m_FFTWPlot->setSelectedPen(myPlottable->selectedPen());
-        myPlottable->m_FFTWPlot->setBrush(myPlottable->brush());
-        myPlottable->m_FFTWPlot->setSelectedBrush(myPlottable->selectedBrush());
-
-        index = 0; for(QMap<int, QCPAbstractPlottable *>::const_iterator
-        k = m_plottables.constBegin(), l = m_plottables.constEnd();
-        (k != l) && (k.value() != myPlottable); k++)
-        {
-            if(qobject_cast<MyCurve *>(k.value())
-            || qobject_cast<MyGraph *>(k.value()))
-            {
-                index += 1;
-            }
-        }
-
-        m_math->insertPlottable(index, myPlottable->m_FFTWPlot);
-
-        m_math->legend->insertRow(index); m_math->legend->addElement(index, 0,
-        new QCPPlottableLegendItem(m_math->legend, myPlottable->m_FFTWPlot));
-
-        ///////////////////////////////////////////////////////////////////////
-
-        ok = setCurveName(plottable, name);
-
-        updatePlots();
     }
-    else // Silently handle error...
+
+    MyCurve *myPlottable =
+    new MyCurve(m_plot->xAxis, m_plot->yAxis);
+
     {
-        return setCurveName(plottable, name); updatePlots();
+        int temp = (plottable % m_pensSize);
+
+        if(temp < 0)
+        {
+            temp += m_pensSize;
+        }
+
+        myPlottable->setPen(m_pens[temp]);
     }
+
+    {
+        int temp = (plottable % m_spensSize);
+
+        if(temp < 0)
+        {
+            temp += m_spensSize;
+        }
+
+        myPlottable->setSelectedPen(m_spens[temp]);
+    }
+
+    {
+        int temp = (plottable % m_brushesSize);
+
+        if(temp < 0)
+        {
+            temp += m_brushesSize;
+        }
+
+        myPlottable->setBrush(m_brushes[temp]);
+    }
+
+    {
+        int temp = (plottable % m_sbrushesSize);
+
+        if(temp < 0)
+        {
+            temp += m_sbrushesSize;
+        }
+
+        myPlottable->setSelectedBrush(m_sbrushes[temp]);
+    }
+
+    QMap<int, QCPAbstractPlottable *>::iterator
+    i = m_plottables.insert(plottable, myPlottable),
+    j = m_plottables.begin(); int index = std::distance(j, i);
+
+    m_plot->insertPlottable(index, myPlottable);
+
+    m_plot->legend->insertRow(index); m_plot->legend->addElement(index, 0,
+    new QCPPlottableLegendItem(m_plot->legend, myPlottable));
+
+    ///////////////////////////////////////////////////////////////////////
+
+    myPlottable->m_FFTWPlot =
+    new QCPCurve(m_math->xAxis, m_math->yAxis);
+
+    myPlottable->m_FFTWPlot->setPen(myPlottable->pen());
+    myPlottable->m_FFTWPlot->setSelectedPen(myPlottable->selectedPen());
+    myPlottable->m_FFTWPlot->setBrush(myPlottable->brush());
+    myPlottable->m_FFTWPlot->setSelectedBrush(myPlottable->selectedBrush());
+
+    index = 0; for(QMap<int, QCPAbstractPlottable *>::const_iterator
+    k = m_plottables.constBegin(), l = m_plottables.constEnd();
+    (k != l) && (k.value() != myPlottable); k++)
+    {
+        if(qobject_cast<MyCurve *>(k.value())
+        || qobject_cast<MyGraph *>(k.value()))
+        {
+            index += 1;
+        }
+    }
+
+    m_math->insertPlottable(index, myPlottable->m_FFTWPlot);
+
+    m_math->legend->insertRow(index); m_math->legend->addElement(index, 0,
+    new QCPPlottableLegendItem(m_math->legend, myPlottable->m_FFTWPlot));
+
+    ///////////////////////////////////////////////////////////////////////
+
+    ok = setCurveName(plottable, name);
+
+    updatePlots();
 
     return ok;
 }
 
 bool SerialOscilloscope::newGraph(int plottable, const QString &name)
 {
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
     bool ok = plottableDoesNotExist(__FUNCTION__, plottable);
 
-    if(ok)
+    if(!ok)
     {
-        MyGraph *myPlottable =
-        new MyGraph(m_plot->xAxis, m_plot->yAxis);
+        // Silently handle error...
 
+        QCPAbstractPlottable *tempPlottable = m_plottables.value(plottable);
+
+        if(qobject_cast<MyGraph *>(tempPlottable))
         {
-            int temp = (plottable % m_pensSize);
-
-            if(temp < 0)
-            {
-                temp += m_pensSize;
-            }
-
-            myPlottable->setPen(m_pens[temp]);
+            ok = setGraphName(plottable, name); updatePlots(); return ok;
         }
-
+        else // Replace object instead of error...
         {
-            int temp = (plottable % m_spensSize);
-
-            if(temp < 0)
-            {
-                temp += m_spensSize;
-            }
-
-            myPlottable->setSelectedPen(m_spens[temp]);
+            deletePlot(plottable);
         }
-
-        {
-            int temp = (plottable % m_brushesSize);
-
-            if(temp < 0)
-            {
-                temp += m_brushesSize;
-            }
-
-            myPlottable->setBrush(m_brushes[temp]);
-        }
-
-        {
-            int temp = (plottable % m_sbrushesSize);
-
-            if(temp < 0)
-            {
-                temp += m_sbrushesSize;
-            }
-
-            myPlottable->setSelectedBrush(m_sbrushes[temp]);
-        }
-
-        QMap<int, QCPAbstractPlottable *>::iterator
-        i = m_plottables.insert(plottable, myPlottable),
-        j = m_plottables.begin(); int index = std::distance(j, i);
-
-        m_plot->insertPlottable(index, myPlottable);
-
-        m_plot->legend->insertRow(index); m_plot->legend->addElement(index, 0,
-        new QCPPlottableLegendItem(m_plot->legend, myPlottable));
-
-        ///////////////////////////////////////////////////////////////////////
-
-        myPlottable->m_FFTWPlot =
-        new QCPGraph(m_math->xAxis, m_math->yAxis);
-
-        myPlottable->m_FFTWPlot->setPen(myPlottable->pen());
-        myPlottable->m_FFTWPlot->setSelectedPen(myPlottable->selectedPen());
-        myPlottable->m_FFTWPlot->setBrush(myPlottable->brush());
-        myPlottable->m_FFTWPlot->setSelectedBrush(myPlottable->selectedBrush());
-
-        index = 0; for(QMap<int, QCPAbstractPlottable *>::const_iterator
-        k = m_plottables.constBegin(), l = m_plottables.constEnd();
-        (k != l) && (k.value() != myPlottable); k++)
-        {
-            if(qobject_cast<MyCurve *>(k.value())
-            || qobject_cast<MyGraph *>(k.value()))
-            {
-                index += 1;
-            }
-        }
-
-        m_math->insertPlottable(index, myPlottable->m_FFTWPlot);
-
-        m_math->legend->insertRow(index); m_math->legend->addElement(index, 0,
-        new QCPPlottableLegendItem(m_math->legend, myPlottable->m_FFTWPlot));
-
-        ///////////////////////////////////////////////////////////////////////
-
-        ok = setGraphName(plottable, name);
-
-        updatePlots();
     }
-    else // Silently handle error...
+
+    MyGraph *myPlottable =
+    new MyGraph(m_plot->xAxis, m_plot->yAxis);
+
     {
-        return setGraphName(plottable, name); updatePlots();
+        int temp = (plottable % m_pensSize);
+
+        if(temp < 0)
+        {
+            temp += m_pensSize;
+        }
+
+        myPlottable->setPen(m_pens[temp]);
     }
+
+    {
+        int temp = (plottable % m_spensSize);
+
+        if(temp < 0)
+        {
+            temp += m_spensSize;
+        }
+
+        myPlottable->setSelectedPen(m_spens[temp]);
+    }
+
+    {
+        int temp = (plottable % m_brushesSize);
+
+        if(temp < 0)
+        {
+            temp += m_brushesSize;
+        }
+
+        myPlottable->setBrush(m_brushes[temp]);
+    }
+
+    {
+        int temp = (plottable % m_sbrushesSize);
+
+        if(temp < 0)
+        {
+            temp += m_sbrushesSize;
+        }
+
+        myPlottable->setSelectedBrush(m_sbrushes[temp]);
+    }
+
+    QMap<int, QCPAbstractPlottable *>::iterator
+    i = m_plottables.insert(plottable, myPlottable),
+    j = m_plottables.begin(); int index = std::distance(j, i);
+
+    m_plot->insertPlottable(index, myPlottable);
+
+    m_plot->legend->insertRow(index); m_plot->legend->addElement(index, 0,
+    new QCPPlottableLegendItem(m_plot->legend, myPlottable));
+
+    ///////////////////////////////////////////////////////////////////////
+
+    myPlottable->m_FFTWPlot =
+    new QCPGraph(m_math->xAxis, m_math->yAxis);
+
+    myPlottable->m_FFTWPlot->setPen(myPlottable->pen());
+    myPlottable->m_FFTWPlot->setSelectedPen(myPlottable->selectedPen());
+    myPlottable->m_FFTWPlot->setBrush(myPlottable->brush());
+    myPlottable->m_FFTWPlot->setSelectedBrush(myPlottable->selectedBrush());
+
+    index = 0; for(QMap<int, QCPAbstractPlottable *>::const_iterator
+    k = m_plottables.constBegin(), l = m_plottables.constEnd();
+    (k != l) && (k.value() != myPlottable); k++)
+    {
+        if(qobject_cast<MyCurve *>(k.value())
+        || qobject_cast<MyGraph *>(k.value()))
+        {
+            index += 1;
+        }
+    }
+
+    m_math->insertPlottable(index, myPlottable->m_FFTWPlot);
+
+    m_math->legend->insertRow(index); m_math->legend->addElement(index, 0,
+    new QCPPlottableLegendItem(m_math->legend, myPlottable->m_FFTWPlot));
+
+    ///////////////////////////////////////////////////////////////////////
+
+    ok = setGraphName(plottable, name);
+
+    updatePlots();
 
     return ok;
 }
 
 bool SerialOscilloscope::newBox(int plottable, const QString &name)
 {
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
     bool ok = plottableDoesNotExist(__FUNCTION__, plottable);
 
-    if(ok)
+    if(!ok)
     {
-        MyStatisticalBox *myPlottable =
-        new MyStatisticalBox(m_plot->xAxis, m_plot->yAxis);
+        // Silently handle error...
 
+        QCPAbstractPlottable *tempPlottable = m_plottables.value(plottable);
+
+        if(qobject_cast<MyStatisticalBox *>(tempPlottable))
         {
-            int temp = (plottable % m_pensSize);
-
-            if(temp < 0)
-            {
-                temp += m_pensSize;
-            }
-
-            myPlottable->setPen(m_pens[temp]);
+            ok = setBoxName(plottable, name); updatePlots(); return ok;
         }
-
+        else // Replace object instead of error...
         {
-            int temp = (plottable % m_spensSize);
-
-            if(temp < 0)
-            {
-                temp += m_spensSize;
-            }
-
-            myPlottable->setSelectedPen(m_spens[temp]);
+            deletePlot(plottable);
         }
-
-        {
-            int temp = (plottable % m_brushesSize);
-
-            if(temp < 0)
-            {
-                temp += m_brushesSize;
-            }
-
-            myPlottable->setBrush(m_brushes[temp]);
-        }
-
-        {
-            int temp = (plottable % m_sbrushesSize);
-
-            if(temp < 0)
-            {
-                temp += m_sbrushesSize;
-            }
-
-            myPlottable->setSelectedBrush(m_sbrushes[temp]);
-        }
-
-        QMap<int, QCPAbstractPlottable *>::iterator
-        i = m_plottables.insert(plottable, myPlottable),
-        j = m_plottables.begin(); int index = std::distance(j, i);
-
-        m_plot->insertPlottable(index, myPlottable);
-
-        m_plot->legend->insertRow(index); m_plot->legend->addElement(index, 0,
-        new QCPPlottableLegendItem(m_plot->legend, myPlottable));
-
-        ///////////////////////////////////////////////////////////////////////
-
-        QBrush brush = myPlottable->brush();
-        QBrush sbrush = myPlottable->selectedBrush();
-
-        brush.setStyle(Qt::SolidPattern);
-        sbrush.setStyle(Qt::SolidPattern);
-
-        myPlottable->setBrush(brush);
-        myPlottable->setSelectedBrush(sbrush);
-
-        ///////////////////////////////////////////////////////////////////////
-
-        ok = setBoxName(plottable, name);
-
-        updatePlots();
     }
-    else // Silently handle error...
+
+    MyStatisticalBox *myPlottable =
+    new MyStatisticalBox(m_plot->xAxis, m_plot->yAxis);
+
     {
-        return setBoxName(plottable, name); updatePlots();
+        int temp = (plottable % m_pensSize);
+
+        if(temp < 0)
+        {
+            temp += m_pensSize;
+        }
+
+        myPlottable->setPen(m_pens[temp]);
     }
+
+    {
+        int temp = (plottable % m_spensSize);
+
+        if(temp < 0)
+        {
+            temp += m_spensSize;
+        }
+
+        myPlottable->setSelectedPen(m_spens[temp]);
+    }
+
+    {
+        int temp = (plottable % m_brushesSize);
+
+        if(temp < 0)
+        {
+            temp += m_brushesSize;
+        }
+
+        myPlottable->setBrush(m_brushes[temp]);
+    }
+
+    {
+        int temp = (plottable % m_sbrushesSize);
+
+        if(temp < 0)
+        {
+            temp += m_sbrushesSize;
+        }
+
+        myPlottable->setSelectedBrush(m_sbrushes[temp]);
+    }
+
+    QMap<int, QCPAbstractPlottable *>::iterator
+    i = m_plottables.insert(plottable, myPlottable),
+    j = m_plottables.begin(); int index = std::distance(j, i);
+
+    m_plot->insertPlottable(index, myPlottable);
+
+    m_plot->legend->insertRow(index); m_plot->legend->addElement(index, 0,
+    new QCPPlottableLegendItem(m_plot->legend, myPlottable));
+
+    ///////////////////////////////////////////////////////////////////////
+
+    QBrush brush = myPlottable->brush();
+    QBrush sbrush = myPlottable->selectedBrush();
+
+    brush.setStyle(Qt::SolidPattern);
+    sbrush.setStyle(Qt::SolidPattern);
+
+    myPlottable->setBrush(brush);
+    myPlottable->setSelectedBrush(sbrush);
+
+    ///////////////////////////////////////////////////////////////////////
+
+    ok = setBoxName(plottable, name);
+
+    updatePlots();
 
     return ok;
 }

@@ -147,6 +147,11 @@ private slots:
     void newFileOrProject();
     void openFileOrProject();
 
+//    void updateOpenBuildOutputFolder();
+//    void openBuildOutputFolder();
+//    void updateOpenBuildOutputFile();
+//    void openBuildOutputFile();
+
     void boardMenuAboutToShow();
     void widgetsMenuAboutToShow();
 
@@ -206,6 +211,7 @@ private slots:
     void rebuildClicked();
     void buildClicked();
     void runClicked();
+    void runClickedHelper(bool buildSuccess);
     void reopenPort();
 
     // Reruns CMake...
@@ -241,6 +247,9 @@ private:
     Core::ActionContainer *m_examplesMenu;
 
     Core::Command *m_closeProjectAndAllFilesAction;
+
+//    Core::Command *m_openBuildOutputFolder;
+//    Core::Command *m_openBuildOutputFile;
 
     Core::ActionContainer *m_boardMenu;
     Core::ActionContainer *m_widgetsMenu;

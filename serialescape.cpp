@@ -2933,7 +2933,7 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
                 SerialWindow *myWindow =
                 newTerminalWindow(window, name, false);
 
-                if(myWindow
+                if(myWindow && (!myWindow->parent())
                 && (!dockWindow(myTargetWindow->widget(), myWindow)))
                 {
                     myWindow->setFloating(true);
@@ -2954,7 +2954,7 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
             SerialWindow *myWindow =
             newTerminalWindow(window, name, false);
 
-            if(myWindow
+            if(myWindow && (!myWindow->parent())
             && (!dockWindow(m_widget, myWindow)))
             {
                 myWindow->setFloating(true);
@@ -3029,7 +3029,7 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
                 SerialWindow *myWindow =
                 newOscilloscopeWindow(window, name, false);
 
-                if(myWindow
+                if(myWindow && (!myWindow->parent())
                 && (!dockWindow(myTargetWindow->widget(), myWindow)))
                 {
                     myWindow->setFloating(true);
@@ -3050,7 +3050,7 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
             SerialWindow *myWindow =
             newOscilloscopeWindow(window, name, false);
 
-            if(myWindow
+            if(myWindow && (!myWindow->parent())
             && (!dockWindow(m_widget, myWindow)))
             {
                 myWindow->setFloating(true);
@@ -10168,7 +10168,7 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
                 SerialWindow *myWindow =
                 newTableWindow(window, name, false);
 
-                if(myWindow
+                if(myWindow && (!myWindow->parent())
                 && (!dockWindow(myTargetWindow->widget(), myWindow)))
                 {
                     myWindow->setFloating(true);
@@ -10189,7 +10189,7 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
             SerialWindow *myWindow =
             newTableWindow(window, name, false);
 
-            if(myWindow
+            if(myWindow && (!myWindow->parent())
             && (!dockWindow(m_widget, myWindow)))
             {
                 myWindow->setFloating(true);
@@ -10569,7 +10569,7 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
                 SerialWindow *myWindow =
                 newTreeWindow(window, name, false);
 
-                if(myWindow
+                if(myWindow && (!myWindow->parent())
                 && (!dockWindow(myTargetWindow->widget(), myWindow)))
                 {
                     myWindow->setFloating(true);
@@ -10590,7 +10590,7 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
             SerialWindow *myWindow =
             newTreeWindow(window, name, false);
 
-            if(myWindow
+            if(myWindow && (!myWindow->parent())
             && (!dockWindow(m_widget, myWindow)))
             {
                 myWindow->setFloating(true);
@@ -10736,7 +10736,7 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
                 SerialWindow *myWindow =
                 newGraphicsWindow(window, name, false);
 
-                if(myWindow
+                if(myWindow && (!myWindow->parent())
                 && (!dockWindow(myTargetWindow->widget(), myWindow)))
                 {
                     myWindow->setFloating(true);
@@ -10757,7 +10757,7 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
             SerialWindow *myWindow =
             newGraphicsWindow(window, name, false);
 
-            if(myWindow
+            if(myWindow && (!myWindow->parent())
             && (!dockWindow(m_widget, myWindow)))
             {
                 myWindow->setFloating(true);
@@ -12246,7 +12246,7 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
                 SerialWindow *myWindow =
                 newInterfaceWindow(window, name, false);
 
-                if(myWindow
+                if(myWindow && (!myWindow->parent())
                 && (!dockWindow(myTargetWindow->widget(), myWindow)))
                 {
                     myWindow->setFloating(true);
@@ -12267,7 +12267,7 @@ bool SerialEscape::parseData(SerialFunction function, const QByteArray &data,
             SerialWindow *myWindow =
             newInterfaceWindow(window, name, false);
 
-            if(myWindow
+            if(myWindow && (!myWindow->parent())
             && (!dockWindow(m_widget, myWindow)))
             {
                 myWindow->setFloating(true);
@@ -16122,34 +16122,47 @@ SerialWindow *SerialEscape::newTerminalWindow(int windowHandle,
                                               const QString &name,
                                               bool autoShow)
 {
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
     SerialTerminal *myWindow = NULL;
 
-    if(windowDoesNotExist(__FUNCTION__, windowHandle))
+    if(!windowDoesNotExist(__FUNCTION__, windowHandle))
     {
-        myWindow = new SerialTerminal(name, m_settings);
-        myWindow->setAttribute(Qt::WA_DeleteOnClose, false);
-        myWindow->setAttribute(Qt::WA_QuitOnClose, false);
-        myWindow->setWindowHandle(windowHandle);
+        // Silently handle error...
 
-        connect(myWindow, SIGNAL(transmit(QByteArray,QWidget*)),
-                this, SLOT(sendData(QByteArray,QWidget*)));
+        SerialWindow *tempWindow = m_windows.value(windowHandle);
 
-        connect(myWindow, SIGNAL(errorMessage(QString)),
-                this, SIGNAL(errorMessage(QString)));
-
-        connect(myWindow, SIGNAL(destroyed(QObject*)),
-                this, SLOT(windowDestroyed(QObject*)));
-
-        m_windows.insert(windowHandle, myWindow);
-
-        if(autoShow)
+        if(qobject_cast<SerialTerminal *>(tempWindow))
         {
-            myWindow->show();
+            tempWindow->setWindowTitle(name); return tempWindow;
+        }
+        else // Replace object instead of error...
+        {
+            tempWindow->setAttribute(Qt::WA_DeleteOnClose, true);
+            tempWindow->close(); delete tempWindow; // delete faster
         }
     }
-    else // Silently handle error...
+
+    myWindow = new SerialTerminal(name, m_settings);
+    myWindow->setAttribute(Qt::WA_DeleteOnClose, false);
+    myWindow->setAttribute(Qt::WA_QuitOnClose, false);
+    myWindow->setWindowHandle(windowHandle);
+
+    connect(myWindow, SIGNAL(transmit(QByteArray,QWidget*)),
+            this, SLOT(sendData(QByteArray,QWidget*)));
+
+    connect(myWindow, SIGNAL(errorMessage(QString)),
+            this, SIGNAL(errorMessage(QString)));
+
+    connect(myWindow, SIGNAL(destroyed(QObject*)),
+            this, SLOT(windowDestroyed(QObject*)));
+
+    m_windows.insert(windowHandle, myWindow);
+
+    if(autoShow)
     {
-        m_windows.value(windowHandle)->setWindowTitle(name);
+        myWindow->show();
     }
 
     return myWindow;
@@ -16159,31 +16172,44 @@ SerialWindow *SerialEscape::newOscilloscopeWindow(int windowHandle,
                                                   const QString &name,
                                                   bool autoShow)
 {
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
     SerialOscilloscope *myWindow = NULL;
 
-    if(windowDoesNotExist(__FUNCTION__, windowHandle))
+    if(!windowDoesNotExist(__FUNCTION__, windowHandle))
     {
-        myWindow = new SerialOscilloscope(name, m_settings);
-        myWindow->setAttribute(Qt::WA_DeleteOnClose, false);
-        myWindow->setAttribute(Qt::WA_QuitOnClose, false);
-        myWindow->setWindowHandle(windowHandle);
+        // Silently handle error...
 
-        connect(myWindow, SIGNAL(errorMessage(QString)),
-                this, SIGNAL(errorMessage(QString)));
+        SerialWindow *tempWindow = m_windows.value(windowHandle);
 
-        connect(myWindow, SIGNAL(destroyed(QObject*)),
-                this, SLOT(windowDestroyed(QObject*)));
-
-        m_windows.insert(windowHandle, myWindow);
-
-        if(autoShow)
+        if(qobject_cast<SerialOscilloscope *>(tempWindow))
         {
-            myWindow->show();
+            tempWindow->setWindowTitle(name); return tempWindow;
+        }
+        else // Replace object instead of error...
+        {
+            tempWindow->setAttribute(Qt::WA_DeleteOnClose, true);
+            tempWindow->close(); delete tempWindow; // delete faster
         }
     }
-    else // Silently handle error...
+
+    myWindow = new SerialOscilloscope(name, m_settings);
+    myWindow->setAttribute(Qt::WA_DeleteOnClose, false);
+    myWindow->setAttribute(Qt::WA_QuitOnClose, false);
+    myWindow->setWindowHandle(windowHandle);
+
+    connect(myWindow, SIGNAL(errorMessage(QString)),
+            this, SIGNAL(errorMessage(QString)));
+
+    connect(myWindow, SIGNAL(destroyed(QObject*)),
+            this, SLOT(windowDestroyed(QObject*)));
+
+    m_windows.insert(windowHandle, myWindow);
+
+    if(autoShow)
     {
-        m_windows.value(windowHandle)->setWindowTitle(name);
+        myWindow->show();
     }
 
     return myWindow;
@@ -16193,31 +16219,44 @@ SerialWindow *SerialEscape::newTableWindow(int windowHandle,
                                            const QString &name,
                                            bool autoShow)
 {
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
     SerialTable *myWindow = NULL;
 
-    if(windowDoesNotExist(__FUNCTION__, windowHandle))
+    if(!windowDoesNotExist(__FUNCTION__, windowHandle))
     {
-        myWindow = new SerialTable(name, m_settings);
-        myWindow->setAttribute(Qt::WA_DeleteOnClose, false);
-        myWindow->setAttribute(Qt::WA_QuitOnClose, false);
-        myWindow->setWindowHandle(windowHandle);
+        // Silently handle error...
 
-        connect(myWindow, SIGNAL(errorMessage(QString)),
-                this, SIGNAL(errorMessage(QString)));
+        SerialWindow *tempWindow = m_windows.value(windowHandle);
 
-        connect(myWindow, SIGNAL(destroyed(QObject*)),
-                this, SLOT(windowDestroyed(QObject*)));
-
-        m_windows.insert(windowHandle, myWindow);
-
-        if(autoShow)
+        if(qobject_cast<SerialTable *>(tempWindow))
         {
-            myWindow->show();
+            tempWindow->setWindowTitle(name); return tempWindow;
+        }
+        else // Replace object instead of error...
+        {
+            tempWindow->setAttribute(Qt::WA_DeleteOnClose, true);
+            tempWindow->close(); delete tempWindow; // delete faster
         }
     }
-    else // Silently handle error...
+
+    myWindow = new SerialTable(name, m_settings);
+    myWindow->setAttribute(Qt::WA_DeleteOnClose, false);
+    myWindow->setAttribute(Qt::WA_QuitOnClose, false);
+    myWindow->setWindowHandle(windowHandle);
+
+    connect(myWindow, SIGNAL(errorMessage(QString)),
+            this, SIGNAL(errorMessage(QString)));
+
+    connect(myWindow, SIGNAL(destroyed(QObject*)),
+            this, SLOT(windowDestroyed(QObject*)));
+
+    m_windows.insert(windowHandle, myWindow);
+
+    if(autoShow)
     {
-        m_windows.value(windowHandle)->setWindowTitle(name);
+        myWindow->show();
     }
 
     return myWindow;
@@ -16227,31 +16266,44 @@ SerialWindow *SerialEscape::newTreeWindow(int windowHandle,
                                           const QString &name,
                                           bool autoShow)
 {
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
     SerialTree *myWindow = NULL;
 
-    if(windowDoesNotExist(__FUNCTION__, windowHandle))
+    if(!windowDoesNotExist(__FUNCTION__, windowHandle))
     {
-        myWindow = new SerialTree(name, m_settings);
-        myWindow->setAttribute(Qt::WA_DeleteOnClose, false);
-        myWindow->setAttribute(Qt::WA_QuitOnClose, false);
-        myWindow->setWindowHandle(windowHandle);
+        // Silently handle error...
 
-        connect(myWindow, SIGNAL(errorMessage(QString)),
-                this, SIGNAL(errorMessage(QString)));
+        SerialWindow *tempWindow = m_windows.value(windowHandle);
 
-        connect(myWindow, SIGNAL(destroyed(QObject*)),
-                this, SLOT(windowDestroyed(QObject*)));
-
-        m_windows.insert(windowHandle, myWindow);
-
-        if(autoShow)
+        if(qobject_cast<SerialTree *>(tempWindow))
         {
-            myWindow->show();
+            tempWindow->setWindowTitle(name); return tempWindow;
+        }
+        else // Replace object instead of error...
+        {
+            tempWindow->setAttribute(Qt::WA_DeleteOnClose, true);
+            tempWindow->close(); delete tempWindow; // delete faster
         }
     }
-    else // Silently handle error...
+
+    myWindow = new SerialTree(name, m_settings);
+    myWindow->setAttribute(Qt::WA_DeleteOnClose, false);
+    myWindow->setAttribute(Qt::WA_QuitOnClose, false);
+    myWindow->setWindowHandle(windowHandle);
+
+    connect(myWindow, SIGNAL(errorMessage(QString)),
+            this, SIGNAL(errorMessage(QString)));
+
+    connect(myWindow, SIGNAL(destroyed(QObject*)),
+            this, SLOT(windowDestroyed(QObject*)));
+
+    m_windows.insert(windowHandle, myWindow);
+
+    if(autoShow)
     {
-        m_windows.value(windowHandle)->setWindowTitle(name);
+        myWindow->show();
     }
 
     return myWindow;
@@ -16261,31 +16313,44 @@ SerialWindow *SerialEscape::newGraphicsWindow(int windowHandle,
                                               const QString &name,
                                               bool autoShow)
 {
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
     SerialGraphics *myWindow = NULL;
 
-    if(windowDoesNotExist(__FUNCTION__, windowHandle))
+    if(!windowDoesNotExist(__FUNCTION__, windowHandle))
     {
-        myWindow = new SerialGraphics(name, m_settings);
-        myWindow->setAttribute(Qt::WA_DeleteOnClose, false);
-        myWindow->setAttribute(Qt::WA_QuitOnClose, false);
-        myWindow->setWindowHandle(windowHandle);
+        // Silently handle error...
 
-        connect(myWindow, SIGNAL(errorMessage(QString)),
-                this, SIGNAL(errorMessage(QString)));
+        SerialWindow *tempWindow = m_windows.value(windowHandle);
 
-        connect(myWindow, SIGNAL(destroyed(QObject*)),
-                this, SLOT(windowDestroyed(QObject*)));
-
-        m_windows.insert(windowHandle, myWindow);
-
-        if(autoShow)
+        if(qobject_cast<SerialGraphics *>(tempWindow))
         {
-            myWindow->show();
+            tempWindow->setWindowTitle(name); return tempWindow;
+        }
+        else // Replace object instead of error...
+        {
+            tempWindow->setAttribute(Qt::WA_DeleteOnClose, true);
+            tempWindow->close(); delete tempWindow; // delete faster
         }
     }
-    else // Silently handle error...
+
+    myWindow = new SerialGraphics(name, m_settings);
+    myWindow->setAttribute(Qt::WA_DeleteOnClose, false);
+    myWindow->setAttribute(Qt::WA_QuitOnClose, false);
+    myWindow->setWindowHandle(windowHandle);
+
+    connect(myWindow, SIGNAL(errorMessage(QString)),
+            this, SIGNAL(errorMessage(QString)));
+
+    connect(myWindow, SIGNAL(destroyed(QObject*)),
+            this, SLOT(windowDestroyed(QObject*)));
+
+    m_windows.insert(windowHandle, myWindow);
+
+    if(autoShow)
     {
-        m_windows.value(windowHandle)->setWindowTitle(name);
+        myWindow->show();
     }
 
     return myWindow;
@@ -16295,36 +16360,49 @@ SerialWindow *SerialEscape::newInterfaceWindow(int windowHandle,
                                                const QString &name,
                                                bool autoShow)
 {
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
     SerialInterface *myWindow = NULL;
 
-    if(windowDoesNotExist(__FUNCTION__, windowHandle))
+    if(!windowDoesNotExist(__FUNCTION__, windowHandle))
     {
-        myWindow = new SerialInterface(name, m_settings);
-        myWindow->setAttribute(Qt::WA_DeleteOnClose, false);
-        myWindow->setAttribute(Qt::WA_QuitOnClose, false);
-        myWindow->setWindowHandle(windowHandle);
+        // Silently handle error...
 
-        connect(myWindow,
-                SIGNAL(dataPacket(SerialFunction,int,int,int,QVariant)),
-                this,
-                SLOT(sendVariantPacket(SerialFunction,int,int,int,QVariant)));
+        SerialWindow *tempWindow = m_windows.value(windowHandle);
 
-        connect(myWindow, SIGNAL(errorMessage(QString)),
-                this, SIGNAL(errorMessage(QString)));
-
-        connect(myWindow, SIGNAL(destroyed(QObject*)),
-                this, SLOT(windowDestroyed(QObject*)));
-
-        m_windows.insert(windowHandle, myWindow);
-
-        if(autoShow)
+        if(qobject_cast<SerialInterface *>(tempWindow))
         {
-            myWindow->show();
+            tempWindow->setWindowTitle(name); return tempWindow;
+        }
+        else // Replace object instead of error...
+        {
+            tempWindow->setAttribute(Qt::WA_DeleteOnClose, true);
+            tempWindow->close(); delete tempWindow; // delete faster
         }
     }
-    else // Silently handle error...
+
+    myWindow = new SerialInterface(name, m_settings);
+    myWindow->setAttribute(Qt::WA_DeleteOnClose, false);
+    myWindow->setAttribute(Qt::WA_QuitOnClose, false);
+    myWindow->setWindowHandle(windowHandle);
+
+    connect(myWindow,
+            SIGNAL(dataPacket(SerialFunction,int,int,int,QVariant)),
+            this,
+            SLOT(sendVariantPacket(SerialFunction,int,int,int,QVariant)));
+
+    connect(myWindow, SIGNAL(errorMessage(QString)),
+            this, SIGNAL(errorMessage(QString)));
+
+    connect(myWindow, SIGNAL(destroyed(QObject*)),
+            this, SLOT(windowDestroyed(QObject*)));
+
+    m_windows.insert(windowHandle, myWindow);
+
+    if(autoShow)
     {
-        m_windows.value(windowHandle)->setWindowTitle(name);
+        myWindow->show();
     }
 
     return myWindow;
@@ -16342,6 +16420,12 @@ bool SerialEscape::dockWindow(QWidget *widget, SerialWindow *window)
         {
             main->addDockWidget(Qt::RightDockWidgetArea, window);
         }
+        // Begin - Always Show Window Override ////////////////////////////////
+        else
+        {
+            window->show();
+        }
+        // End - Always Show Window Override //////////////////////////////////
 
         // Begin Action/Shortcut Workaround ///////////////////////////////////
 

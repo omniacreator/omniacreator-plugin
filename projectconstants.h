@@ -64,6 +64,12 @@ PROJECT_FULL_NAME_WO_SPACES_STR ".ExamplesMenu";
 const char CLOSE_PROJECT_AND_ALL_FILES_ACTION_ID[] =
 PROJECT_FULL_NAME_WO_SPACES_STR ".CloseProjectAndAllFilesAction";
 
+const char OPEN_BUILD_OUTPUT_FOLDER_ID[] =
+PROJECT_FULL_NAME_WO_SPACES_STR ".OpenBuildOutputFolder";
+
+const char OPEN_BUILD_OUTPUT_FILE_ID[] =
+PROJECT_FULL_NAME_WO_SPACES_STR ".OpenBuildOutputFile";
+
 // Board Menu /////////////////////////////////////////////////////////////////
 
 const char BOARD_MENU_ID[] =

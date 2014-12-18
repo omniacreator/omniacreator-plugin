@@ -140,7 +140,7 @@ PUB addValue(value)
     core.send2Handle1Long(OSCILLOSCOPE_ADD_BAR_DATA_1, {
     } m_parentHandle, m_thisHandle, value)
 
-PUB addValueF(keyF, valueF)
+PUB addValueF(valueF)
     core.send2Handle1Long(OSCILLOSCOPE_ADD_BAR_DATA_1_F, {
     } m_parentHandle, m_thisHandle, valueF)
 

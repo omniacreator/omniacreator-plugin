@@ -1,6 +1,6 @@
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 ' @file
-' Interface Library Demo 0
+' Interface Library Curve Demo
 '
 ' @version @n 1.0
 ' @date @n 11/30/2014

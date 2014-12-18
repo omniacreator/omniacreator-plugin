@@ -67,38 +67,71 @@ QString SerialInterface::keyGeometry() const
 bool SerialInterface::newGroupBox(int groupBox,
                                   const QString &name)
 {
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
     bool ok =
     groupBoxDoesNotExist(__FUNCTION__, groupBox);
 
-    if(ok)
+    if(!ok)
     {
-        MyGroupBox *myWidget = new MyGroupBox(name);
+        // Silently handle error...
 
-        QMap<int, MyGroupBox *>::iterator
-        i = m_children.insert(groupBox, myWidget),
-        j = m_children.begin(); int index = std::distance(j, i);
+        QWidget *tempWidget = m_children.value(groupBox);
 
-        m_layout->insertWidget(index, myWidget);
-
-        myWidget->show();
+        if(qobject_cast<MyGroupBox *>(tempWidget))
+        {
+            return setGroupBoxName(groupBox, name);
+        }
+        else // Replace object instead of error...
+        {
+            deleteGroupBox(groupBox);
+        }
     }
-    else // Silently handle error...
-    {
-        return setGroupBoxName(groupBox, name);
-    }
 
-    return ok;
+    MyGroupBox *myWidget = new MyGroupBox(name);
+
+    QMap<int, MyGroupBox *>::iterator
+    i = m_children.insert(groupBox, myWidget),
+    j = m_children.begin(); int index = std::distance(j, i);
+
+    m_layout->insertWidget(index, myWidget);
+
+    myWidget->show();
+
+    return true;
 }
 
 bool SerialInterface::newPushButton(int groupBox,
                                     int interfaceBox,
                                     const QString &name)
 {
-    MyGroupBox *gBox =
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
+    MyGroupBox *ok =
     interfaceBoxDoesNotExist(__FUNCTION__, groupBox, interfaceBox);
+
+    MyGroupBox *gBox = m_children.value(groupBox);
 
     if(gBox)
     {
+        if(!ok)
+        {
+            // Silently handle error...
+
+            QWidget *tempWidget = gBox->m_children.value(interfaceBox);
+
+            if(qobject_cast<MyPushButton *>(tempWidget))
+            {
+                return setPushButtonName(groupBox, interfaceBox, name);
+            }
+            else // Replace object instead of error...
+            {
+                deleteInterfaceBox(groupBox, interfaceBox);
+            }
+        }
+
         MyPushButton *myWidget = new MyPushButton(name);
 
         myWidget->m_windowHandle = getWindowHandle();
@@ -117,10 +150,6 @@ bool SerialInterface::newPushButton(int groupBox,
 
         myWidget->show();
     }
-    else if(m_children.contains(groupBox)) // Silently handle error...
-    {
-        return setPushButtonName(groupBox, interfaceBox, name);
-    }
 
     return gBox;
 }
@@ -129,11 +158,32 @@ bool SerialInterface::newRadioButton(int groupBox,
                                      int interfaceBox,
                                      const QString &name)
 {
-    MyGroupBox *gBox =
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
+    MyGroupBox *ok =
     interfaceBoxDoesNotExist(__FUNCTION__, groupBox, interfaceBox);
+
+    MyGroupBox *gBox = m_children.value(groupBox);
 
     if(gBox)
     {
+        if(!ok)
+        {
+            // Silently handle error...
+
+            QWidget *tempWidget = gBox->m_children.value(interfaceBox);
+
+            if(qobject_cast<MyRadioButton *>(tempWidget))
+            {
+                return setRadioButtonName(groupBox, interfaceBox, name);
+            }
+            else // Replace object instead of error...
+            {
+                deleteInterfaceBox(groupBox, interfaceBox);
+            }
+        }
+
         MyRadioButton *myWidget = new MyRadioButton(name);
 
         myWidget->m_windowHandle = getWindowHandle();
@@ -152,10 +202,6 @@ bool SerialInterface::newRadioButton(int groupBox,
 
         myWidget->show();
     }
-    else if(m_children.contains(groupBox)) // Silently handle error...
-    {
-        return setRadioButtonName(groupBox, interfaceBox, name);
-    }
 
     return gBox;
 }
@@ -164,11 +210,32 @@ bool SerialInterface::newCheckBox(int groupBox,
                                   int interfaceBox,
                                   const QString &name)
 {
-    MyGroupBox *gBox =
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
+    MyGroupBox *ok =
     interfaceBoxDoesNotExist(__FUNCTION__, groupBox, interfaceBox);
+
+    MyGroupBox *gBox = m_children.value(groupBox);
 
     if(gBox)
     {
+        if(!ok)
+        {
+            // Silently handle error...
+
+            QWidget *tempWidget = gBox->m_children.value(interfaceBox);
+
+            if(qobject_cast<MyCheckBox *>(tempWidget))
+            {
+                return setCheckBoxName(groupBox, interfaceBox, name);
+            }
+            else // Replace object instead of error...
+            {
+                deleteInterfaceBox(groupBox, interfaceBox);
+            }
+        }
+
         MyCheckBox *myWidget = new MyCheckBox(name);
 
         myWidget->m_windowHandle = getWindowHandle();
@@ -187,10 +254,6 @@ bool SerialInterface::newCheckBox(int groupBox,
 
         myWidget->show();
     }
-    else if(m_children.contains(groupBox)) // Silently handle error...
-    {
-        return setCheckBoxName(groupBox, interfaceBox, name);
-    }
 
     return gBox;
 }
@@ -199,11 +262,32 @@ bool SerialInterface::newLineEdit(int groupBox,
                                   int interfaceBox,
                                   const QString &name)
 {
-    MyGroupBox *gBox =
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
+    MyGroupBox *ok =
     interfaceBoxDoesNotExist(__FUNCTION__, groupBox, interfaceBox);
+
+    MyGroupBox *gBox = m_children.value(groupBox);
 
     if(gBox)
     {
+        if(!ok)
+        {
+            // Silently handle error...
+
+            QWidget *tempWidget = gBox->m_children.value(interfaceBox);
+
+            if(qobject_cast<MyLineEdit *>(tempWidget))
+            {
+                return setLineEditName(groupBox, interfaceBox, name);
+            }
+            else // Replace object instead of error...
+            {
+                deleteInterfaceBox(groupBox, interfaceBox);
+            }
+        }
+
         MyLineEdit *myWidget = new MyLineEdit;
 
         myWidget->m_windowHandle = getWindowHandle();
@@ -222,10 +306,6 @@ bool SerialInterface::newLineEdit(int groupBox,
 
         myWidget->show();
     }
-    else if(m_children.contains(groupBox)) // Silently handle error...
-    {
-        return setLineEditName(groupBox, interfaceBox, name);
-    }
 
     return gBox;
 }
@@ -234,11 +314,32 @@ bool SerialInterface::newIntSpinBox(int groupBox,
                                     int interfaceBox,
                                     const QString &name)
 {
-    MyGroupBox *gBox =
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
+    MyGroupBox *ok =
     interfaceBoxDoesNotExist(__FUNCTION__, groupBox, interfaceBox);
+
+    MyGroupBox *gBox = m_children.value(groupBox);
 
     if(gBox)
     {
+        if(!ok)
+        {
+            // Silently handle error...
+
+            QWidget *tempWidget = gBox->m_children.value(interfaceBox);
+
+            if(qobject_cast<MyIntSpinBox *>(tempWidget))
+            {
+                return setIntSpinBoxName(groupBox, interfaceBox, name);
+            }
+            else // Replace object instead of error...
+            {
+                deleteInterfaceBox(groupBox, interfaceBox);
+            }
+        }
+
         MyIntSpinBox *myWidget = new MyIntSpinBox;
 
         myWidget->m_windowHandle = getWindowHandle();
@@ -257,10 +358,6 @@ bool SerialInterface::newIntSpinBox(int groupBox,
 
         myWidget->show();
     }
-    else if(m_children.contains(groupBox)) // Silently handle error...
-    {
-        return setIntSpinBoxName(groupBox, interfaceBox, name);
-    }
 
     return gBox;
 }
@@ -269,11 +366,32 @@ bool SerialInterface::newBinSpinBox(int groupBox,
                                     int interfaceBox,
                                     const QString &name)
 {
-    MyGroupBox *gBox =
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
+    MyGroupBox *ok =
     interfaceBoxDoesNotExist(__FUNCTION__, groupBox, interfaceBox);
+
+    MyGroupBox *gBox = m_children.value(groupBox);
 
     if(gBox)
     {
+        if(!ok)
+        {
+            // Silently handle error...
+
+            QWidget *tempWidget = gBox->m_children.value(interfaceBox);
+
+            if(qobject_cast<MyBinSpinBox *>(tempWidget))
+            {
+                return setBinSpinBoxName(groupBox, interfaceBox, name);
+            }
+            else // Replace object instead of error...
+            {
+                deleteInterfaceBox(groupBox, interfaceBox);
+            }
+        }
+
         MyBinSpinBox *myWidget = new MyBinSpinBox;
 
         myWidget->m_windowHandle = getWindowHandle();
@@ -292,10 +410,6 @@ bool SerialInterface::newBinSpinBox(int groupBox,
 
         myWidget->show();
     }
-    else if(m_children.contains(groupBox)) // Silently handle error...
-    {
-        return setBinSpinBoxName(groupBox, interfaceBox, name);
-    }
 
     return gBox;
 }
@@ -304,11 +418,32 @@ bool SerialInterface::newHexSpinBox(int groupBox,
                                     int interfaceBox,
                                     const QString &name)
 {
-    MyGroupBox *gBox =
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
+    MyGroupBox *ok =
     interfaceBoxDoesNotExist(__FUNCTION__, groupBox, interfaceBox);
+
+    MyGroupBox *gBox = m_children.value(groupBox);
 
     if(gBox)
     {
+        if(!ok)
+        {
+            // Silently handle error...
+
+            QWidget *tempWidget = gBox->m_children.value(interfaceBox);
+
+            if(qobject_cast<MyHexSpinBox *>(tempWidget))
+            {
+                return setHexSpinBoxName(groupBox, interfaceBox, name);
+            }
+            else // Replace object instead of error...
+            {
+                deleteInterfaceBox(groupBox, interfaceBox);
+            }
+        }
+
         MyHexSpinBox *myWidget = new MyHexSpinBox;
 
         myWidget->m_windowHandle = getWindowHandle();
@@ -327,10 +462,6 @@ bool SerialInterface::newHexSpinBox(int groupBox,
 
         myWidget->show();
     }
-    else if(m_children.contains(groupBox)) // Silently handle error...
-    {
-        return setHexSpinBoxName(groupBox, interfaceBox, name);
-    }
 
     return gBox;
 }
@@ -339,11 +470,32 @@ bool SerialInterface::newDoubleSpinBox(int groupBox,
                                        int interfaceBox,
                                        const QString &name)
 {
-    MyGroupBox *gBox =
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
+    MyGroupBox *ok =
     interfaceBoxDoesNotExist(__FUNCTION__, groupBox, interfaceBox);
+
+    MyGroupBox *gBox = m_children.value(groupBox);
 
     if(gBox)
     {
+        if(!ok)
+        {
+            // Silently handle error...
+
+            QWidget *tempWidget = gBox->m_children.value(interfaceBox);
+
+            if(qobject_cast<MyDoubleSpinBox *>(tempWidget))
+            {
+                return setDoubleSpinBoxName(groupBox, interfaceBox, name);
+            }
+            else // Replace object instead of error...
+            {
+                deleteInterfaceBox(groupBox, interfaceBox);
+            }
+        }
+
         MyDoubleSpinBox *myWidget = new MyDoubleSpinBox;
 
         myWidget->m_windowHandle = getWindowHandle();
@@ -362,10 +514,6 @@ bool SerialInterface::newDoubleSpinBox(int groupBox,
 
         myWidget->show();
     }
-    else if(m_children.contains(groupBox)) // Silently handle error...
-    {
-        return setDoubleSpinBoxName(groupBox, interfaceBox, name);
-    }
 
     return gBox;
 }
@@ -374,12 +522,32 @@ bool SerialInterface::newTimeEdit(int groupBox,
                                   int interfaceBox,
                                   const QString &name)
 {
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
 
-    MyGroupBox *gBox =
+    MyGroupBox *ok =
     interfaceBoxDoesNotExist(__FUNCTION__, groupBox, interfaceBox);
+
+    MyGroupBox *gBox = m_children.value(groupBox);
 
     if(gBox)
     {
+        if(!ok)
+        {
+            // Silently handle error...
+
+            QWidget *tempWidget = gBox->m_children.value(interfaceBox);
+
+            if(qobject_cast<MyTimeEdit *>(tempWidget))
+            {
+                return setTimeEditName(groupBox, interfaceBox, name);
+            }
+            else // Replace object instead of error...
+            {
+                deleteInterfaceBox(groupBox, interfaceBox);
+            }
+        }
+
         MyTimeEdit *myWidget = new MyTimeEdit;
 
         myWidget->m_windowHandle = getWindowHandle();
@@ -398,10 +566,6 @@ bool SerialInterface::newTimeEdit(int groupBox,
 
         myWidget->show();
     }
-    else if(m_children.contains(groupBox)) // Silently handle error...
-    {
-        return setTimeEditName(groupBox, interfaceBox, name);
-    }
 
     return gBox;
 }
@@ -410,11 +574,32 @@ bool SerialInterface::newDateEdit(int groupBox,
                                   int interfaceBox,
                                   const QString &name)
 {
-    MyGroupBox *gBox =
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
+    MyGroupBox *ok =
     interfaceBoxDoesNotExist(__FUNCTION__, groupBox, interfaceBox);
+
+    MyGroupBox *gBox = m_children.value(groupBox);
 
     if(gBox)
     {
+        if(!ok)
+        {
+            // Silently handle error...
+
+            QWidget *tempWidget = gBox->m_children.value(interfaceBox);
+
+            if(qobject_cast<MyDateEdit *>(tempWidget))
+            {
+                return setDateEditName(groupBox, interfaceBox, name);
+            }
+            else // Replace object instead of error...
+            {
+                deleteInterfaceBox(groupBox, interfaceBox);
+            }
+        }
+
         MyDateEdit *myWidget = new MyDateEdit;
 
         myWidget->m_windowHandle = getWindowHandle();
@@ -433,10 +618,6 @@ bool SerialInterface::newDateEdit(int groupBox,
 
         myWidget->show();
     }
-    else if(m_children.contains(groupBox)) // Silently handle error...
-    {
-        return setDateEditName(groupBox, interfaceBox, name);
-    }
 
     return gBox;
 }
@@ -445,11 +626,32 @@ bool SerialInterface::newDateTimeEdit(int groupBox,
                                       int interfaceBox,
                                       const QString &name)
 {
-    MyGroupBox *gBox =
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
+    MyGroupBox *ok =
     interfaceBoxDoesNotExist(__FUNCTION__, groupBox, interfaceBox);
+
+    MyGroupBox *gBox = m_children.value(groupBox);
 
     if(gBox)
     {
+        if(!ok)
+        {
+            // Silently handle error...
+
+            QWidget *tempWidget = gBox->m_children.value(interfaceBox);
+
+            if(qobject_cast<MyDateTimeEdit *>(tempWidget))
+            {
+                return setDateTimeEditName(groupBox, interfaceBox, name);
+            }
+            else // Replace object instead of error...
+            {
+                deleteInterfaceBox(groupBox, interfaceBox);
+            }
+        }
+
         MyDateTimeEdit *myWidget = new MyDateTimeEdit;
 
         myWidget->m_windowHandle = getWindowHandle();
@@ -468,10 +670,6 @@ bool SerialInterface::newDateTimeEdit(int groupBox,
 
         myWidget->show();
     }
-    else if(m_children.contains(groupBox)) // Silently handle error...
-    {
-        return setDateTimeEditName(groupBox, interfaceBox, name);
-    }
 
     return gBox;
 }
@@ -480,11 +678,32 @@ bool SerialInterface::newSlider(int groupBox,
                                 int interfaceBox,
                                 const QString &name)
 {
-    MyGroupBox *gBox =
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
+    MyGroupBox *ok =
     interfaceBoxDoesNotExist(__FUNCTION__, groupBox, interfaceBox);
+
+    MyGroupBox *gBox = m_children.value(groupBox);
 
     if(gBox)
     {
+        if(!ok)
+        {
+            // Silently handle error...
+
+            QWidget *tempWidget = gBox->m_children.value(interfaceBox);
+
+            if(qobject_cast<MySlider *>(tempWidget))
+            {
+                return setSliderName(groupBox, interfaceBox, name);
+            }
+            else // Replace object instead of error...
+            {
+                deleteInterfaceBox(groupBox, interfaceBox);
+            }
+        }
+
         MySlider *myWidget = new MySlider;
 
         myWidget->m_windowHandle = getWindowHandle();
@@ -503,10 +722,6 @@ bool SerialInterface::newSlider(int groupBox,
 
         myWidget->show();
     }
-    else if(m_children.contains(groupBox)) // Silently handle error...
-    {
-        return setSliderName(groupBox, interfaceBox, name);
-    }
 
     return gBox;
 }
@@ -515,11 +730,32 @@ bool SerialInterface::newLabel(int groupBox,
                                int interfaceBox,
                                const QString &text)
 {
-    MyGroupBox *gBox =
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
+    MyGroupBox *ok =
     interfaceBoxDoesNotExist(__FUNCTION__, groupBox, interfaceBox);
+
+    MyGroupBox *gBox = m_children.value(groupBox);
 
     if(gBox)
     {
+        if(!ok)
+        {
+            // Silently handle error...
+
+            QWidget *tempWidget = gBox->m_children.value(interfaceBox);
+
+            if(qobject_cast<MyLabel *>(tempWidget))
+            {
+                return setLabelText(groupBox, interfaceBox, text);
+            }
+            else // Replace object instead of error...
+            {
+                deleteInterfaceBox(groupBox, interfaceBox);
+            }
+        }
+
         MyLabel *myWidget = new MyLabel(text);
 
         QMap<int, QWidget *>::iterator
@@ -530,10 +766,6 @@ bool SerialInterface::newLabel(int groupBox,
 
         myWidget->show();
     }
-    else if(m_children.contains(groupBox)) // Silently handle error...
-    {
-        return setLabelText(groupBox, interfaceBox, text);
-    }
 
     return gBox;
 }
@@ -542,11 +774,32 @@ bool SerialInterface::newProgressBar(int groupBox,
                                      int interfaceBox,
                                      const QString &name)
 {
-    MyGroupBox *gBox =
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
+    MyGroupBox *ok =
     interfaceBoxDoesNotExist(__FUNCTION__, groupBox, interfaceBox);
+
+    MyGroupBox *gBox = m_children.value(groupBox);
 
     if(gBox)
     {
+        if(!ok)
+        {
+            // Silently handle error...
+
+            QWidget *tempWidget = gBox->m_children.value(interfaceBox);
+
+            if(qobject_cast<MyProgressBar *>(tempWidget))
+            {
+                return setProgressBarName(groupBox, interfaceBox, name);
+            }
+            else // Replace object instead of error...
+            {
+                deleteInterfaceBox(groupBox, interfaceBox);
+            }
+        }
+
         MyProgressBar *myWidget = new MyProgressBar;
 
         QMap<int, QWidget *>::iterator
@@ -557,10 +810,6 @@ bool SerialInterface::newProgressBar(int groupBox,
 
         myWidget->show();
     }
-    else if(m_children.contains(groupBox)) // Silently handle error...
-    {
-        return setProgressBarName(groupBox, interfaceBox, name);
-    }
 
     return gBox;
 }
@@ -568,11 +817,32 @@ bool SerialInterface::newProgressBar(int groupBox,
 bool SerialInterface::newSeperator(int groupBox,
                                    int interfaceBox)
 {
-    MyGroupBox *gBox =
+    // This code was optimal once-upon-a-time... It has now been "tweaked" to
+    // not error out on any problem and tries to solve it as best it can...
+
+    MyGroupBox *ok =
     interfaceBoxDoesNotExist(__FUNCTION__, groupBox, interfaceBox);
+
+    MyGroupBox *gBox = m_children.value(groupBox);
 
     if(gBox)
     {
+        if(!ok)
+        {
+            // Silently handle error...
+
+            QWidget *tempWidget = gBox->m_children.value(interfaceBox);
+
+            if(qobject_cast<MySeperator *>(tempWidget))
+            {
+                return true;
+            }
+            else // Replace object instead of error...
+            {
+                deleteInterfaceBox(groupBox, interfaceBox);
+            }
+        }
+
         MySeperator *myWidget = new MySeperator;
 
         QMap<int, QWidget *>::iterator
@@ -582,10 +852,6 @@ bool SerialInterface::newSeperator(int groupBox,
         gBox->m_layout->insertRow(index, myWidget);
 
         myWidget->show();
-    }
-    else if(m_children.contains(groupBox)) // Silently handle error...
-    {
-        //
     }
 
     return gBox;

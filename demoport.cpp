@@ -36,7 +36,7 @@ void DemoPort::setup()
     core->init();
     core->clearAll();
 
-    oscilloscope->initDocked(core, "Sine & Cosine Waves");
+    oscilloscope->init(core, "Sine & Cosine Waves");
     oscilloscope->setBackgroundColor(0xFFFFFF);
     oscilloscope->setXAxisLabel("x");
     oscilloscope->setYAxisLabel("y");

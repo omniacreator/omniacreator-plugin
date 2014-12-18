@@ -138,7 +138,6 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
             splashScreen, SLOT(close()));
 
     splashScreen->show();
-
     SerialOscilloscope::initFftw(Core::ICore::settings(), splashScreen);
 
     // Serial Make Init ///////////////////////////////////////////////////////
@@ -1858,6 +1857,92 @@ void OmniaCreatorPlugin::openFileOrProject()
     }
 }
 
+//void OmniaCreatorPlugin::updateOpenBuildOutputFolder()
+//{
+//    m_openBuildOutputFolder->action()->setEnabled(false);
+
+//    if((!m_make->getProjectFPath().isEmpty())
+//    && QDir(m_make->getGenCMakeBuildFolder()).exists())
+//    {
+//        m_openBuildOutputFolder->action()->setEnabled(true);
+//    }
+//}
+
+//void OmniaCreatorPlugin::openBuildOutputFolder()
+//{
+//    if(!QDesktopServices::openUrl(QUrl::fromLocalFile(
+//    m_make->getGenCMakeBuildFolder())))
+//    {
+//        QMessageBox::critical(Core::ICore::mainWindow(),
+//        tr("Open Failed"), tr("Project not configured!"));
+//    }
+//}
+
+//void OmniaCreatorPlugin::updateOpenBuildOutputFile()
+//{
+//    m_openBuildOutputFile->action()->setEnabled(false);
+
+//    CMakeProjectManager::Internal::CMakeProject *project =
+//    qobject_cast<CMakeProjectManager::Internal::CMakeProject *>
+//    (ProjectExplorer::SessionManager::startupProject());
+
+//    if(!project)
+//    {
+//        project = qobject_cast<CMakeProjectManager::Internal::CMakeProject *>
+//        (ProjectExplorer::ProjectExplorerPlugin::currentProject());
+
+//        if(!project)
+//        {
+//            return;
+//        }
+//    }
+
+//    foreach(const QString &title, project->buildTargetTitles(true))
+//    {
+//        QString file = project->buildTargetForTitle(title).executable;
+
+//        if(QFileInfo(file).exists())
+//        {
+//            m_openBuildOutputFile->action()->setEnabled(true);
+
+//            break;
+//        }
+//    }
+//}
+
+//void OmniaCreatorPlugin::openBuildOutputFile()
+//{
+//    CMakeProjectManager::Internal::CMakeProject *project =
+//    qobject_cast<CMakeProjectManager::Internal::CMakeProject *>
+//    (ProjectExplorer::SessionManager::startupProject());
+
+//    if(!project)
+//    {
+//        project = qobject_cast<CMakeProjectManager::Internal::CMakeProject *>
+//        (ProjectExplorer::ProjectExplorerPlugin::currentProject());
+
+//        if(!project)
+//        {
+//            QMessageBox::critical(Core::ICore::mainWindow(),
+//            tr("Open Failed"), tr("Project not configured!"));
+
+//            return;
+//        }
+//    }
+
+//    foreach(const QString &title, project->buildTargetTitles(true))
+//    {
+//        QString file = project->buildTargetForTitle(title).executable;
+
+//        if(QFileInfo(file).exists())
+//        {
+//            Core::EditorManager::openEditor(file);
+
+//            break;
+//        }
+//    }
+//}
+
 void OmniaCreatorPlugin::boardMenuAboutToShow()
 {
     bool portOpen = m_port->getPort();
@@ -2976,6 +3061,47 @@ void OmniaCreatorPlugin::projectManagerSetup()
             // widget->insertCornerWidget(3, actionBar3);
         }
     }
+
+    Core::ActionManager::actionContainer(
+    ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->addSeparator();
+
+//    // Open Build Output Folder //
+//    {
+//        m_openBuildOutputFolder = Core::ActionManager::registerAction(
+//        new QAction(tr("Open Build Output Folder"), this),
+//        OPEN_BUILD_OUTPUT_FOLDER_ID,
+//        Core::Context(Core::Constants::C_GLOBAL));
+
+//        Core::ActionManager::actionContainer(
+//        ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->addAction(
+//        m_openBuildOutputFolder->action());
+
+//        connect(m_openBuildOutputFolder->action(), SIGNAL(triggered()),
+//                this, SLOT(openBuildOutputFolder()));
+
+//        connect(Core::ActionManager::actionContainer(
+//        ProjectExplorer::Constants::M_BUILDPROJECT)->menu(),
+//        SIGNAL(aboutToShow()), this, SLOT(updateOpenBuildOutputFolder()));
+//    }
+
+//    // Open Build Output File //
+//    {
+//        m_openBuildOutputFile = Core::ActionManager::registerAction(
+//        new QAction(tr("Open Build Output File"), this),
+//        OPEN_BUILD_OUTPUT_FILE_ID,
+//        Core::Context(Core::Constants::C_GLOBAL));
+
+//        Core::ActionManager::actionContainer(
+//        ProjectExplorer::Constants::M_BUILDPROJECT)->menu()->addAction(
+//        m_openBuildOutputFile->action());
+
+//        connect(m_openBuildOutputFile->action(), SIGNAL(triggered()),
+//                this, SLOT(openBuildOutputFile()));
+
+//        connect(Core::ActionManager::actionContainer(
+//        ProjectExplorer::Constants::M_BUILDPROJECT)->menu(),
+//        SIGNAL(aboutToShow()), this, SLOT(updateOpenBuildOutputFile()));
+//    }
 }
 
 void OmniaCreatorPlugin::environmentSetup()
@@ -3203,7 +3329,7 @@ void OmniaCreatorPlugin::updateExamples()
 
             if(!actionList.isEmpty())
             {
-                QAction *label=new QAction(tr("System Library Examples"), menu);
+                QAction *label=new QAction(tr("System Library Examples"),menu);
                 label->setDisabled(true);
 
                 menu->addAction(label);
@@ -3264,9 +3390,9 @@ void OmniaCreatorPlugin::updateExamples()
         }
     }
 
-    // Propeller Examples
+    // Propeller C/C++ Examples
     {
-        QMenu *menu = new QMenu(tr("Propeller"), m_examplesMenu->menu());
+        QMenu *menu = new QMenu(tr("Propeller C/C++"), m_examplesMenu->menu());
 
         {
             QList<QAction *> actionList = entryList(
@@ -3339,7 +3465,7 @@ void OmniaCreatorPlugin::updateExamples()
 
             if(!actionList.isEmpty())
             {
-                QAction *label=new QAction(tr("System Library Examples"), menu);
+                QAction *label=new QAction(tr("System Library Examples"),menu);
                 label->setDisabled(true);
 
                 menu->addAction(label);
@@ -3399,6 +3525,152 @@ void OmniaCreatorPlugin::updateExamples()
             m_examplesMenu->menu()->addMenu(menu);
         }
     }
+
+    // Propeller SPIN Examples
+    {
+        QMenu *menu = new QMenu(tr("Propeller SPIN"), m_examplesMenu->menu());
+
+        {
+            QList<QAction *> actionList = entryList(
+            QDir::fromNativeSeparators(QDir::cleanPath(
+            QApplication::applicationDirPath() +
+            "/../../../tools/propeller/propeller-gcc/spin/_Demos")),
+            QStringList() << "*.spin");
+
+            actionList += entryList(
+            QDir::fromNativeSeparators(QDir::cleanPath(
+            QApplication::applicationDirPath() +
+            "/../../../tools/propeller/propeller-gcc/spin/_Examples")),
+            QStringList() << "*.spin");
+
+            if(!actionList.isEmpty())
+            {
+                QAction *label=new QAction(tr("System Examples"), menu);
+                label->setDisabled(true);
+
+                menu->addAction(label);
+                menu->addSeparator();
+                menu->addActions(actionList);
+            }
+        }
+
+        menu->addSeparator();
+
+        {
+            QList<QAction *> actionList = entryList(
+            QDir::fromNativeSeparators(QDir::cleanPath(
+            m_make->getWorkspaceFolder() +
+            "/spin/_Demos")),
+            QStringList() << "*.spin");
+
+            actionList += entryList(
+            QDir::fromNativeSeparators(QDir::cleanPath(
+            m_make->getWorkspaceFolder() +
+            "/spin/_Examples")),
+            QStringList() << "*.spin");
+
+            if(!actionList.isEmpty())
+            {
+                QAction *label=new QAction(tr("User Examples"), menu);
+                label->setDisabled(true);
+
+                menu->addAction(label);
+                menu->addSeparator();
+                menu->addActions(actionList);
+            }
+        }
+
+        menu->addSeparator();
+
+        {
+            QList<QAction *> actionList;
+
+            QString topPath = QDir::fromNativeSeparators(QDir::cleanPath(
+            QApplication::applicationDirPath() +
+            "/../share/qtcreator/libraries"));
+
+            foreach(const QString &itemName,
+            QDir(topPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot,
+            QDir::Name | QDir::DirsFirst | QDir::LocaleAware))
+            {
+                QString path = QDir::fromNativeSeparators(QDir::cleanPath(
+                topPath + QDir::separator() + itemName));
+
+                QList<QAction *> actionList2 = entryList(
+                QDir::fromNativeSeparators(QDir::cleanPath(
+                path + "/examples")),
+                QStringList() << "*.spin");
+
+                if(!actionList2.isEmpty())
+                {
+                    QMenu *menu2 = new QMenu(QDir(path).dirName(), menu);
+
+                    menu2->addActions(actionList2);
+                    actionList.append(menu2->menuAction());
+                }
+            }
+
+            if(!actionList.isEmpty())
+            {
+                QAction *label=new QAction(tr("System Library Examples"),menu);
+                label->setDisabled(true);
+
+                menu->addAction(label);
+                menu->addSeparator();
+                menu->addActions(actionList);
+            }
+        }
+
+        menu->addSeparator();
+
+        {
+            QList<QAction *> actionList;
+
+            QString topPath = QDir::fromNativeSeparators(QDir::cleanPath(
+            m_make->getWorkspaceFolder() +
+            "/libraries"));
+
+            foreach(const QString &itemName,
+            QDir(topPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot,
+            QDir::Name | QDir::DirsFirst | QDir::LocaleAware))
+            {
+                QString path = QDir::fromNativeSeparators(QDir::cleanPath(
+                topPath + QDir::separator() + itemName));
+
+                QList<QAction *> actionList2 = entryList(
+                QDir::fromNativeSeparators(QDir::cleanPath(
+                path + "/examples")),
+                QStringList() << "*.spin");
+
+                if(actionList2.size())
+                {
+                    QMenu *menu2 = new QMenu(QDir(path).dirName());
+
+                    menu2->addActions(actionList2);
+                    actionList.append(menu2->menuAction());
+                }
+            }
+
+            if(!actionList.isEmpty())
+            {
+                QAction *label=new QAction(tr("User Library Examples"), menu);
+                label->setDisabled(true);
+
+                menu->addAction(label);
+                menu->addSeparator();
+                menu->addActions(actionList);
+            }
+        }
+
+        if(menu->isEmpty())
+        {
+            delete menu;
+        }
+        else
+        {
+            m_examplesMenu->menu()->addMenu(menu);
+        }
+    }
 }
 
 QList<QAction *> OmniaCreatorPlugin::entryList(const QString &topPath,
@@ -3418,19 +3690,21 @@ QList<QAction *> OmniaCreatorPlugin::entryList(const QString &topPath,
         {
             QList<QAction *> actionList2 = entryList(path, nameFilters);
 
-            if(actionList2.size() > 1)
+            if(actionList2.size() >= 1)
             {
-                QMenu *menu =
-                new QMenu(QDir(path).dirName(), NULL);
+                if((actionList2.size() == 1)
+                && (QDir(path).dirName() == actionList2.first()->text()))
+                {
+                    actionList.append(actionList2.first());
+                }
+                else
+                {
+                    QMenu *menu =
+                    new QMenu(QDir(path).dirName(), NULL);
 
-                menu->addActions(actionList2);
-                actionList.append(menu->menuAction());
-            }
-            else if((actionList2.size() > 0)
-            && (QDir(path).dirName()
-            == actionList2.first()->text()))
-            {
-                actionList.append(actionList2.first());
+                    menu->addActions(actionList2);
+                    actionList.append(menu->menuAction());
+                }
             }
         }
         else
@@ -4002,6 +4276,34 @@ void OmniaCreatorPlugin::buildClicked()
 
 void OmniaCreatorPlugin::runClicked()
 {
+    ProjectExplorer::BuildManager *manager =
+    qobject_cast<ProjectExplorer::BuildManager *>
+    (ProjectExplorer::BuildManager::instance());
+
+    connect(manager, SIGNAL(buildQueueFinished(bool)),
+    this, SLOT(runClickedHelper(bool)));
+
+    buildClicked();
+}
+
+void OmniaCreatorPlugin::runClickedHelper(bool buildSuccess)
+{
+    {
+        ProjectExplorer::BuildManager *manager =
+        qobject_cast<ProjectExplorer::BuildManager *>
+        (ProjectExplorer::BuildManager::instance());
+
+        disconnect(manager, SIGNAL(buildQueueFinished(bool)),
+        this, SLOT(runClickedHelper(bool)));
+    }
+
+    if(!buildSuccess)
+    {
+        return;
+    }
+
+    // Run Clicked ////////////////////////////////////////////////////////////
+
     if(m_make->getProjectCMakeFile().isEmpty())
     {
         QMessageBox::warning(Core::ICore::mainWindow(), tr("Run Halted"),
