@@ -5361,13 +5361,15 @@ bool SerialOscilloscope::addCurveData(int plottable,
         {
             if(myPlottable->m_coordinateSystem == CS_POLAR)
             {
+                double temp = key;
+
                 if(myPlottable->m_angleUnits == AU_DEGREES)
                 {
-                    key = qDegreesToRadians(key);
+                    temp = qDegreesToRadians(temp);
                 }
 
-                key = value * qCos(key) * myPlottable->m_scaler;
-                value = value * qSin(key) * myPlottable->m_scaler;
+                key = value * qCos(temp) * myPlottable->m_scaler;
+                value = value * qSin(temp) * myPlottable->m_scaler;
             }
             else
             {
@@ -5421,13 +5423,15 @@ bool SerialOscilloscope::addCurveData(int plottable,
 
             if(myPlottable->m_coordinateSystem == CS_POLAR)
             {
+                double temp = key;
+
                 if(myPlottable->m_angleUnits == AU_DEGREES)
                 {
-                    key = qDegreesToRadians(key);
+                    temp = qDegreesToRadians(temp);
                 }
 
-                key = value * qCos(key) * myPlottable->m_scaler;
-                value = value * qSin(key) * myPlottable->m_scaler;
+                key = value * qCos(temp) * myPlottable->m_scaler;
+                value = value * qSin(temp) * myPlottable->m_scaler;
             }
             else
             {
