@@ -3401,6 +3401,18 @@ void OmniaCreatorPlugin::updateExamples()
             "/../../../tools/propeller/Workspace/Learn/Examples")),
             QStringList() << "*.side");
 
+            actionList += entryList(
+            QDir::fromNativeSeparators(QDir::cleanPath(
+            QApplication::applicationDirPath() +
+            "/../../../tools/propeller/Workspace/My Projects")),
+            QStringList() << "*.side");
+
+            actionList += entryList(
+            QDir::fromNativeSeparators(QDir::cleanPath(
+            QApplication::applicationDirPath() +
+            "/../../../tools/propeller/Workspace/Propeller GCC Demos")),
+            QStringList() << "*.side");
+
             if(!actionList.isEmpty())
             {
                 QAction *label=new QAction(tr("System Examples"), menu);
@@ -3420,6 +3432,20 @@ void OmniaCreatorPlugin::updateExamples()
             QStandardPaths::writableLocation(
             QStandardPaths::DocumentsLocation) +
             "/SimpleIDE/Learn/Examples")),
+            QStringList() << "*.side");
+
+            actionList += entryList(
+            QDir::fromNativeSeparators(QDir::cleanPath(
+            QStandardPaths::writableLocation(
+            QStandardPaths::DocumentsLocation) +
+            "/SimpleIDE/My Projects")),
+            QStringList() << "*.side");
+
+            actionList += entryList(
+            QDir::fromNativeSeparators(QDir::cleanPath(
+            QStandardPaths::writableLocation(
+            QStandardPaths::DocumentsLocation) +
+            "/SimpleIDE/Propeller GCC Demos")),
             QStringList() << "*.side");
 
             if(!actionList.isEmpty())
