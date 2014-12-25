@@ -117,7 +117,7 @@ void SerialMake::setWorkspaceFolder(const QString &folder)
         settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
         settings.setValue(SERIAL_MAKE_KEY_WORKSPACE_FOLDER, mFolder);
 
-        updateProject2();
+        QTimer::singleShot(0, this, SLOT(updateProject2()));
     }
 }
 
@@ -183,7 +183,7 @@ void SerialMake::setProjectFPath(const QString &fpath) // file or folder path
         settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
         settings.setValue(SERIAL_MAKE_KEY_PROJECT_FPATH, mFPath);
 
-        updateProject2();
+        QTimer::singleShot(0, this, SLOT(updateProject2()));
     }
 }
 
@@ -248,7 +248,7 @@ void SerialMake::setProjectPortName(const QString &portName)
         settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
         settings.setValue(SERIAL_MAKE_KEY_PROJECT_PORT_NAME, mPortName);
 
-        updateProject2();
+        QTimer::singleShot(0, this, SLOT(updateProject2()));
     }
 }
 
@@ -293,7 +293,7 @@ void SerialMake::setProjectCMakeFile(const QString &cmakeFile) // file path
         settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
         settings.setValue(SERIAL_MAKE_KEY_PROJECT_CMAKE_FILE, mCMakeFile);
 
-        updateProject2();
+        QTimer::singleShot(0, this, SLOT(updateProject2()));
     }
 }
 

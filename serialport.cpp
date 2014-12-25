@@ -26,6 +26,12 @@ sizeof(SerialPort::m_demoPortNameList) / sizeof(const char *);
 SerialPort::SerialPort(QWidget *widget,
 QSettings *settings, QObject *parent) : QObject(parent)
 {
+    qRegisterMetaType< QPair<QString, QString> >
+    ("QPair<QString, QString>");
+
+    qRegisterMetaType< QList< QPair<QString, QString> > >
+    ("QList< QPair<QString, QString> >");
+
     m_port = NULL;
 
     m_widget = widget;
@@ -1198,12 +1204,58 @@ bool SerialPort::isSerialPort(QIODevice *port)
 
 void SerialPort::scanDemoPorts()
 {
-    setDemoPortList(availableDemoPorts());
+    DemoPortScanner *scanner = new DemoPortScanner(this);
+    QThread *thread = new QThread;
+
+    scanner->moveToThread(thread);
+
+    connect(thread, SIGNAL(started()), scanner, SLOT(scan()));
+
+    connect(scanner, SIGNAL(availablePorts(QList<QPair<QString,QString> >)),
+            this, SLOT(scanDemoPorts2(QList<QPair<QString,QString> >)));
+
+    connect(scanner, SIGNAL(availablePorts(QList<QPair<QString,QString> >)),
+            thread, SLOT(quit()));
+
+    connect(scanner, SIGNAL(availablePorts(QList<QPair<QString,QString> >)),
+            scanner, SLOT(deleteLater()));
+
+    connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater()));
+
+    thread->start();
+}
+
+void SerialPort::scanDemoPorts2(QList< QPair<QString, QString> > list)
+{
+    setDemoPortList(list);
 }
 
 void SerialPort::scanSerialPorts()
 {
-    setSerialPortList(availableSerialPorts());
+    SerialPortScanner *scanner = new SerialPortScanner(this);
+    QThread *thread = new QThread;
+
+    scanner->moveToThread(thread);
+
+    connect(thread, SIGNAL(started()), scanner, SLOT(scan()));
+
+    connect(scanner, SIGNAL(availablePorts(QList<QPair<QString,QString> >)),
+            this, SLOT(scanSerialPorts2(QList<QPair<QString,QString> >)));
+
+    connect(scanner, SIGNAL(availablePorts(QList<QPair<QString,QString> >)),
+            thread, SLOT(quit()));
+
+    connect(scanner, SIGNAL(availablePorts(QList<QPair<QString,QString> >)),
+            scanner, SLOT(deleteLater()));
+
+    connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater()));
+
+    thread->start();
+}
+
+void SerialPort::scanSerialPorts2(QList< QPair<QString, QString> > list)
+{
+    setSerialPortList(list);
 }
 
 void SerialPort::attachOverride(QIODevice *port)
