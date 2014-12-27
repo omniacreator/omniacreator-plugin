@@ -915,15 +915,15 @@ void OmniaCreatorPlugin::extensionsInitialized()
 bool OmniaCreatorPlugin::delayedInitialize()
 {
     ///////////////////////////////////////////////////////////////////////////
-
-    // Synchronize SerialMake And SessionManager
+    // Synchronize SerialMake And SessionManager //////////////////////////////
 
     ProjectExplorer::Project *project =
     ProjectExplorer::SessionManager::startupProject();
 
     if(!project)
     {
-        project = ProjectExplorer::ProjectExplorerPlugin::currentProject();
+        project =
+        ProjectExplorer::ProjectExplorerPlugin::currentProject();
     }
 
     if(bool(project) && m_make->getProjectFPath().isEmpty())
