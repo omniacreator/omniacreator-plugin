@@ -155,7 +155,7 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
     connect(m_make, SIGNAL(workspaceOrProjectSettingsChanged()),
             this, SLOT(cmakeChanged()));
 
-    m_runClicked = false;
+    m_runClicked = false; m_cmakeChangedLock = false;
     m_projectModel = new QFileSystemModel(this);
 
     ///////////////////////////////////////////////////////////////////////
@@ -492,7 +492,7 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
         fileMenu->addMenu(m_examplesMenu,
         Core::Constants::G_FILE_PROJECT);
 
-        connect(m_examplesMenu->menu(), SIGNAL(aboutToShow()),
+        connect(fileMenu->menu(), SIGNAL(aboutToShow()),
                 this, SLOT(updateExamples()));
 
         connect(m_examplesMenu->menu(), SIGNAL(triggered(QAction*)),
@@ -512,7 +512,7 @@ bool OmniaCreatorPlugin::initialize(const QStringList &arguments,
         fileMenu->addMenu(m_documentsMenu,
         Core::Constants::G_FILE_PROJECT);
 
-        connect(m_documentsMenu->menu(), SIGNAL(aboutToShow()),
+        connect(fileMenu->menu(), SIGNAL(aboutToShow()),
                 this, SLOT(updateDocuments()));
 
         connect(m_documentsMenu->menu(), SIGNAL(triggered(QAction*)),
@@ -914,6 +914,26 @@ void OmniaCreatorPlugin::extensionsInitialized()
 
 bool OmniaCreatorPlugin::delayedInitialize()
 {
+    ///////////////////////////////////////////////////////////////////////////
+
+    // Synchronize SerialMake And SessionManager
+
+    ProjectExplorer::Project *project =
+    ProjectExplorer::SessionManager::startupProject();
+
+    if(!project)
+    {
+        project = ProjectExplorer::ProjectExplorerPlugin::currentProject();
+    }
+
+    if(bool(project) && m_make->getProjectFPath().isEmpty())
+    {
+        ProjectExplorer::ProjectExplorerPlugin::
+        instance()->unloadProject(project);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
     QSettings settings(Core::ICore::settings()->fileName(),
                        Core::ICore::settings()->format());
 
@@ -3816,6 +3836,8 @@ void OmniaCreatorPlugin::updateExamples()
     }
 
     m_examplesMenu->menu()->addSeparator();
+
+    m_examplesMenu->menu()->setDisabled(m_examplesMenu->menu()->isEmpty());
 }
 
 void OmniaCreatorPlugin::updateDocuments()
@@ -4002,6 +4024,8 @@ void OmniaCreatorPlugin::updateDocuments()
     }
 
     m_documentsMenu->menu()->addSeparator();
+
+    m_documentsMenu->menu()->setDisabled(m_documentsMenu->menu()->isEmpty());
 }
 
 QList<QAction *> OmniaCreatorPlugin::entryList(const QString &topPath,
@@ -4139,8 +4163,10 @@ void OmniaCreatorPlugin::closeProject2()
 
 void OmniaCreatorPlugin::cmakeChanged()
 {
-    if(!m_runClicked)
+    if((!m_cmakeChangedLock) && (!m_runClicked))
     {
+        m_cmakeChangedLock = true;
+
         ProjectExplorer::Project *project =
         ProjectExplorer::SessionManager::startupProject();
 
@@ -4154,7 +4180,7 @@ void OmniaCreatorPlugin::cmakeChanged()
         {
             if(project->projectFilePath() == m_make->getGenCMakeFile())
             {
-                return;
+                m_cmakeChangedLock = false; return;
             }
 
             ProjectExplorer::ProjectExplorerPlugin::
@@ -4228,6 +4254,8 @@ void OmniaCreatorPlugin::cmakeChanged()
 
         m_codeSpaceUsed->setText(tr("..."));
         m_dataSpaceUsed->setText(tr("..."));
+
+        m_cmakeChangedLock = false;
     }
 }
 
@@ -4880,6 +4908,8 @@ void OmniaCreatorPlugin::messageHandler(QtMsgType type, const char *text)
     ignored << "No deployment configuration factory found for target id";
                // This might not be harmless...
     ignored << "SOFT ASSERT: \"m_outputParserChain\" in file";
+               // This might not be harmless...
+    ignored << "QFSFileEngine::open: No file name specified";
                // This might not be harmless...
 
     foreach(const QString &string, ignored)

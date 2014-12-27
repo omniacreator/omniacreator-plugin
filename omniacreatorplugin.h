@@ -235,7 +235,7 @@ private:
     SerialPort *m_port;
     SerialEscape *m_escape;
 
-    bool m_runClicked;
+    bool m_runClicked, m_cmakeChangedLock;
     QFileSystemModel *m_projectModel;
 
     QStatusBar *m_status;
