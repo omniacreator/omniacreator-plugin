@@ -460,8 +460,8 @@ void SerialMake::updateProject2()
         QString text = "cmake_minimum_required(VERSION \"2.8\")\n";
         text.append("cmake_policy(VERSION \"2.8\")\n\n");
 
-        text.append(QString("set(CMAKE_MAKE_PROGRAM \"%L1\")\n\n").
-        arg(getNinjaPath()));
+        text.append(QString("set(CMAKE_MAKE_PROGRAM \"%L1\" "
+        "CACHE INTERNAL CMAKE_MAKE_PROGRAM FORCE)\n\n").arg(getNinjaPath()));
 
         text.append(QString("set(IDE_FOLDER \"%L1\")\n").
         arg(QDir::fromNativeSeparators(QDir::cleanPath(
@@ -508,7 +508,7 @@ void SerialMake::updateProject2()
             arg(getProjectCMakeFile()));
         }
 
-        text.append(QString("project(\"%L1\")\n\n").
+        text.append(QString("project(\"%L1\" C CXX ASM)\n\n").
         arg((QFileInfo(getProjectFPath()).isDir() ?
         QDir(getProjectFPath()).dirName() :
         QFileInfo(getProjectFPath()).completeBaseName()).

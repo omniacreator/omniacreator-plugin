@@ -19,12 +19,11 @@
 ****************************************************************************
 **           Author: Emanuel Eichhammer                                   **
 **  Website/Contact: http://www.qcustomplot.com/                          **
-**             Date: 11.10.14                                             **
-**          Version: 1.3.0-beta                                           **
+**             Date: 27.12.14                                             **
+**          Version: 1.3.0                                                **
 ****************************************************************************/
 
 #include "qcustomplot.h"
-
 
 
 
@@ -1502,121 +1501,6 @@ bool QCPRange::validRange(const QCPRange &range)
           qAbs(range.lower-range.upper) > minRange &&
           qAbs(range.lower-range.upper) < maxRange);
 }
-
-
-/*! \page thelayoutsystem The Layout System
- 
-  The layout system is responsible for positioning and scaling layout elements such as axis rects,
-  legends and plot titles in a QCustomPlot.
-
-  \section layoutsystem-classesandmechanisms Classes and mechanisms
-  
-  The layout system is based on the abstract base class \ref QCPLayoutElement. All objects that
-  take part in the layout system derive from this class, either directly or indirectly.
-  
-  Since QCPLayoutElement itself derives from \ref QCPLayerable, a layout element may draw its own
-  content. However, it is perfectly possible for a layout element to only serve as a structuring
-  and/or positioning element, not drawing anything on its own.
-  
-  \subsection layoutsystem-rects Rects of a layout element
-  
-  A layout element is a rectangular object described by two rects: the inner rect (\ref
-  QCPLayoutElement::rect) and the outer rect (\ref QCPLayoutElement::setOuterRect). The inner rect
-  is calculated automatically by applying the margin (\ref QCPLayoutElement::setMargins) inward
-  from the outer rect. The inner rect is meant for main content while the margin area may either be
-  left blank or serve for displaying peripheral graphics. For example, \ref QCPAxisRect positions
-  the four main axes at the sides of the inner rect, so graphs end up inside it and the axis labels
-  and tick labels are in the margin area.
-  
-  \subsection layoutsystem-margins Margins
-  
-  Each layout element may provide a mechanism to automatically determine its margins. Internally,
-  this is realized with the \ref QCPLayoutElement::calculateAutoMargin function which takes a \ref
-  QCP::MarginSide and returns an integer value which represents the ideal margin for the specified
-  side. The automatic margin will be used on the sides specified in \ref
-  QCPLayoutElement::setAutoMargins. By default, it is set to \ref QCP::msAll meaning automatic
-  margin calculation is enabled for all four sides. In this case, a minimum margin may be set with
-  \ref QCPLayoutElement::setMinimumMargins, to prevent the automatic margin mechanism from setting
-  margins smaller than desired for a specific situation. If automatic margin calculation is unset
-  for a specific side, the margin of that side can be controlled directy via \ref
-  QCPLayoutElement::setMargins.
-  
-  If multiple layout ements are arranged next to or beneath each other, it may be desirable to
-  align their inner rects on certain sides. Since they all might have different automatic margins,
-  this usually isn't the case. The class \ref QCPMarginGroup and \ref
-  QCPLayoutElement::setMarginGroup fix this by allowing to synchronize multiple margins. See the
-  documentation there for details.
-  
-  \subsection layoutsystem-layout Layouts
-  
-  As mentioned, a QCPLayoutElement may have an arbitrary number of child layout elements and in
-  princple can have the only purpose to manage/arrange those child elements. This is what the
-  subclass \ref QCPLayout specializes on. It is a QCPLayoutElement itself but has no visual
-  representation. It defines an interface to add, remove and manage child layout elements.
-  QCPLayout isn't a usable layout though, it's an abstract base class that concrete layouts derive
-  from, like \ref QCPLayoutGrid which arranges its child elements in a grid and \ref QCPLayoutInset
-  which allows placing child elements freely inside its rect.
-  
-  Since a QCPLayout is a layout element itself, it may be placed inside other layouts. This way,
-  complex hierarchies may be created, offering very flexible arrangements.
-  
-  Below is a sketch of the default \ref QCPLayoutGrid accessible via \ref QCustomPlot::plotLayout.
-  It shows how two child layout elements are placed inside the grid layout next to each other in
-  cells (0, 0) and (0, 1).
-  
-  \image html LayoutsystemSketch.png 
-  
-  \subsection layoutsystem-plotlayout The top level plot layout
-  
-  Every QCustomPlot has one top level layout of type \ref QCPLayoutGrid. It is accessible via \ref
-  QCustomPlot::plotLayout and contains (directly or indirectly via other sub-layouts) all layout
-  elements in the QCustomPlot. By default, this top level grid layout contains a single cell which
-  holds the main axis rect.
- 
-  \subsection layoutsystem-examples Examples
-  
-  <b>Adding a plot title</b> is a typical and simple case to demonstrate basic workings of the layout system.
-  \code
-  // first we create and prepare a plot title layout element:
-  QCPPlotTitle *title = new QCPPlotTitle(customPlot);
-  title->setText("Plot Title Example");
-  title->setFont(QFont("sans", 12, QFont::Bold));
-  // then we add it to the main plot layout:
-  customPlot->plotLayout()->insertRow(0); // insert an empty row above the axis rect
-  customPlot->plotLayout()->addElement(0, 0, title); // place the title in the empty cell we've just created
-  \endcode
-  \image html layoutsystem-addingplottitle.png
-
-  <b>Arranging multiple axis rects</b> actually is the central purpose of the layout system.
-  \code
-  customPlot->plotLayout()->clear(); // let's start from scratch and remove the default axis rect
-  // add the first axis rect in second row (row index 1):
-  QCPAxisRect *bottomAxisRect = new QCPAxisRect(customPlot);
-  customPlot->plotLayout()->addElement(1, 0, bottomAxisRect);
-  // create a sub layout that we'll place in first row:
-  QCPLayoutGrid *subLayout = new QCPLayoutGrid;
-  customPlot->plotLayout()->addElement(0, 0, subLayout);
-  // add two axis rects in the sub layout next to each other:
-  QCPAxisRect *leftAxisRect = new QCPAxisRect(customPlot);
-  QCPAxisRect *rightAxisRect = new QCPAxisRect(customPlot);
-  subLayout->addElement(0, 0, leftAxisRect);
-  subLayout->addElement(0, 1, rightAxisRect);
-  subLayout->setColumnStretchFactor(0, 3); // left axis rect shall have 60% of width
-  subLayout->setColumnStretchFactor(1, 2); // right one only 40% (3:2 = 60:40)
-  // since we've created the axis rects and axes from scratch, we need to place them on
-  // according layers, if we don't want the grid to be drawn above the axes etc.
-  // place the axis on "axes" layer and grids on the "grid" layer, which is below "axes":
-  QList<QCPAxis*> allAxes;
-  allAxes << bottomAxisRect->axes() << leftAxisRect->axes() << rightAxisRect->axes();
-  foreach (QCPAxis *axis, allAxes)
-  {
-    axis->setLayer("axes");
-    axis->grid()->setLayer("grid");
-  }
-  \endcode
-  \image html layoutsystem-multipleaxisrects.png
-  
-*/
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3803,7 +3687,7 @@ void QCPLineEnding::draw(QCPPainter *painter, const QVector2D &pos, double angle
   You shouldn't instantiate grids on their own, since every QCPAxis brings its own QCPGrid.
 */
 QCPGrid::QCPGrid(QCPAxis *parentAxis) :
-  QCPLayerable(parentAxis->parentPlot(), "", parentAxis),
+  QCPLayerable(parentAxis->parentPlot(), QString(), parentAxis),
   mParentAxis(parentAxis)
 {
   // warning: this is called in QCPAxis constructor, so parentAxis members should not be accessed/called
@@ -4104,10 +3988,13 @@ void QCPGrid::drawSubGridLines(QCPPainter *painter) const
 
 /*!
   Constructs an Axis instance of Type \a type for the axis rect \a parent.
-  You shouldn't instantiate axes directly, rather use \ref QCPAxisRect::addAxis.
+  
+  Usually it isn't necessary to instantiate axes directly, because you can let QCustomPlot create
+  them for you with \ref QCPAxisRect::addAxis. If you want to use own QCPAxis-subclasses however,
+  create them manually and then inject them also via \ref QCPAxisRect::addAxis.
 */
 QCPAxis::QCPAxis(QCPAxisRect *parent, AxisType type) :
-  QCPLayerable(parent->parentPlot(), "", parent),
+  QCPLayerable(parent->parentPlot(), QString(), parent),
   // axis base:
   mAxisType(type),
   mAxisRect(parent),
@@ -4118,7 +4005,7 @@ QCPAxis::QCPAxis(QCPAxisRect *parent, AxisType type) :
   mBasePen(QPen(Qt::black, 0, Qt::SolidLine, Qt::SquareCap)),
   mSelectedBasePen(QPen(Qt::blue, 2)),
   // axis label:
-  mLabel(""),
+  mLabel(),
   mLabelFont(mParentPlot->font()),
   mSelectedLabelFont(QFont(mLabelFont.family(), mLabelFont.pointSize(), QFont::Bold)),
   mLabelColor(Qt::black),
@@ -4131,7 +4018,7 @@ QCPAxis::QCPAxis(QCPAxisRect *parent, AxisType type) :
   mSelectedTickLabelFont(QFont(mTickLabelFont.family(), mTickLabelFont.pointSize(), QFont::Bold)),
   mTickLabelColor(Qt::black),
   mSelectedTickLabelColor(Qt::blue),
-  mDateTimeFormat("hh:mm:ss\ndd.MM.yy"),
+  mDateTimeFormat(QLatin1String("hh:mm:ss\ndd.MM.yy")),
   mDateTimeSpec(Qt::LocalTime),
   mNumberPrecision(6),
   mNumberFormatChar('g'),
@@ -4215,9 +4102,9 @@ QString QCPAxis::numberFormat() const
   result.append(mNumberFormatChar);
   if (mNumberBeautifulPowers)
   {
-    result.append("b");
+    result.append(QLatin1Char('b'));
     if (mAxisPainter->numberMultiplyCross)
-      result.append("c");
+      result.append(QLatin1Char('c'));
   }
   return result;
 }
@@ -4816,10 +4703,10 @@ void QCPAxis::setNumberFormat(const QString &formatCode)
   mCachedMarginValid = false;
   
   // interpret first char as number format char:
-  QString allowedFormatChars = "eEfgG";
+  QString allowedFormatChars(QLatin1String("eEfgG"));
   if (allowedFormatChars.contains(formatCode.at(0)))
   {
-    mNumberFormatChar = formatCode.at(0).toLatin1();
+    mNumberFormatChar = QLatin1Char(formatCode.at(0).toLatin1());
   } else
   {
     qDebug() << Q_FUNC_INFO << "Invalid number format code (first char not in 'eEfgG'):" << formatCode;
@@ -4833,7 +4720,7 @@ void QCPAxis::setNumberFormat(const QString &formatCode)
   }
   
   // interpret second char as indicator for beautiful decimal powers:
-  if (formatCode.at(1) == 'b' && (mNumberFormatChar == 'e' || mNumberFormatChar == 'g'))
+  if (formatCode.at(1) == QLatin1Char('b') && (mNumberFormatChar == QLatin1Char('e') || mNumberFormatChar == QLatin1Char('g')))
   {
     mNumberBeautifulPowers = true;
   } else
@@ -4848,10 +4735,10 @@ void QCPAxis::setNumberFormat(const QString &formatCode)
   }
   
   // interpret third char as indicator for dot or cross multiplication symbol:
-  if (formatCode.at(2) == 'c')
+  if (formatCode.at(2) == QLatin1Char('c'))
   {
     mAxisPainter->numberMultiplyCross = true;
-  } else if (formatCode.at(2) == 'd')
+  } else if (formatCode.at(2) == QLatin1Char('d'))
   {
     mAxisPainter->numberMultiplyCross = false;
   } else
@@ -5689,7 +5576,7 @@ void QCPAxis::setupTickVectors()
     if (mTickLabelType == ltNumber)
     {
       for (int i=mLowestVisibleTick; i<=mHighestVisibleTick; ++i)
-        mTickVectorLabels[i] = mParentPlot->locale().toString(mTickVector.at(i), mNumberFormatChar, mNumberPrecision);
+        mTickVectorLabels[i] = mParentPlot->locale().toString(mTickVector.at(i), mNumberFormatChar.toLatin1(), mNumberPrecision);
     } else if (mTickLabelType == ltDateTime)
     {
       for (int i=mLowestVisibleTick; i<=mHighestVisibleTick; ++i)
@@ -6465,8 +6352,8 @@ QByteArray QCPAxisPainterPrivate::generateLabelParameterHash() const
   result.append(QByteArray::number((int)tickLabelSide));
   result.append(QByteArray::number((int)substituteExponent));
   result.append(QByteArray::number((int)numberMultiplyCross));
-  result.append(tickLabelColor.name()+QByteArray::number(tickLabelColor.alpha(), 16));
-  result.append(tickLabelFont.toString());
+  result.append(tickLabelColor.name().toLatin1()+QByteArray::number(tickLabelColor.alpha(), 16));
+  result.append(tickLabelFont.toString().toLatin1());
   return result;
 }
 
@@ -6620,7 +6507,7 @@ QCPAxisPainterPrivate::TickLabelData QCPAxisPainterPrivate::getTickLabelData(con
   int ePos = -1;
   if (substituteExponent)
   {
-    ePos = text.indexOf('e');
+    ePos = text.indexOf(QLatin1Char('e'));
     if (ePos > -1)
       useBeautifulPowers = true;
   }
@@ -6634,15 +6521,15 @@ QCPAxisPainterPrivate::TickLabelData QCPAxisPainterPrivate::getTickLabelData(con
     // split text into parts of number/symbol that will be drawn normally and part that will be drawn as exponent:
     result.basePart = text.left(ePos);
     // in log scaling, we want to turn "1*10^n" into "10^n", else add multiplication sign and decimal base:
-    if (abbreviateDecimalPowers && result.basePart == "1")
-      result.basePart = "10";
+    if (abbreviateDecimalPowers && result.basePart == QLatin1String("1"))
+      result.basePart = QLatin1String("10");
     else
-      result.basePart += (numberMultiplyCross ? QString(QChar(215)) : QString(QChar(183))) + "10";
+      result.basePart += (numberMultiplyCross ? QString(QChar(215)) : QString(QChar(183))) + QLatin1String("10");
     result.expPart = text.mid(ePos+1);
     // clip "+" and leading zeros off expPart:
-    while (result.expPart.length() > 2 && result.expPart.at(1) == '0') // length > 2 so we leave one zero when numberFormatChar is 'e'
+    while (result.expPart.length() > 2 && result.expPart.at(1) == QLatin1Char('0')) // length > 2 so we leave one zero when numberFormatChar is 'e'
       result.expPart.remove(1, 1);
-    if (!result.expPart.isEmpty() && result.expPart.at(0) == '+')
+    if (!result.expPart.isEmpty() && result.expPart.at(0) == QLatin1Char('+'))
       result.expPart.remove(0, 1);
     // prepare smaller font for exponent:
     result.expFont = font;
@@ -6951,8 +6838,8 @@ void QCPAxisPainterPrivate::getMaxTickLabelSize(const QFont &font, const QString
   You probably want one of the subclasses like \ref QCPGraph or \ref QCPCurve instead.
 */
 QCPAbstractPlottable::QCPAbstractPlottable(QCPAxis *keyAxis, QCPAxis *valueAxis) :
-  QCPLayerable(keyAxis->parentPlot(), "", keyAxis->axisRect()),
-  mName(""),
+  QCPLayerable(keyAxis->parentPlot(), QString(), keyAxis->axisRect()),
+  mName(),
   mAntialiasedFill(true),
   mAntialiasedScatters(true),
   mAntialiasedErrorBars(false),
@@ -8839,195 +8726,6 @@ QCP::Interaction QCPAbstractItem::selectionCategory() const
 
 
 
-/*! \mainpage %QCustomPlot 1.3.0-beta Documentation
-
-  \image html qcp-doc-logo.png
-  
-  Below is a brief overview of and guide to the classes and their relations. If you are new to
-  QCustomPlot and just want to start using it, it's recommended to look at the tutorials and
-  examples at
- 
-  http://www.qcustomplot.com/
- 
-  This documentation is especially helpful as a reference, when you're familiar with the basic
-  concept of how to use %QCustomPlot and you wish to learn more about specific functionality.
-  See the \ref classoverview "class overview" for diagrams explaining the relationships between
-  the most important classes of the QCustomPlot library.
-  
-  The central widget which displays the plottables and axes on its surface is QCustomPlot. Every
-  QCustomPlot contains four axes by default. They can be accessed via the members \ref
-  QCustomPlot::xAxis "xAxis", \ref QCustomPlot::yAxis "yAxis", \ref QCustomPlot::xAxis2 "xAxis2"
-  and \ref QCustomPlot::yAxis2 "yAxis2", and are of type QCPAxis. QCustomPlot supports an arbitrary
-  number of axes and axis rects, see the documentation of QCPAxisRect for details.
-
-  \section mainpage-plottables Plottables
-  
-  \a Plottables are classes that display any kind of data inside the QCustomPlot. They all derive
-  from QCPAbstractPlottable. For example, the QCPGraph class is a plottable that displays a graph
-  inside the plot with different line styles, scatter styles, filling etc.
-  
-  Since plotting graphs is such a dominant use case, QCustomPlot has a special interface for working
-  with QCPGraph plottables, that makes it very easy to handle them:\n
-  You create a new graph with QCustomPlot::addGraph and access them with QCustomPlot::graph.
-  
-  For all other plottables, you need to use the normal plottable interface:\n
-  First, you create an instance of the plottable you want, e.g.
-  \code
-  QCPCurve *newCurve = new QCPCurve(customPlot->xAxis, customPlot->yAxis);\endcode
-  add it to the customPlot:
-  \code
-  customPlot->addPlottable(newCurve);\endcode
-  and then modify the properties of the newly created plottable via the <tt>newCurve</tt> pointer.
-  
-  Plottables (including graphs) can be retrieved via QCustomPlot::plottable. Since the return type
-  of that function is the abstract base class of all plottables, QCPAbstractPlottable, you will
-  probably want to qobject_cast the returned pointer to the respective plottable subclass. (As
-  usual, if the cast returns zero, the plottable wasn't of that specific subclass.)
-  
-  All further interfacing with plottables (e.g how to set data) is specific to the plottable type.
-  See the documentations of the subclasses: QCPGraph, QCPCurve, QCPBars, QCPStatisticalBox,
-  QCPColorMap, QCPFinancial.
-
-  \section mainpage-axes Controlling the Axes
-  
-  As mentioned, QCustomPlot has four axes by default: \a xAxis (bottom), \a yAxis (left), \a xAxis2
-  (top), \a yAxis2 (right).
-  
-  Their range is handled by the simple QCPRange class. You can set the range with the
-  QCPAxis::setRange function. By default, the axes represent a linear scale. To set a logarithmic
-  scale, set \ref QCPAxis::setScaleType to \ref QCPAxis::stLogarithmic. The logarithm base can be set freely
-  with \ref QCPAxis::setScaleLogBase.
-  
-  By default, an axis automatically creates and labels ticks in a sensible manner. See the
-  following functions for tick manipulation:\n QCPAxis::setTicks, QCPAxis::setAutoTicks,
-  QCPAxis::setAutoTickCount, QCPAxis::setAutoTickStep, QCPAxis::setTickLabels,
-  QCPAxis::setTickLabelType, QCPAxis::setTickLabelRotation, QCPAxis::setTickStep,
-  QCPAxis::setTickLength,...
-  
-  Each axis can be given an axis label (e.g. "Voltage (mV)") with QCPAxis::setLabel.
-  
-  The distance of an axis backbone to the respective viewport border is called its margin.
-  Normally, the margins are calculated automatically. To change this, set
-  \ref QCPAxisRect::setAutoMargins to exclude the respective margin sides, set the margins manually with
-  \ref QCPAxisRect::setMargins. The main axis rect can be reached with \ref QCustomPlot::axisRect().
-  
-  \section mainpage-legend Plot Legend
-  
-  Every QCustomPlot has one QCPLegend (as \ref QCustomPlot::legend) by default. A legend is a small
-  layout element inside the plot which lists the plottables with an icon of the plottable
-  line/symbol and a name (QCPAbstractPlottable::setName). Plottables can be added and removed from
-  the main legend via \ref QCPAbstractPlottable::addToLegend and \ref
-  QCPAbstractPlottable::removeFromLegend. By default, adding a plottable to QCustomPlot
-  automatically adds it to the legend, too. This behaviour can be modified with the
-  QCustomPlot::setAutoAddPlottableToLegend property.
-  
-  The QCPLegend provides an interface to access, add and remove legend items directly, too. See
-  QCPLegend::item, QCPLegend::itemWithPlottable, QCPLegend::addItem, QCPLegend::removeItem for
-  example.
-  
-  Multiple legends are supported via the \link thelayoutsystem layout system\endlink (as a
-  QCPLegend simply is a normal layout element).
-  
-  \section mainpage-userinteraction User Interactions
-  
-  QCustomPlot supports dragging axis ranges with the mouse (\ref
-  QCPAxisRect::setRangeDrag), zooming axis ranges with the mouse wheel (\ref
-  QCPAxisRect::setRangeZoom) and a complete selection mechanism.
-  
-  The availability of these interactions is controlled with \ref QCustomPlot::setInteractions. For
-  details about the interaction system, see the documentation there.
-  
-  Further, QCustomPlot always emits corresponding signals, when objects are clicked or
-  doubleClicked. See \ref QCustomPlot::plottableClick, \ref QCustomPlot::plottableDoubleClick
-  and \ref QCustomPlot::axisClick for example.
-  
-  \section mainpage-items Items
-  
-  Apart from plottables there is another category of plot objects that are important: Items. The
-  base class of all items is QCPAbstractItem. An item sets itself apart from plottables in that
-  it's not necessarily bound to any axes. This means it may also be positioned in absolute pixel
-  coordinates or placed at a relative position on an axis rect. Further, it usually doesn't
-  represent data directly, but acts as decoration, emphasis, description etc.
-  
-  Multiple items can be arranged in a parent-child-hierarchy allowing for dynamical behaviour. For
-  example, you could place the head of an arrow at a fixed plot coordinate, so it always points to
-  some important area in the plot. The tail of the arrow can be anchored to a text item which
-  always resides in the top center of the axis rect, independent of where the user drags the axis
-  ranges. This way the arrow stretches and turns so it always points from the label to the
-  specified plot coordinate, without any further code necessary.
-  
-  For a more detailed introduction, see the QCPAbstractItem documentation, and from there the
-  documentations of the individual built-in items, to find out how to use them.
-  
-  \section mainpage-layoutelements Layout elements and layouts
-  
-  QCustomPlot uses an internal layout system to provide dynamic sizing and positioning of objects like
-  the axis rect(s), legends and the plot title. They are all based on \ref QCPLayoutElement and are arranged by
-  placing them inside a \ref QCPLayout.
-  
-  Details on this topic are given on the dedicated page about \link thelayoutsystem the layout system\endlink.
-  
-  \section mainpage-performancetweaks Performance Tweaks
-  
-  Although QCustomPlot is quite fast, some features like translucent fills, antialiasing and thick
-  lines can cause a significant slow down. If you notice this in your application, here are some
-  thoughts on how to increase performance. By far the most time is spent in the drawing functions,
-  specifically the drawing of graphs. For maximum performance, consider the following (most
-  recommended/effective measures first):
-  
-  \li use Qt 4.8.0 and up. Performance has doubled or tripled with respect to Qt 4.7.4. However
-  QPainter was broken and drawing pixel precise things, e.g. scatters, isn't possible with Qt >=
-  4.8.0. So it's a performance vs. plot quality tradeoff when switching to Qt 4.8.
-  \li To increase responsiveness during dragging, consider setting \ref QCustomPlot::setNoAntialiasingOnDrag to true.
-  \li On X11 (GNU/Linux), avoid the slow native drawing system, use raster by supplying
-  "-graphicssystem raster" as command line argument or calling QApplication::setGraphicsSystem("raster")
-  before creating the QApplication object. (Only available for Qt versions before 5.0)
-  \li On all operating systems, use OpenGL hardware acceleration by supplying "-graphicssystem
-  opengl" as command line argument or calling QApplication::setGraphicsSystem("opengl") (Only
-  available for Qt versions before 5.0). If OpenGL is available, this will slightly decrease the
-  quality of antialiasing, but extremely increase performance especially with alpha
-  (semi-transparent) fills, much antialiasing and a large QCustomPlot drawing surface. Note
-  however, that the maximum frame rate might be constrained by the vertical sync frequency of your
-  monitor (VSync can be disabled in the graphics card driver configuration). So for simple plots
-  (where the potential framerate is far above 60 frames per second), OpenGL acceleration might
-  achieve numerically lower frame rates than the other graphics systems, because they are not
-  capped at the VSync frequency.
-  \li Avoid any kind of alpha (transparency), especially in fills
-  \li Avoid lines with a pen width greater than one
-  \li Avoid any kind of antialiasing, especially in graph lines (see \ref QCustomPlot::setNotAntialiasedElements)
-  \li Avoid repeatedly setting the complete data set with \ref QCPGraph::setData. Use \ref QCPGraph::addData instead, if most
-  data points stay unchanged, e.g. in a running measurement.
-  \li Set the \a copy parameter of the setData functions to false, so only pointers get
-  transferred. (Relevant only if preparing data maps with a large number of points, i.e. over 10000)
-  
-  \section mainpage-flags Preprocessor Define Flags
-  
-  QCustomPlot understands some preprocessor defines that are useful for debugging and compilation:
-  <dl>
-  <dt>\c QCUSTOMPLOT_COMPILE_LIBRARY
-  <dd>Define this flag when you compile QCustomPlot as a shared library (.so/.dll)
-  <dt>\c QCUSTOMPLOT_USE_LIBRARY
-  <dd>Define this flag before including the header, when using QCustomPlot as a shared library
-  <dt>\c QCUSTOMPLOT_CHECK_DATA
-  <dd>If this flag is defined, the QCustomPlot plottables will perform data validity checks on every redraw.
-      This means they will give qDebug output when you plot \e inf or \e nan values, they will not
-      fix your data.
-  </dl>
-
-*/
-
-/*! \page classoverview Class Overview
-  
-  The following diagrams may help to gain a deeper understanding of the relationships between classes that make up
-  the QCustomPlot library. The diagrams are not exhaustive, so only the classes deemed most relevant are shown.
-  
-  \section classoverview-relations Class Relationship Diagram
-  \image html RelationOverview.png "Overview of most important classes and their relations"
-  \section classoverview-inheritance Class Inheritance Tree
-  \image html InheritanceOverview.png "Inheritance tree of most important classes"
-  
-*/
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////// QCustomPlot
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -9365,19 +9063,19 @@ QCustomPlot::QCustomPlot(QWidget *parent) :
   setLocale(currentLocale);
   
   // create initial layers:
-  mLayers.append(new QCPLayer(this, "background"));
-  mLayers.append(new QCPLayer(this, "grid"));
-  mLayers.append(new QCPLayer(this, "main"));
-  mLayers.append(new QCPLayer(this, "axes"));
-  mLayers.append(new QCPLayer(this, "legend"));
+  mLayers.append(new QCPLayer(this, QLatin1String("background")));
+  mLayers.append(new QCPLayer(this, QLatin1String("grid")));
+  mLayers.append(new QCPLayer(this, QLatin1String("main")));
+  mLayers.append(new QCPLayer(this, QLatin1String("axes")));
+  mLayers.append(new QCPLayer(this, QLatin1String("legend")));
   updateLayerIndices();
-  setCurrentLayer("main");
+  setCurrentLayer(QLatin1String("main"));
   
   // create initial layout, axis rect and legend:
   mPlotLayout = new QCPLayoutGrid;
   mPlotLayout->initializeParentPlot(this);
   mPlotLayout->setParent(this); // important because if parent is QWidget, QCPLayout::sizeConstraintsChanged will call QWidget::updateGeometry
-  mPlotLayout->setLayer("main");
+  mPlotLayout->setLayer(QLatin1String("main"));
   QCPAxisRect *defaultAxisRect = new QCPAxisRect(this, true);
   mPlotLayout->addElement(0, 0, defaultAxisRect);
   xAxis = defaultAxisRect->axis(QCPAxis::atBottom);
@@ -9389,16 +9087,16 @@ QCustomPlot::QCustomPlot(QWidget *parent) :
   defaultAxisRect->insetLayout()->addElement(legend, Qt::AlignRight|Qt::AlignTop);
   defaultAxisRect->insetLayout()->setMargins(QMargins(12, 12, 12, 12));
   
-  defaultAxisRect->setLayer("background");
-  xAxis->setLayer("axes");
-  yAxis->setLayer("axes");
-  xAxis2->setLayer("axes");
-  yAxis2->setLayer("axes");
-  xAxis->grid()->setLayer("grid");
-  yAxis->grid()->setLayer("grid");
-  xAxis2->grid()->setLayer("grid");
-  yAxis2->grid()->setLayer("grid");
-  legend->setLayer("legend");
+  defaultAxisRect->setLayer(QLatin1String("background"));
+  xAxis->setLayer(QLatin1String("axes"));
+  yAxis->setLayer(QLatin1String("axes"));
+  xAxis2->setLayer(QLatin1String("axes"));
+  yAxis2->setLayer(QLatin1String("axes"));
+  xAxis->grid()->setLayer(QLatin1String("grid"));
+  yAxis->grid()->setLayer(QLatin1String("grid"));
+  xAxis2->grid()->setLayer(QLatin1String("grid"));
+  yAxis2->grid()->setLayer(QLatin1String("grid"));
+  legend->setLayer(QLatin1String("legend"));
   
   setViewport(rect()); // needs to be called after mPlotLayout has been created
   
@@ -10031,7 +9729,7 @@ QCPGraph *QCustomPlot::addGraph(QCPAxis *keyAxis, QCPAxis *valueAxis)
   QCPGraph *newGraph = new QCPGraph(keyAxis, valueAxis);
   if (addPlottable(newGraph))
   {
-    newGraph->setName("Graph "+QString::number(mGraphs.size()));
+    newGraph->setName(QLatin1String("Graph ")+QString::number(mGraphs.size()));
     return newGraph;
   } else
   {
@@ -11623,7 +11321,7 @@ void QCPColorGradient::colorize(const double *data, const QCPRange &range, QRgb 
   
   if (!logarithmic)
   {
-    const double posToIndexFactor = mLevelCount/range.size();
+    const double posToIndexFactor = (mLevelCount-1)/range.size();
     if (mPeriodic)
     {
       for (int i=0; i<n; ++i)
@@ -11651,7 +11349,7 @@ void QCPColorGradient::colorize(const double *data, const QCPRange &range, QRgb 
     {
       for (int i=0; i<n; ++i)
       {
-        int index = (int)(qLn(data[dataIndexFactor*i]/range.lower)/qLn(range.upper/range.lower)*mLevelCount) % mLevelCount;
+        int index = (int)(qLn(data[dataIndexFactor*i]/range.lower)/qLn(range.upper/range.lower)*(mLevelCount-1)) % mLevelCount;
         if (index < 0)
           index += mLevelCount;
         scanLine[i] = mColorBuffer.at(index);
@@ -11660,7 +11358,7 @@ void QCPColorGradient::colorize(const double *data, const QCPRange &range, QRgb 
     {
       for (int i=0; i<n; ++i)
       {
-        int index = qLn(data[dataIndexFactor*i]/range.lower)/qLn(range.upper/range.lower)*mLevelCount;
+        int index = qLn(data[dataIndexFactor*i]/range.lower)/qLn(range.upper/range.lower)*(mLevelCount-1);
         if (index < 0)
           index = 0;
         else if (index >= mLevelCount)
@@ -11687,9 +11385,9 @@ QRgb QCPColorGradient::color(double position, const QCPRange &range, bool logari
     updateColorBuffer();
   int index = 0;
   if (!logarithmic)
-    index = (position-range.lower)*mLevelCount/range.size();
+    index = (position-range.lower)*(mLevelCount-1)/range.size();
   else
-    index = qLn(position/range.lower)/qLn(range.upper/range.lower)*mLevelCount;
+    index = qLn(position/range.lower)/qLn(range.upper/range.lower)*(mLevelCount-1);
   if (mPeriodic)
   {
     index = index % mLevelCount;
@@ -12159,17 +11857,48 @@ QList<QCPAxis*> QCPAxisRect::axes() const
 }
 
 /*!
-  Adds a new axis to the axis rect side specified with \a type, and returns it.
+  Adds a new axis to the axis rect side specified with \a type, and returns it. If \a axis is 0, a
+  new QCPAxis instance is created internally.
+
+  You may inject QCPAxis instances (or sublasses of QCPAxis) by setting \a axis to an axis that was
+  previously created outside QCustomPlot. It is important to note that QCustomPlot takes ownership
+  of the axis, so you may not delete it afterwards. Further, the \a axis must have been created
+  with this axis rect as parent and with the same axis type as specified in \a type. If this is not
+  the case, a debug output is generated, the axis is not added, and the method returns 0.
+  
+  This method can not be used to move \a axis between axis rects. The same \a axis instance must
+  not be added multiple times to the same or different axis rects.
   
   If an axis rect side already contains one or more axes, the lower and upper endings of the new
-  axis (\ref QCPAxis::setLowerEnding, \ref QCPAxis::setUpperEnding) are initialized to \ref
+  axis (\ref QCPAxis::setLowerEnding, \ref QCPAxis::setUpperEnding) are set to \ref
   QCPLineEnding::esHalfBar.
   
   \see addAxes, setupFullAxesBox
 */
-QCPAxis *QCPAxisRect::addAxis(QCPAxis::AxisType type)
+QCPAxis *QCPAxisRect::addAxis(QCPAxis::AxisType type, QCPAxis *axis)
 {
-  QCPAxis *newAxis = new QCPAxis(this, type);
+  QCPAxis *newAxis = axis;
+  if (!newAxis)
+  {
+    newAxis = new QCPAxis(this, type);
+  } else // user provided existing axis instance, do some sanity checks
+  {
+    if (newAxis->axisType() != type)
+    {
+      qDebug() << Q_FUNC_INFO << "passed axis has different axis type than specified in type parameter";
+      return 0;
+    }
+    if (newAxis->axisRect() != this)
+    {
+      qDebug() << Q_FUNC_INFO << "passed axis doesn't have this axis rect as parent axis rect";
+      return 0;
+    }
+    if (axes().contains(newAxis))
+    {
+      qDebug() << Q_FUNC_INFO << "passed axis is already owned by this axis rect";
+      return 0;
+    }
+  }
   if (mAxes[type].size() > 0) // multiple axes on one side, add half-bar axis ending to additional axes with offset
   {
     bool invert = (type == QCPAxis::atRight) || (type == QCPAxis::atBottom);
@@ -12938,7 +12667,7 @@ QCPAbstractLegendItem::QCPAbstractLegendItem(QCPLegend *parent) :
   mSelectable(true),
   mSelected(false)
 {
-  setLayer("legend");
+  setLayer(QLatin1String("legend"));
   setMargins(QMargins(8, 2, 8, 2));
 }
 
@@ -13799,9 +13528,9 @@ void QCPLegend::parentPlotInitialized(QCustomPlot *parentPlot)
 */
 QCPPlotTitle::QCPPlotTitle(QCustomPlot *parentPlot) :
   QCPLayoutElement(parentPlot),
-  mFont(QFont("sans serif", 13*1.5, QFont::Bold)),
+  mFont(QFont(QLatin1String("sans serif"), 13*1.5, QFont::Bold)),
   mTextColor(Qt::black),
-  mSelectedFont(QFont("sans serif", 13*1.6, QFont::Bold)),
+  mSelectedFont(QFont(QLatin1String("sans serif"), 13*1.6, QFont::Bold)),
   mSelectedTextColor(Qt::blue),
   mSelectable(false),
   mSelected(false)
@@ -13829,7 +13558,7 @@ QCPPlotTitle::QCPPlotTitle(QCustomPlot *parentPlot, const QString &text) :
   mSelectable(false),
   mSelected(false)
 {
-  setLayer("axes");
+  setLayer(QLatin1String("axes"));
   setMargins(QMargins(5, 5, 5, 0));
 }
 
@@ -14057,8 +13786,7 @@ QColor QCPPlotTitle::mainTextColor() const
   setMinimumMargins), because vertical color scales are most common and the minimum top/bottom
   margin makes sure it keeps some distance to the top/bottom widget border. So if you change to a
   horizontal color scale by setting \ref setType to \ref QCPAxis::atBottom or \ref QCPAxis::atTop, you
-  might want to also change the minimum margins accordingly, e.g. \ref
-  setMinimumMargins(QMargins(6, 0, 6, 0)).
+  might want to also change the minimum margins accordingly, e.g. <tt>setMinimumMargins(QMargins(6, 0, 6, 0))</tt>.
 */
 
 /* start documentation of inline functions */
@@ -14188,7 +13916,7 @@ void QCPColorScale::setType(QCPAxis::AxisType type)
       rangeTransfer = mColorAxis.data()->range();
       labelTransfer = mColorAxis.data()->label();
       logBaseTransfer = mColorAxis.data()->scaleLogBase();
-      mColorAxis.data()->setLabel("");
+      mColorAxis.data()->setLabel(QString());
       disconnect(mColorAxis.data(), SIGNAL(rangeChanged(QCPRange)), this, SLOT(setDataRange(QCPRange)));
       disconnect(mColorAxis.data(), SIGNAL(scaleTypeChanged(QCPAxis::ScaleType)), this, SLOT(setDataScaleType(QCPAxis::ScaleType)));
     }
@@ -14806,6 +14534,11 @@ QCPGraph::~QCPGraph()
 */
 void QCPGraph::setData(QCPDataMap *data, bool copy)
 {
+  if (mData == data)
+  {
+    qDebug() << Q_FUNC_INFO << "The data pointer is already in (and owned by) this plottable" << reinterpret_cast<quintptr>(data);
+    return;
+  }
   if (copy)
   {
     *mData = *data;
@@ -15963,8 +15696,8 @@ void QCPGraph::getPreparedData(QVector<QCPData> *lineData, QVector<QCPData> *sca
       double minValue = it.value().value;
       double maxValue = it.value().value;
       QCPDataMap::const_iterator currentIntervalFirstPoint = it;
-      int reversedFactor = keyAxis->rangeReversed() ? -1 : 1; // is used to calculate keyEpsilon pixel into the correct direction
-      int reversedRound = keyAxis->rangeReversed() ? 1 : 0; // is used to switch between floor (normal) and ceil (reversed) rounding of currentIntervalStartKey
+      int reversedFactor = keyAxis->rangeReversed() != (keyAxis->orientation()==Qt::Vertical) ? -1 : 1; // is used to calculate keyEpsilon pixel into the correct direction
+      int reversedRound = keyAxis->rangeReversed() != (keyAxis->orientation()==Qt::Vertical) ? 1 : 0; // is used to switch between floor (normal) and ceil (reversed) rounding of currentIntervalStartKey
       double currentIntervalStartKey = keyAxis->pixelToCoord((int)(keyAxis->coordToPixel(lower.key())+reversedRound));
       double lastIntervalEndKey = currentIntervalStartKey;
       double keyEpsilon = qAbs(currentIntervalStartKey-keyAxis->pixelToCoord(keyAxis->coordToPixel(currentIntervalStartKey)+1.0*reversedFactor)); // interval of one pixel on screen when mapped to plot key coordinates
@@ -17100,6 +16833,11 @@ QCPCurve::~QCPCurve()
 */
 void QCPCurve::setData(QCPCurveDataMap *data, bool copy)
 {
+  if (mData == data)
+  {
+    qDebug() << Q_FUNC_INFO << "The data pointer is already in (and owned by) this plottable" << reinterpret_cast<quintptr>(data);
+    return;
+  }
   if (copy)
   {
     *mData = *data;
@@ -17975,17 +17713,17 @@ bool QCPCurve::mayTraverse(int prevRegion, int currentRegion) const
 */
 bool QCPCurve::getTraverse(double prevKey, double prevValue, double key, double value, double rectLeft, double rectTop, double rectRight, double rectBottom, QPointF &crossA, QPointF &crossB) const
 {
-  QList<QVector2D> intersections; // x of QVector2D corresponds to key and y to value
+  QList<QPointF> intersections; // x of QPointF corresponds to key and y to value
   if (qFuzzyIsNull(key-prevKey)) // line is parallel to value axis
   {
     // due to region filter in mayTraverseR(), if line is parallel to value or key axis, R is traversed here
-    intersections.append(QVector2D(key, rectBottom)); // direction will be taken care of at end of method
-    intersections.append(QVector2D(key, rectTop));
+    intersections.append(QPointF(key, rectBottom)); // direction will be taken care of at end of method
+    intersections.append(QPointF(key, rectTop));
   } else if (qFuzzyIsNull(value-prevValue)) // line is parallel to key axis
   {
     // due to region filter in mayTraverseR(), if line is parallel to value or key axis, R is traversed here
-    intersections.append(QVector2D(rectLeft, value)); // direction will be taken care of at end of method
-    intersections.append(QVector2D(rectRight, value));
+    intersections.append(QPointF(rectLeft, value)); // direction will be taken care of at end of method
+    intersections.append(QPointF(rectRight, value));
   } else // line is skewed
   {
     double gamma;
@@ -17993,20 +17731,20 @@ bool QCPCurve::getTraverse(double prevKey, double prevValue, double key, double 
     // check top of rect:
     gamma = prevKey + (rectTop-prevValue)*keyPerValue;
     if (gamma >= rectLeft && gamma <= rectRight)
-      intersections.append(QVector2D(gamma, rectTop));
+      intersections.append(QPointF(gamma, rectTop));
     // check bottom of rect:
     gamma = prevKey + (rectBottom-prevValue)*keyPerValue;
     if (gamma >= rectLeft && gamma <= rectRight)
-      intersections.append(QVector2D(gamma, rectBottom));
+      intersections.append(QPointF(gamma, rectBottom));
     double valuePerKey = 1.0/keyPerValue;
     // check left of rect:
     gamma = prevValue + (rectLeft-prevKey)*valuePerKey;
     if (gamma >= rectBottom && gamma <= rectTop)
-      intersections.append(QVector2D(rectLeft, gamma));
+      intersections.append(QPointF(rectLeft, gamma));
     // check right of rect:
     gamma = prevValue + (rectRight-prevKey)*valuePerKey;
     if (gamma >= rectBottom && gamma <= rectTop)
-      intersections.append(QVector2D(rectRight, gamma));
+      intersections.append(QPointF(rectRight, gamma));
   }
   
   // handle cases where found points isn't exactly 2:
@@ -18014,12 +17752,13 @@ bool QCPCurve::getTraverse(double prevKey, double prevValue, double key, double 
   {
     // line probably goes through corner of rect, and we got duplicate points there. single out the point pair with greatest distance in between:
     double distSqrMax = 0;
-    QVector2D pv1, pv2;
+    QPointF pv1, pv2;
     for (int i=0; i<intersections.size()-1; ++i)
     {
       for (int k=i+1; k<intersections.size(); ++k)
       {
-        double distSqr = (intersections.at(i)-intersections.at(k)).lengthSquared();
+        QPointF distPoint = intersections.at(i)-intersections.at(k);
+        double distSqr = distPoint.x()*distPoint.x()+distPoint.y()+distPoint.y();
         if (distSqr > distSqrMax)
         {
           pv1 = intersections.at(i);
@@ -18028,7 +17767,7 @@ bool QCPCurve::getTraverse(double prevKey, double prevValue, double key, double 
         }
       }
     }
-    intersections = QList<QVector2D>() << pv1 << pv2;
+    intersections = QList<QPointF>() << pv1 << pv2;
   } else if (intersections.size() != 2)
   {
     // one or even zero points found (shouldn't happen unless line perfectly tangent to corner), no need to draw segment
@@ -18037,7 +17776,7 @@ bool QCPCurve::getTraverse(double prevKey, double prevValue, double key, double 
   
   // possibly re-sort points so optimized point segment has same direction as original segment:
   if ((key-prevKey)*(intersections.at(1).x()-intersections.at(0).x()) + (value-prevValue)*(intersections.at(1).y()-intersections.at(0).y()) < 0) // scalar product of both segments < 0 -> opposite direction
-    intersections.swap(0, 1);
+    intersections.move(0, 1);
   crossA = coordsToPixels(intersections.at(0).x(), intersections.at(0).y());
   crossB = coordsToPixels(intersections.at(1).x(), intersections.at(1).y());
   return true;
@@ -18790,6 +18529,11 @@ void QCPBars::setBaseValue(double baseValue)
 */
 void QCPBars::setData(QCPBarDataMap *data, bool copy)
 {
+  if (mData == data)
+  {
+    qDebug() << Q_FUNC_INFO << "The data pointer is already in (and owned by) this plottable" << reinterpret_cast<quintptr>(data);
+    return;
+  }
   if (copy)
   {
     *mData = *data;
@@ -19933,7 +19677,7 @@ QCPColorMapData &QCPColorMapData::operator=(const QCPColorMapData &other)
 double QCPColorMapData::data(double key, double value)
 {
   int keyCell = (key-mKeyRange.lower)/(mKeyRange.upper-mKeyRange.lower)*(mKeySize-1)+0.5;
-  int valueCell = (1.0-(value-mValueRange.lower)/(mValueRange.upper-mValueRange.lower))*(mValueSize-1)+0.5;
+  int valueCell = (value-mValueRange.lower)/(mValueRange.upper-mValueRange.lower)*(mValueSize-1)+0.5;
   if (keyCell >= 0 && keyCell < mKeySize && valueCell >= 0 && valueCell < mValueSize)
     return mData[valueCell*mKeySize + keyCell];
   else
@@ -20345,6 +20089,11 @@ QCPColorMap::~QCPColorMap()
 */
 void QCPColorMap::setData(QCPColorMapData *data, bool copy)
 {
+  if (mMapData == data)
+  {
+    qDebug() << Q_FUNC_INFO << "The data pointer is already in (and owned by) this plottable" << reinterpret_cast<quintptr>(data);
+    return;
+  }
   if (copy)
   {
     *mMapData = *data;
@@ -20849,6 +20598,11 @@ QCPFinancial::~QCPFinancial()
 */
 void QCPFinancial::setData(QCPFinancialDataMap *data, bool copy)
 {
+  if (mData == data)
+  {
+    qDebug() << Q_FUNC_INFO << "The data pointer is already in (and owned by) this plottable" << reinterpret_cast<quintptr>(data);
+    return;
+  }
   if (copy)
   {
     *mData = *data;
@@ -21646,8 +21400,8 @@ void QCPFinancial::getVisibleDataBounds(QCPFinancialDataMap::const_iterator &low
 */
 QCPItemStraightLine::QCPItemStraightLine(QCustomPlot *parentPlot) :
   QCPAbstractItem(parentPlot),
-  point1(createPosition("point1")),
-  point2(createPosition("point2"))
+  point1(createPosition(QLatin1String("point1"))),
+  point2(createPosition(QLatin1String("point2")))
 {
   point1->setCoords(0, 0);
   point2->setCoords(1, 1);
@@ -21836,8 +21590,8 @@ QPen QCPItemStraightLine::mainPen() const
 */
 QCPItemLine::QCPItemLine(QCustomPlot *parentPlot) :
   QCPAbstractItem(parentPlot),
-  start(createPosition("start")),
-  end(createPosition("end"))
+  start(createPosition(QLatin1String("start"))),
+  end(createPosition(QLatin1String("end")))
 {
   start->setCoords(0, 0);
   end->setCoords(1, 1);
@@ -22069,10 +21823,10 @@ QPen QCPItemLine::mainPen() const
 */
 QCPItemCurve::QCPItemCurve(QCustomPlot *parentPlot) :
   QCPAbstractItem(parentPlot),
-  start(createPosition("start")),
-  startDir(createPosition("startDir")),
-  endDir(createPosition("endDir")),
-  end(createPosition("end"))
+  start(createPosition(QLatin1String("start"))),
+  startDir(createPosition(QLatin1String("startDir"))),
+  endDir(createPosition(QLatin1String("endDir"))),
+  end(createPosition(QLatin1String("end")))
 {
   start->setCoords(0, 0);
   startDir->setCoords(0.5, 0);
@@ -22219,14 +21973,14 @@ QPen QCPItemCurve::mainPen() const
 */
 QCPItemRect::QCPItemRect(QCustomPlot *parentPlot) :
   QCPAbstractItem(parentPlot),
-  topLeft(createPosition("topLeft")),
-  bottomRight(createPosition("bottomRight")),
-  top(createAnchor("top", aiTop)),
-  topRight(createAnchor("topRight", aiTopRight)),
-  right(createAnchor("right", aiRight)),
-  bottom(createAnchor("bottom", aiBottom)),
-  bottomLeft(createAnchor("bottomLeft", aiBottomLeft)),
-  left(createAnchor("left", aiLeft))
+  topLeft(createPosition(QLatin1String("topLeft"))),
+  bottomRight(createPosition(QLatin1String("bottomRight"))),
+  top(createAnchor(QLatin1String("top"), aiTop)),
+  topRight(createAnchor(QLatin1String("topRight"), aiTopRight)),
+  right(createAnchor(QLatin1String("right"), aiRight)),
+  bottom(createAnchor(QLatin1String("bottom"), aiBottom)),
+  bottomLeft(createAnchor(QLatin1String("bottomLeft"), aiBottomLeft)),
+  left(createAnchor(QLatin1String("left"), aiLeft))
 {
   topLeft->setCoords(0, 1);
   bottomRight->setCoords(1, 0);
@@ -22377,22 +22131,22 @@ QBrush QCPItemRect::mainBrush() const
 */
 QCPItemText::QCPItemText(QCustomPlot *parentPlot) :
   QCPAbstractItem(parentPlot),
-  position(createPosition("position")),
-  topLeft(createAnchor("topLeft", aiTopLeft)),
-  top(createAnchor("top", aiTop)),
-  topRight(createAnchor("topRight", aiTopRight)),
-  right(createAnchor("right", aiRight)),
-  bottomRight(createAnchor("bottomRight", aiBottomRight)),
-  bottom(createAnchor("bottom", aiBottom)),
-  bottomLeft(createAnchor("bottomLeft", aiBottomLeft)),
-  left(createAnchor("left", aiLeft))
+  position(createPosition(QLatin1String("position"))),
+  topLeft(createAnchor(QLatin1String("topLeft"), aiTopLeft)),
+  top(createAnchor(QLatin1String("top"), aiTop)),
+  topRight(createAnchor(QLatin1String("topRight"), aiTopRight)),
+  right(createAnchor(QLatin1String("right"), aiRight)),
+  bottomRight(createAnchor(QLatin1String("bottomRight"), aiBottomRight)),
+  bottom(createAnchor(QLatin1String("bottom"), aiBottom)),
+  bottomLeft(createAnchor(QLatin1String("bottomLeft"), aiBottomLeft)),
+  left(createAnchor(QLatin1String("left"), aiLeft))
 {
   position->setCoords(0, 0);
   
   setRotation(0);
   setTextAlignment(Qt::AlignTop|Qt::AlignHCenter);
   setPositionAlignment(Qt::AlignCenter);
-  setText("text");
+  setText(QLatin1String("text"));
   
   setPen(Qt::NoPen);
   setSelectedPen(Qt::NoPen);
@@ -22715,17 +22469,17 @@ QBrush QCPItemText::mainBrush() const
 */
 QCPItemEllipse::QCPItemEllipse(QCustomPlot *parentPlot) :
   QCPAbstractItem(parentPlot),
-  topLeft(createPosition("topLeft")),
-  bottomRight(createPosition("bottomRight")),
-  topLeftRim(createAnchor("topLeftRim", aiTopLeftRim)),
-  top(createAnchor("top", aiTop)),
-  topRightRim(createAnchor("topRightRim", aiTopRightRim)),
-  right(createAnchor("right", aiRight)),
-  bottomRightRim(createAnchor("bottomRightRim", aiBottomRightRim)),
-  bottom(createAnchor("bottom", aiBottom)),
-  bottomLeftRim(createAnchor("bottomLeftRim", aiBottomLeftRim)),
-  left(createAnchor("left", aiLeft)),
-  center(createAnchor("center", aiCenter))
+  topLeft(createPosition(QLatin1String("topLeft"))),
+  bottomRight(createPosition(QLatin1String("bottomRight"))),
+  topLeftRim(createAnchor(QLatin1String("topLeftRim"), aiTopLeftRim)),
+  top(createAnchor(QLatin1String("top"), aiTop)),
+  topRightRim(createAnchor(QLatin1String("topRightRim"), aiTopRightRim)),
+  right(createAnchor(QLatin1String("right"), aiRight)),
+  bottomRightRim(createAnchor(QLatin1String("bottomRightRim"), aiBottomRightRim)),
+  bottom(createAnchor(QLatin1String("bottom"), aiBottom)),
+  bottomLeftRim(createAnchor(QLatin1String("bottomLeftRim"), aiBottomLeftRim)),
+  left(createAnchor(QLatin1String("left"), aiLeft)),
+  center(createAnchor(QLatin1String("center"), aiCenter))
 {
   topLeft->setCoords(0, 1);
   bottomRight->setCoords(1, 0);
@@ -22905,21 +22659,21 @@ QBrush QCPItemEllipse::mainBrush() const
 */
 QCPItemPixmap::QCPItemPixmap(QCustomPlot *parentPlot) :
   QCPAbstractItem(parentPlot),
-  topLeft(createPosition("topLeft")),
-  bottomRight(createPosition("bottomRight")),
-  top(createAnchor("top", aiTop)),
-  topRight(createAnchor("topRight", aiTopRight)),
-  right(createAnchor("right", aiRight)),
-  bottom(createAnchor("bottom", aiBottom)),
-  bottomLeft(createAnchor("bottomLeft", aiBottomLeft)),
-  left(createAnchor("left", aiLeft))
+  topLeft(createPosition(QLatin1String("topLeft"))),
+  bottomRight(createPosition(QLatin1String("bottomRight"))),
+  top(createAnchor(QLatin1String("top"), aiTop)),
+  topRight(createAnchor(QLatin1String("topRight"), aiTopRight)),
+  right(createAnchor(QLatin1String("right"), aiRight)),
+  bottom(createAnchor(QLatin1String("bottom"), aiBottom)),
+  bottomLeft(createAnchor(QLatin1String("bottomLeft"), aiBottomLeft)),
+  left(createAnchor(QLatin1String("left"), aiLeft))
 {
   topLeft->setCoords(0, 1);
   bottomRight->setCoords(1, 0);
   
   setPen(Qt::NoPen);
   setSelectedPen(QPen(Qt::blue));
-  setScaled(false, Qt::KeepAspectRatio);
+  setScaled(false, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 }
 
 QCPItemPixmap::~QCPItemPixmap()
@@ -22940,10 +22694,11 @@ void QCPItemPixmap::setPixmap(const QPixmap &pixmap)
   Sets whether the pixmap will be scaled to fit the rectangle defined by the \a topLeft and \a
   bottomRight positions.
 */
-void QCPItemPixmap::setScaled(bool scaled, Qt::AspectRatioMode aspectRatioMode)
+void QCPItemPixmap::setScaled(bool scaled, Qt::AspectRatioMode aspectRatioMode, Qt::TransformationMode transformationMode)
 {
   mScaled = scaled;
   mAspectRatioMode = aspectRatioMode;
+  mTransformationMode = transformationMode;
   updateScaledPixmap();
 }
 
@@ -23050,7 +22805,7 @@ void QCPItemPixmap::updateScaledPixmap(QRect finalRect, bool flipHorz, bool flip
       finalRect = getFinalRect(&flipHorz, &flipVert);
     if (finalRect.size() != mScaledPixmap.size())
     {
-      mScaledPixmap = mPixmap.scaled(finalRect.size(), mAspectRatioMode, Qt::SmoothTransformation);
+      mScaledPixmap = mPixmap.scaled(finalRect.size(), mAspectRatioMode, mTransformationMode);
       if (flipHorz || flipVert)
         mScaledPixmap = QPixmap::fromImage(mScaledPixmap.toImage().mirrored(flipHorz, flipVert));
     }
@@ -23163,7 +22918,7 @@ QPen QCPItemPixmap::mainPen() const
 */
 QCPItemTracer::QCPItemTracer(QCustomPlot *parentPlot) :
   QCPAbstractItem(parentPlot),
-  position(createPosition("position")),
+  position(createPosition(QLatin1String("position"))),
   mGraph(0)
 {
   position->setCoords(0, 0);
@@ -23516,9 +23271,9 @@ QBrush QCPItemTracer::mainBrush() const
 */
 QCPItemBracket::QCPItemBracket(QCustomPlot *parentPlot) :
   QCPAbstractItem(parentPlot),
-  left(createPosition("left")),
-  right(createPosition("right")),
-  center(createAnchor("center", aiCenter))
+  left(createPosition(QLatin1String("left"))),
+  right(createPosition(QLatin1String("right"))),
+  center(createAnchor(QLatin1String("center"), aiCenter))
 {
   left->setCoords(0, 0);
   right->setCoords(1, 1);
