@@ -368,8 +368,8 @@ protected:
 
         m_handle = m_handles[0] = m_handles[1] = m_handles[2] = 0;
 
-        m_signalBuffer = m_signalBuffer; // do not zero
-        m_signalBufferSize = m_signalBufferSize; // do not zero
+        // m_signalBuffer = m_signalBuffer; // do not zero
+        // m_signalBufferSize = m_signalBufferSize; // do not zero
 
         m_parent = 0;
         m_children = 0;
