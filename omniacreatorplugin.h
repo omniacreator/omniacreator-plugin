@@ -198,11 +198,13 @@ private slots:
 
     void updateRecentProjects();
     void updateExamples();
+    void updateDocuments();
     void updateCloseProjectAndAllFilesState();
     void updateSaveAllState();
     void updateRunCMake();
 
     void openProject(QAction *action);
+    void openLink(QAction *action);
     void closeProject();
     void closeProject2();
     void cmakeChanged();
@@ -233,7 +235,7 @@ private:
     SerialPort *m_port;
     SerialEscape *m_escape;
 
-    bool m_runClicked;
+    bool m_runClicked, m_cmakeChangedLock;
     QFileSystemModel *m_projectModel;
 
     QStatusBar *m_status;
@@ -245,6 +247,7 @@ private:
     QLabel *m_dataSpaceUsed;
 
     Core::ActionContainer *m_examplesMenu;
+    Core::ActionContainer *m_documentsMenu;
 
     Core::Command *m_closeProjectAndAllFilesAction;
 

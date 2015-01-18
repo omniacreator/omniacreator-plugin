@@ -1,6 +1,6 @@
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 ' @file
-' Interface Library Terminal Demo
+' Interface Library Terminal Serial Demo
 '
 ' @version @n 1.0
 ' @date @n 11/30/2014

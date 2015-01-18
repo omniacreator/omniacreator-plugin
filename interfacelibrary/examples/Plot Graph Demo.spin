@@ -1,6 +1,6 @@
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 ' @file
-' Interface Library Graph Demo
+' Interface Library Graph Plot Demo
 '
 ' @version @n 1.0
 ' @date @n 11/30/2014

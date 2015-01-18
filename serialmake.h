@@ -90,11 +90,12 @@ public:
     QString getGenCMakeFile() const; // generated
 
     void updateProject();
-    void updateProject2();
 
     void setMakeFileWithDialog();
 
 private slots:
+
+    void updateProject2();
 
     void handlePortDestroyedOrChanged();
 
@@ -112,6 +113,7 @@ private:
                                        SerialPort *parent);
 
     void entryList(const QString &path, QStandardItem *parent);
+
     int indexOf(const QString &itemText, QStandardItem *parent);
 
     QModelIndex findItem(const QString &itemData,

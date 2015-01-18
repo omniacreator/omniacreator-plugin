@@ -3350,6 +3350,16 @@ bool SerialInterface::deleteInterfaceBox(int groupBox, int interfaceBox)
     if(pair.second)
     {
         pair.first->m_children.remove(interfaceBox);
+
+        QWidget *label = pair.first->m_layout->labelForField(pair.second);
+
+        if(label)
+        {
+            pair.first->m_layout->removeWidget(label);
+
+            delete label;
+        }
+
         pair.first->m_layout->removeWidget(pair.second);
 
         delete pair.second;

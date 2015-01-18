@@ -253,7 +253,9 @@ public:
 private slots:
 
     void scanDemoPorts();
+    void scanDemoPorts2(QList< QPair<QString, QString> > list);
     void scanSerialPorts();
+    void scanSerialPorts2(QList< QPair<QString, QString> > list);
 
 signals:
 
@@ -302,6 +304,60 @@ private:
 
     QTimer *m_demoPortListTimer;
     QTimer *m_serialPortListTimer;
+};
+
+class DemoPortScanner : public QObject
+{
+    Q_OBJECT
+
+public:
+
+    explicit DemoPortScanner(SerialPort *port)
+    {
+        m_port = port;
+    }
+
+public slots:
+
+    void scan()
+    {
+        emit availablePorts(m_port->availableDemoPorts());
+    }
+
+signals:
+
+    void availablePorts(QList< QPair<QString, QString> > list);
+
+private:
+
+    SerialPort *m_port;
+};
+
+class SerialPortScanner : public QObject
+{
+    Q_OBJECT
+
+public:
+
+    explicit SerialPortScanner(SerialPort *port)
+    {
+        m_port = port;
+    }
+
+public slots:
+
+    void scan()
+    {
+        emit availablePorts(m_port->availableSerialPorts());
+    }
+
+signals:
+
+    void availablePorts(QList< QPair<QString, QString> > list);
+
+private:
+
+    SerialPort *m_port;
 };
 
 #endif // SERIALPORT_H

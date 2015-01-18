@@ -117,7 +117,7 @@ void SerialMake::setWorkspaceFolder(const QString &folder)
         settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
         settings.setValue(SERIAL_MAKE_KEY_WORKSPACE_FOLDER, mFolder);
 
-        updateProject2();
+        QTimer::singleShot(0, this, SLOT(updateProject2()));
     }
 }
 
@@ -183,7 +183,7 @@ void SerialMake::setProjectFPath(const QString &fpath) // file or folder path
         settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
         settings.setValue(SERIAL_MAKE_KEY_PROJECT_FPATH, mFPath);
 
-        updateProject2();
+        QTimer::singleShot(0, this, SLOT(updateProject2()));
     }
 }
 
@@ -248,7 +248,7 @@ void SerialMake::setProjectPortName(const QString &portName)
         settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
         settings.setValue(SERIAL_MAKE_KEY_PROJECT_PORT_NAME, mPortName);
 
-        updateProject2();
+        QTimer::singleShot(0, this, SLOT(updateProject2()));
     }
 }
 
@@ -293,7 +293,7 @@ void SerialMake::setProjectCMakeFile(const QString &cmakeFile) // file path
         settings.beginGroup(SERIAL_MAKE_KEY_GROUP);
         settings.setValue(SERIAL_MAKE_KEY_PROJECT_CMAKE_FILE, mCMakeFile);
 
-        updateProject2();
+        QTimer::singleShot(0, this, SLOT(updateProject2()));
     }
 }
 
@@ -460,8 +460,8 @@ void SerialMake::updateProject2()
         QString text = "cmake_minimum_required(VERSION \"2.8\")\n";
         text.append("cmake_policy(VERSION \"2.8\")\n\n");
 
-        text.append(QString("set(CMAKE_MAKE_PROGRAM \"%L1\")\n\n").
-        arg(getNinjaPath()));
+        text.append(QString("set(CMAKE_MAKE_PROGRAM \"%L1\" "
+        "CACHE INTERNAL CMAKE_MAKE_PROGRAM FORCE)\n\n").arg(getNinjaPath()));
 
         text.append(QString("set(IDE_FOLDER \"%L1\")\n").
         arg(QDir::fromNativeSeparators(QDir::cleanPath(
@@ -508,7 +508,7 @@ void SerialMake::updateProject2()
             arg(getProjectCMakeFile()));
         }
 
-        text.append(QString("project(\"%L1\")\n\n").
+        text.append(QString("project(\"%L1\" C CXX ASM)\n\n").
         arg((QFileInfo(getProjectFPath()).isDir() ?
         QDir(getProjectFPath()).dirName() :
         QFileInfo(getProjectFPath()).completeBaseName()).
